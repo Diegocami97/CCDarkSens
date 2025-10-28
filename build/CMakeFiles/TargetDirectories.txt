@@ -1,0 +1,4 @@
+/Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles/ccdarksens_core.dir
+/Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles/ccdarksens_sensitivity.dir
+/Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles/edit_cache.dir
+/Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles/rebuild_cache.dir

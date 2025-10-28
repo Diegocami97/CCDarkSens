@@ -1,0 +1,40 @@
+{
+  "run": {
+    "label": "mvp_dm_electron",
+    "outdir": "outputs/mvp_dm_electron",
+    "cl": 0.90,
+    "test_stat": "PLR",
+    "n_toys": 0,
+    "rng_seed": 12345,
+    "verbosity": 1
+  },
+  "detector": {
+    "rows": 4096,
+    "cols": 4096,
+    "pixel_size_um": 15.0,
+    "thickness_mm": 0.67,
+    "active_fraction": 0.98,
+    "target_element": "Si",
+    "density_g_cm3": 2.329,
+    "mass_kg": null
+  },
+  "experiment": {
+    "mode": "asimov",
+    "livetime_days": 100.0,
+    "duty_cycle": 1.0,
+    "binning": { "ne_min": 0, "ne_max": 20 },
+    "roi_bins": [1, 2, 3, 4, 5]
+  },
+  "physics_model": {
+    "name": "DM_electron",
+    "masses_GeV": [0.5, 1.0, 2.0],
+    "cross_section_scan": {
+      "type": "sigma_e",
+      "min": 1e-40,
+      "max": 1e-30,
+      "n_points": 25,
+      "log_spacing": true
+    },
+    "mediator": "heavy"
+  }
+}
