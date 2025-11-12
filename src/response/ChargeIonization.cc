@@ -63,7 +63,7 @@ double ChargeIonization::InterpLinearClamped(const std::vector<double>& x,
 }
 
 std::unique_ptr<TH1D> ChargeIonization::FoldToNe(const TH1D& dRdE,
-                                                  double exposure_kg_day,
+                                                  double exposure_kg_year,
                                                   int ne_min, int ne_max) const {
   if (ne_max < ne_min) throw std::invalid_argument("ne_max < ne_min");
   const int k = MaxNeFromTable();
@@ -81,7 +81,8 @@ std::unique_ptr<TH1D> ChargeIonization::FoldToNe(const TH1D& dRdE,
     const double Ei   = dRdE.GetBinCenter(i);
     const double dEi  = dRdE.GetBinWidth(i);
     const double rate = dRdE.GetBinContent(i);  // events/(kg day eV)
-    const double counts = rate * dEi * exposure_kg_day;
+    // const double counts = rate * dEi * exposure_kg_day;
+    const double counts = rate * dEi;
     if (counts <= 0) continue;
 
     for (int n=1; n<=k; ++n) {

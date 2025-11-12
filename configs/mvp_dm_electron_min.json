@@ -23,6 +23,8 @@
     "livetime_days": 100.0,
     "duty_cycle": 1.0,
     "binning": { "ne_min": 0, "ne_max": 20 },
+    "exposure_time_s": 3600,
+    "n_exposures": null,
     "roi_bins": [1, 2, 3, 4, 5]
   },
   "physics_model": {
@@ -36,5 +38,45 @@
       "log_spacing": true
     },
     "mediator": "heavy"
+  },
+
+  "backgrounds": {
+    "dark_current": {
+      "lambda_e_per_pix_per_exposure": 1.5e-4,
+      "norm_scale": 1.0
+    },
+    "pattern_efficiency": {
+      "type": "flat",
+      "epsilon": 0.95
+    },
+    "timing": {
+      "exposure_time_s": 3600,
+      "n_exposures": null
+    }
+  },
+
+  
+  "response": {
+    "mode": "cluster_mc",          
+    "cluster_mc": {
+      "n_events_per_ne": 20000,
+      "sigma_readout_e": 0.16,
+      "Qmin_e": 0.3,
+      "Qmax_e": 4.0,
+      "diffusion": {
+        "A_um2": 803.25,
+        "b_umInv": 0.00065,
+        "alpha": 1.0,
+        "beta_per_keV": 0.0
+      },
+      "binning": { "rows_bin": 1, "cols_bin": 1 },
+      "pileup_with_dc": false,
+      "rng_seed": 987654321
+    }
   }
+
+
+
+
 }
+

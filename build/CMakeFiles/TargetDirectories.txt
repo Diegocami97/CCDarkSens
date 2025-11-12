@@ -1,4 +1,8 @@
 /Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles/ccdarksens_core.dir
 /Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles/ccdarksens_sensitivity.dir
+/Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles/ccdarksens_sensitivity_fast.dir
+/Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles/ccdarksens_sensitivity_cluster_mc.dir
+/Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles/gen_qedark_rates.dir
+/Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles/ccdarksens_check_dmelectron.dir
 /Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles/edit_cache.dir
 /Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles/rebuild_cache.dir

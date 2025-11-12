@@ -1,0 +1,41 @@
+{
+  "run": {
+    "label": "check_dmelectron_single",
+    "outdir": "outputs/check_dmelectron_single",
+    "exposure_kg_year": 1,
+    "cl": 0.90,
+    "test_stat": "PLR",
+    "n_toys": 0
+  },
+
+  "detector": {
+    "rows": 4126,
+    "cols": 3984,
+    "mass_kg": 0.00577262,
+    "material": "Si",
+    "dark_current_lambda": 1.5e-4,
+    "pixel_size_um": 15.0,
+    "thickness_mm": 0.67,
+     "active_fraction": 0.98,
+    "target_element": "Si",
+    "density_g_cm3": 2.329,
+    "n_exposures": 2400
+  },
+
+  
+
+  "model": {
+    "type": "dm_electron",
+    "material": "Si",
+    "mediator": "heavy",
+    "rates_dir": "data/qedark_rates/Si/heavy",
+    "filename_template": "dRdE_{material}_{mediator}_m{mchi_MeV}_s{sigma_e_cm2}.csv",
+
+    "mchi_MeV": 10.500000,
+    "sigma_e_cm2": "1.0e-34",
+
+    "Emin_eV": 0.0,
+    "Emax_eV": 20.0,
+    "nbins": 200
+  }
+}
