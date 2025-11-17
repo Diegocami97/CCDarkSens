@@ -21,6 +21,8 @@ set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/Users/diegovenegasvargas/Documents/CCDarkSens/src/response/DetectorResponsePipeline.cc" "CMakeFiles/ccdarksens_core.dir/src/response/DetectorResponsePipeline.cc.o" "gcc" "CMakeFiles/ccdarksens_core.dir/src/response/DetectorResponsePipeline.cc.o.d"
   "/Users/diegovenegasvargas/Documents/CCDarkSens/src/response/Diffusion.cc" "CMakeFiles/ccdarksens_core.dir/src/response/Diffusion.cc.o" "gcc" "CMakeFiles/ccdarksens_core.dir/src/response/Diffusion.cc.o.d"
   "/Users/diegovenegasvargas/Documents/CCDarkSens/src/response/PatternEfficiency.cc" "CMakeFiles/ccdarksens_core.dir/src/response/PatternEfficiency.cc.o" "gcc" "CMakeFiles/ccdarksens_core.dir/src/response/PatternEfficiency.cc.o.d"
+  "/Users/diegovenegasvargas/Documents/CCDarkSens/src/stats/PoissonAsimovPLR.cc" "CMakeFiles/ccdarksens_core.dir/src/stats/PoissonAsimovPLR.cc.o" "gcc" "CMakeFiles/ccdarksens_core.dir/src/stats/PoissonAsimovPLR.cc.o.d"
+  "/Users/diegovenegasvargas/Documents/CCDarkSens/src/stats/TestStatisticFactory.cc" "CMakeFiles/ccdarksens_core.dir/src/stats/TestStatisticFactory.cc.o" "gcc" "CMakeFiles/ccdarksens_core.dir/src/stats/TestStatisticFactory.cc.o.d"
   )
 
 # Targets to which this target links which contain Fortran sources.

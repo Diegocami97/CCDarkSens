@@ -37,6 +37,11 @@ add_library(ccdarksens_core
 
     # Rates
     src/rates/RateSource.cc
+
+    # Stats
+    src/stats/PoissonAsimovPLR.cc
+    src/stats/TestStatisticFactory.cc
+
 )
 
 # Ensure nlohmann json headers are seen BEFORE ROOT's vendored headers
@@ -109,7 +114,20 @@ target_link_libraries(ccdarksens_check_dmelectron_chain_cluster_mc
           ROOT::Core ROOT::RIO ROOT::Hist ROOT::Graf ROOT::Gpad
           nlohmann_json::nlohmann_json)
 
+add_executable(ccdarksens_scan_dmelectron_grid 
+  apps/ccdarksens_scan_dmelectron_grid.cc)
+target_link_libraries(ccdarksens_scan_dmelectron_grid
+  PRIVATE ccdarksens_core
+          ROOT::Core ROOT::RIO ROOT::Hist ROOT::Graf ROOT::Gpad
+          nlohmann_json::nlohmann_json)
 
+add_executable(ccdarksens_plot_dmelectron_limit
+  apps/ccdarksens_plot_dmelectron_limit.cc
+)
+target_link_libraries(ccdarksens_plot_dmelectron_limit
+  PRIVATE ccdarksens_core
+    ROOT::Core ROOT::Hist ROOT::Graf ROOT::Gpad
+)
 
 message(STATUS "CXX standard: ${CMAKE_CXX_STANDARD}")
 message(STATUS "ROOT include dirs: ${ROOT_INCLUDE_DIRS}")

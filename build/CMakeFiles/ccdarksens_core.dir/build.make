@@ -254,6 +254,34 @@ CMakeFiles/ccdarksens_core.dir/src/rates/RateSource.cc.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/ccdarksens_core.dir/src/rates/RateSource.cc.s"
 	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/diegovenegasvargas/Documents/CCDarkSens/src/rates/RateSource.cc -o CMakeFiles/ccdarksens_core.dir/src/rates/RateSource.cc.s
 
+CMakeFiles/ccdarksens_core.dir/src/stats/PoissonAsimovPLR.cc.o: CMakeFiles/ccdarksens_core.dir/flags.make
+CMakeFiles/ccdarksens_core.dir/src/stats/PoissonAsimovPLR.cc.o: /Users/diegovenegasvargas/Documents/CCDarkSens/src/stats/PoissonAsimovPLR.cc
+CMakeFiles/ccdarksens_core.dir/src/stats/PoissonAsimovPLR.cc.o: CMakeFiles/ccdarksens_core.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_14) "Building CXX object CMakeFiles/ccdarksens_core.dir/src/stats/PoissonAsimovPLR.cc.o"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/ccdarksens_core.dir/src/stats/PoissonAsimovPLR.cc.o -MF CMakeFiles/ccdarksens_core.dir/src/stats/PoissonAsimovPLR.cc.o.d -o CMakeFiles/ccdarksens_core.dir/src/stats/PoissonAsimovPLR.cc.o -c /Users/diegovenegasvargas/Documents/CCDarkSens/src/stats/PoissonAsimovPLR.cc
+
+CMakeFiles/ccdarksens_core.dir/src/stats/PoissonAsimovPLR.cc.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/ccdarksens_core.dir/src/stats/PoissonAsimovPLR.cc.i"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/diegovenegasvargas/Documents/CCDarkSens/src/stats/PoissonAsimovPLR.cc > CMakeFiles/ccdarksens_core.dir/src/stats/PoissonAsimovPLR.cc.i
+
+CMakeFiles/ccdarksens_core.dir/src/stats/PoissonAsimovPLR.cc.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/ccdarksens_core.dir/src/stats/PoissonAsimovPLR.cc.s"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/diegovenegasvargas/Documents/CCDarkSens/src/stats/PoissonAsimovPLR.cc -o CMakeFiles/ccdarksens_core.dir/src/stats/PoissonAsimovPLR.cc.s
+
+CMakeFiles/ccdarksens_core.dir/src/stats/TestStatisticFactory.cc.o: CMakeFiles/ccdarksens_core.dir/flags.make
+CMakeFiles/ccdarksens_core.dir/src/stats/TestStatisticFactory.cc.o: /Users/diegovenegasvargas/Documents/CCDarkSens/src/stats/TestStatisticFactory.cc
+CMakeFiles/ccdarksens_core.dir/src/stats/TestStatisticFactory.cc.o: CMakeFiles/ccdarksens_core.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_15) "Building CXX object CMakeFiles/ccdarksens_core.dir/src/stats/TestStatisticFactory.cc.o"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/ccdarksens_core.dir/src/stats/TestStatisticFactory.cc.o -MF CMakeFiles/ccdarksens_core.dir/src/stats/TestStatisticFactory.cc.o.d -o CMakeFiles/ccdarksens_core.dir/src/stats/TestStatisticFactory.cc.o -c /Users/diegovenegasvargas/Documents/CCDarkSens/src/stats/TestStatisticFactory.cc
+
+CMakeFiles/ccdarksens_core.dir/src/stats/TestStatisticFactory.cc.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/ccdarksens_core.dir/src/stats/TestStatisticFactory.cc.i"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/diegovenegasvargas/Documents/CCDarkSens/src/stats/TestStatisticFactory.cc > CMakeFiles/ccdarksens_core.dir/src/stats/TestStatisticFactory.cc.i
+
+CMakeFiles/ccdarksens_core.dir/src/stats/TestStatisticFactory.cc.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/ccdarksens_core.dir/src/stats/TestStatisticFactory.cc.s"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/diegovenegasvargas/Documents/CCDarkSens/src/stats/TestStatisticFactory.cc -o CMakeFiles/ccdarksens_core.dir/src/stats/TestStatisticFactory.cc.s
+
 # Object files for target ccdarksens_core
 ccdarksens_core_OBJECTS = \
 "CMakeFiles/ccdarksens_core.dir/src/io/ConfigManager.cc.o" \
@@ -268,7 +296,9 @@ ccdarksens_core_OBJECTS = \
 "CMakeFiles/ccdarksens_core.dir/src/response/ClusterMC.cc.o" \
 "CMakeFiles/ccdarksens_core.dir/src/backgrounds/PoissonDarkCurrent.cc.o" \
 "CMakeFiles/ccdarksens_core.dir/src/backgrounds/BackgroundBuilder.cc.o" \
-"CMakeFiles/ccdarksens_core.dir/src/rates/RateSource.cc.o"
+"CMakeFiles/ccdarksens_core.dir/src/rates/RateSource.cc.o" \
+"CMakeFiles/ccdarksens_core.dir/src/stats/PoissonAsimovPLR.cc.o" \
+"CMakeFiles/ccdarksens_core.dir/src/stats/TestStatisticFactory.cc.o"
 
 # External object files for target ccdarksens_core
 ccdarksens_core_EXTERNAL_OBJECTS =
@@ -286,9 +316,11 @@ libccdarksens_core.a: CMakeFiles/ccdarksens_core.dir/src/response/ClusterMC.cc.o
 libccdarksens_core.a: CMakeFiles/ccdarksens_core.dir/src/backgrounds/PoissonDarkCurrent.cc.o
 libccdarksens_core.a: CMakeFiles/ccdarksens_core.dir/src/backgrounds/BackgroundBuilder.cc.o
 libccdarksens_core.a: CMakeFiles/ccdarksens_core.dir/src/rates/RateSource.cc.o
+libccdarksens_core.a: CMakeFiles/ccdarksens_core.dir/src/stats/PoissonAsimovPLR.cc.o
+libccdarksens_core.a: CMakeFiles/ccdarksens_core.dir/src/stats/TestStatisticFactory.cc.o
 libccdarksens_core.a: CMakeFiles/ccdarksens_core.dir/build.make
 libccdarksens_core.a: CMakeFiles/ccdarksens_core.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_14) "Linking CXX static library libccdarksens_core.a"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_16) "Linking CXX static library libccdarksens_core.a"
 	$(CMAKE_COMMAND) -P CMakeFiles/ccdarksens_core.dir/cmake_clean_target.cmake
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/ccdarksens_core.dir/link.txt --verbose=$(VERBOSE)
 

@@ -68,4 +68,6 @@ set(CMAKE_DEPEND_INFO_FILES
   "CMakeFiles/gen_qedark_rates.dir/DependInfo.cmake"
   "CMakeFiles/ccdarksens_check_dmelectron.dir/DependInfo.cmake"
   "CMakeFiles/ccdarksens_check_dmelectron_chain_cluster_mc.dir/DependInfo.cmake"
+  "CMakeFiles/ccdarksens_scan_dmelectron_grid.dir/DependInfo.cmake"
+  "CMakeFiles/ccdarksens_plot_dmelectron_limit.dir/DependInfo.cmake"
   )

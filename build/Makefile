@@ -207,6 +207,32 @@ ccdarksens_check_dmelectron_chain_cluster_mc/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/ccdarksens_check_dmelectron_chain_cluster_mc.dir/build.make CMakeFiles/ccdarksens_check_dmelectron_chain_cluster_mc.dir/build
 .PHONY : ccdarksens_check_dmelectron_chain_cluster_mc/fast
 
+#=============================================================================
+# Target rules for targets named ccdarksens_scan_dmelectron_grid
+
+# Build rule for target.
+ccdarksens_scan_dmelectron_grid: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 ccdarksens_scan_dmelectron_grid
+.PHONY : ccdarksens_scan_dmelectron_grid
+
+# fast build rule for target.
+ccdarksens_scan_dmelectron_grid/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ccdarksens_scan_dmelectron_grid.dir/build.make CMakeFiles/ccdarksens_scan_dmelectron_grid.dir/build
+.PHONY : ccdarksens_scan_dmelectron_grid/fast
+
+#=============================================================================
+# Target rules for targets named ccdarksens_plot_dmelectron_limit
+
+# Build rule for target.
+ccdarksens_plot_dmelectron_limit: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 ccdarksens_plot_dmelectron_limit
+.PHONY : ccdarksens_plot_dmelectron_limit
+
+# fast build rule for target.
+ccdarksens_plot_dmelectron_limit/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ccdarksens_plot_dmelectron_limit.dir/build.make CMakeFiles/ccdarksens_plot_dmelectron_limit.dir/build
+.PHONY : ccdarksens_plot_dmelectron_limit/fast
+
 apps/ccdarksens_check_dmelectron.o: apps/ccdarksens_check_dmelectron.cc.o
 .PHONY : apps/ccdarksens_check_dmelectron.o
 
@@ -254,6 +280,54 @@ apps/ccdarksens_check_dmelectron_chain_cluster_mc.s: apps/ccdarksens_check_dmele
 apps/ccdarksens_check_dmelectron_chain_cluster_mc.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/ccdarksens_check_dmelectron_chain_cluster_mc.dir/build.make CMakeFiles/ccdarksens_check_dmelectron_chain_cluster_mc.dir/apps/ccdarksens_check_dmelectron_chain_cluster_mc.cc.s
 .PHONY : apps/ccdarksens_check_dmelectron_chain_cluster_mc.cc.s
+
+apps/ccdarksens_plot_dmelectron_limit.o: apps/ccdarksens_plot_dmelectron_limit.cc.o
+.PHONY : apps/ccdarksens_plot_dmelectron_limit.o
+
+# target to build an object file
+apps/ccdarksens_plot_dmelectron_limit.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ccdarksens_plot_dmelectron_limit.dir/build.make CMakeFiles/ccdarksens_plot_dmelectron_limit.dir/apps/ccdarksens_plot_dmelectron_limit.cc.o
+.PHONY : apps/ccdarksens_plot_dmelectron_limit.cc.o
+
+apps/ccdarksens_plot_dmelectron_limit.i: apps/ccdarksens_plot_dmelectron_limit.cc.i
+.PHONY : apps/ccdarksens_plot_dmelectron_limit.i
+
+# target to preprocess a source file
+apps/ccdarksens_plot_dmelectron_limit.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ccdarksens_plot_dmelectron_limit.dir/build.make CMakeFiles/ccdarksens_plot_dmelectron_limit.dir/apps/ccdarksens_plot_dmelectron_limit.cc.i
+.PHONY : apps/ccdarksens_plot_dmelectron_limit.cc.i
+
+apps/ccdarksens_plot_dmelectron_limit.s: apps/ccdarksens_plot_dmelectron_limit.cc.s
+.PHONY : apps/ccdarksens_plot_dmelectron_limit.s
+
+# target to generate assembly for a file
+apps/ccdarksens_plot_dmelectron_limit.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ccdarksens_plot_dmelectron_limit.dir/build.make CMakeFiles/ccdarksens_plot_dmelectron_limit.dir/apps/ccdarksens_plot_dmelectron_limit.cc.s
+.PHONY : apps/ccdarksens_plot_dmelectron_limit.cc.s
+
+apps/ccdarksens_scan_dmelectron_grid.o: apps/ccdarksens_scan_dmelectron_grid.cc.o
+.PHONY : apps/ccdarksens_scan_dmelectron_grid.o
+
+# target to build an object file
+apps/ccdarksens_scan_dmelectron_grid.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ccdarksens_scan_dmelectron_grid.dir/build.make CMakeFiles/ccdarksens_scan_dmelectron_grid.dir/apps/ccdarksens_scan_dmelectron_grid.cc.o
+.PHONY : apps/ccdarksens_scan_dmelectron_grid.cc.o
+
+apps/ccdarksens_scan_dmelectron_grid.i: apps/ccdarksens_scan_dmelectron_grid.cc.i
+.PHONY : apps/ccdarksens_scan_dmelectron_grid.i
+
+# target to preprocess a source file
+apps/ccdarksens_scan_dmelectron_grid.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ccdarksens_scan_dmelectron_grid.dir/build.make CMakeFiles/ccdarksens_scan_dmelectron_grid.dir/apps/ccdarksens_scan_dmelectron_grid.cc.i
+.PHONY : apps/ccdarksens_scan_dmelectron_grid.cc.i
+
+apps/ccdarksens_scan_dmelectron_grid.s: apps/ccdarksens_scan_dmelectron_grid.cc.s
+.PHONY : apps/ccdarksens_scan_dmelectron_grid.s
+
+# target to generate assembly for a file
+apps/ccdarksens_scan_dmelectron_grid.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ccdarksens_scan_dmelectron_grid.dir/build.make CMakeFiles/ccdarksens_scan_dmelectron_grid.dir/apps/ccdarksens_scan_dmelectron_grid.cc.s
+.PHONY : apps/ccdarksens_scan_dmelectron_grid.cc.s
 
 apps/ccdarksens_sensitivity.o: apps/ccdarksens_sensitivity.cc.o
 .PHONY : apps/ccdarksens_sensitivity.o
@@ -639,6 +713,54 @@ src/response/PatternEfficiency.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/ccdarksens_core.dir/build.make CMakeFiles/ccdarksens_core.dir/src/response/PatternEfficiency.cc.s
 .PHONY : src/response/PatternEfficiency.cc.s
 
+src/stats/PoissonAsimovPLR.o: src/stats/PoissonAsimovPLR.cc.o
+.PHONY : src/stats/PoissonAsimovPLR.o
+
+# target to build an object file
+src/stats/PoissonAsimovPLR.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ccdarksens_core.dir/build.make CMakeFiles/ccdarksens_core.dir/src/stats/PoissonAsimovPLR.cc.o
+.PHONY : src/stats/PoissonAsimovPLR.cc.o
+
+src/stats/PoissonAsimovPLR.i: src/stats/PoissonAsimovPLR.cc.i
+.PHONY : src/stats/PoissonAsimovPLR.i
+
+# target to preprocess a source file
+src/stats/PoissonAsimovPLR.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ccdarksens_core.dir/build.make CMakeFiles/ccdarksens_core.dir/src/stats/PoissonAsimovPLR.cc.i
+.PHONY : src/stats/PoissonAsimovPLR.cc.i
+
+src/stats/PoissonAsimovPLR.s: src/stats/PoissonAsimovPLR.cc.s
+.PHONY : src/stats/PoissonAsimovPLR.s
+
+# target to generate assembly for a file
+src/stats/PoissonAsimovPLR.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ccdarksens_core.dir/build.make CMakeFiles/ccdarksens_core.dir/src/stats/PoissonAsimovPLR.cc.s
+.PHONY : src/stats/PoissonAsimovPLR.cc.s
+
+src/stats/TestStatisticFactory.o: src/stats/TestStatisticFactory.cc.o
+.PHONY : src/stats/TestStatisticFactory.o
+
+# target to build an object file
+src/stats/TestStatisticFactory.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ccdarksens_core.dir/build.make CMakeFiles/ccdarksens_core.dir/src/stats/TestStatisticFactory.cc.o
+.PHONY : src/stats/TestStatisticFactory.cc.o
+
+src/stats/TestStatisticFactory.i: src/stats/TestStatisticFactory.cc.i
+.PHONY : src/stats/TestStatisticFactory.i
+
+# target to preprocess a source file
+src/stats/TestStatisticFactory.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ccdarksens_core.dir/build.make CMakeFiles/ccdarksens_core.dir/src/stats/TestStatisticFactory.cc.i
+.PHONY : src/stats/TestStatisticFactory.cc.i
+
+src/stats/TestStatisticFactory.s: src/stats/TestStatisticFactory.cc.s
+.PHONY : src/stats/TestStatisticFactory.s
+
+# target to generate assembly for a file
+src/stats/TestStatisticFactory.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ccdarksens_core.dir/build.make CMakeFiles/ccdarksens_core.dir/src/stats/TestStatisticFactory.cc.s
+.PHONY : src/stats/TestStatisticFactory.cc.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -651,6 +773,8 @@ help:
 	@echo "... ccdarksens_check_dmelectron"
 	@echo "... ccdarksens_check_dmelectron_chain_cluster_mc"
 	@echo "... ccdarksens_core"
+	@echo "... ccdarksens_plot_dmelectron_limit"
+	@echo "... ccdarksens_scan_dmelectron_grid"
 	@echo "... ccdarksens_sensitivity"
 	@echo "... ccdarksens_sensitivity_cluster_mc"
 	@echo "... ccdarksens_sensitivity_fast"
@@ -660,6 +784,12 @@ help:
 	@echo "... apps/ccdarksens_check_dmelectron_chain_cluster_mc.o"
 	@echo "... apps/ccdarksens_check_dmelectron_chain_cluster_mc.i"
 	@echo "... apps/ccdarksens_check_dmelectron_chain_cluster_mc.s"
+	@echo "... apps/ccdarksens_plot_dmelectron_limit.o"
+	@echo "... apps/ccdarksens_plot_dmelectron_limit.i"
+	@echo "... apps/ccdarksens_plot_dmelectron_limit.s"
+	@echo "... apps/ccdarksens_scan_dmelectron_grid.o"
+	@echo "... apps/ccdarksens_scan_dmelectron_grid.i"
+	@echo "... apps/ccdarksens_scan_dmelectron_grid.s"
 	@echo "... apps/ccdarksens_sensitivity.o"
 	@echo "... apps/ccdarksens_sensitivity.i"
 	@echo "... apps/ccdarksens_sensitivity.s"
@@ -708,6 +838,12 @@ help:
 	@echo "... src/response/PatternEfficiency.o"
 	@echo "... src/response/PatternEfficiency.i"
 	@echo "... src/response/PatternEfficiency.s"
+	@echo "... src/stats/PoissonAsimovPLR.o"
+	@echo "... src/stats/PoissonAsimovPLR.i"
+	@echo "... src/stats/PoissonAsimovPLR.s"
+	@echo "... src/stats/TestStatisticFactory.o"
+	@echo "... src/stats/TestStatisticFactory.i"
+	@echo "... src/stats/TestStatisticFactory.s"
 .PHONY : help
 
 

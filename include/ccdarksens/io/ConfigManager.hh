@@ -68,21 +68,29 @@ struct ResponseJSON {
   ClusterMCJSON cmc;
 };
 
+// ---- NEW: grid axis helper for model.grid ----
+struct GridAxisJSON {
+  std::vector<double> values;   // expanded numeric grid
+  std::string format;           // optional: printf-like, e.g. ".6f", ".1e"
+};
+
 struct ModelJSON {
   std::string type;              // e.g. "dm_electron"
   std::string material;          // "Si"
   std::string mediator;          // "heavy" | "massless"
   std::string rates_dir;         // e.g. data/qedark_rates/Si/heavy
   std::string filename_template; // e.g. dRdE_{material}_{mediator}_m{mchi_MeV}_s{sigma_e_cm2}.csv
-  double      mchi_MeV = 0.0;    // used to resolve filename
+  double      mchi_MeV = 0.0;    // used to resolve filename (single-point apps)
   std::string sigma_e_cm2;       // keep string to match filename format exactly
   double      Emin_eV = 0.0;     // spectrum binning (internal representation)
   double      Emax_eV = 20.0;
   int         nbins   = 200;
+
+  // ---- NEW: QE-Dark style grid specification for scans ----
+  bool        has_grid = false;
+  GridAxisJSON grid_mchi;        // values in MeV
+  GridAxisJSON grid_sigma;       // values in cm^2 (numeric)
 };
-
-
-
 
 
 class ConfigManager {
@@ -93,10 +101,10 @@ public:
   const RunHeader&        run()           const noexcept { return run_; }
   const Detector&         detector()      const noexcept { return *detector_; }
   const ExperimentConfig& experiment_cfg() const noexcept { return exp_cfg_; }
-  const BackgroundJSON& backgrounds() const noexcept { return bkg_; }
-  const TimingJSON&     timing() const noexcept { return timing_; }
-  const ResponseJSON& response() const noexcept { return response_; }
-  const ModelJSON& model() const noexcept { return model_; }
+  const BackgroundJSON&   backgrounds()   const noexcept { return bkg_; }
+  const TimingJSON&       timing()        const noexcept { return timing_; }
+  const ResponseJSON&     response()      const noexcept { return response_; }
+  const ModelJSON&        model()         const noexcept { return model_; }
 
 
 private:

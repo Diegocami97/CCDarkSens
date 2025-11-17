@@ -25,6 +25,10 @@ file(REMOVE_RECURSE
   "CMakeFiles/ccdarksens_core.dir/src/response/Diffusion.cc.o.d"
   "CMakeFiles/ccdarksens_core.dir/src/response/PatternEfficiency.cc.o"
   "CMakeFiles/ccdarksens_core.dir/src/response/PatternEfficiency.cc.o.d"
+  "CMakeFiles/ccdarksens_core.dir/src/stats/PoissonAsimovPLR.cc.o"
+  "CMakeFiles/ccdarksens_core.dir/src/stats/PoissonAsimovPLR.cc.o.d"
+  "CMakeFiles/ccdarksens_core.dir/src/stats/TestStatisticFactory.cc.o"
+  "CMakeFiles/ccdarksens_core.dir/src/stats/TestStatisticFactory.cc.o.d"
   "libccdarksens_core.a"
   "libccdarksens_core.pdb"
 )

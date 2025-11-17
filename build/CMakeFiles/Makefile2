@@ -69,6 +69,8 @@ all: CMakeFiles/ccdarksens_sensitivity_fast.dir/all
 all: CMakeFiles/ccdarksens_sensitivity_cluster_mc.dir/all
 all: CMakeFiles/ccdarksens_check_dmelectron.dir/all
 all: CMakeFiles/ccdarksens_check_dmelectron_chain_cluster_mc.dir/all
+all: CMakeFiles/ccdarksens_scan_dmelectron_grid.dir/all
+all: CMakeFiles/ccdarksens_plot_dmelectron_limit.dir/all
 .PHONY : all
 
 # The main recursive "codegen" target.
@@ -78,6 +80,8 @@ codegen: CMakeFiles/ccdarksens_sensitivity_fast.dir/codegen
 codegen: CMakeFiles/ccdarksens_sensitivity_cluster_mc.dir/codegen
 codegen: CMakeFiles/ccdarksens_check_dmelectron.dir/codegen
 codegen: CMakeFiles/ccdarksens_check_dmelectron_chain_cluster_mc.dir/codegen
+codegen: CMakeFiles/ccdarksens_scan_dmelectron_grid.dir/codegen
+codegen: CMakeFiles/ccdarksens_plot_dmelectron_limit.dir/codegen
 .PHONY : codegen
 
 # The main recursive "preinstall" target.
@@ -92,6 +96,8 @@ clean: CMakeFiles/ccdarksens_sensitivity_cluster_mc.dir/clean
 clean: CMakeFiles/gen_qedark_rates.dir/clean
 clean: CMakeFiles/ccdarksens_check_dmelectron.dir/clean
 clean: CMakeFiles/ccdarksens_check_dmelectron_chain_cluster_mc.dir/clean
+clean: CMakeFiles/ccdarksens_scan_dmelectron_grid.dir/clean
+clean: CMakeFiles/ccdarksens_plot_dmelectron_limit.dir/clean
 .PHONY : clean
 
 #=============================================================================
@@ -101,12 +107,12 @@ clean: CMakeFiles/ccdarksens_check_dmelectron_chain_cluster_mc.dir/clean
 CMakeFiles/ccdarksens_core.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/ccdarksens_core.dir/build.make CMakeFiles/ccdarksens_core.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/ccdarksens_core.dir/build.make CMakeFiles/ccdarksens_core.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles --progress-num=5,6,7,8,9,10,11,12,13,14,15,16,17,18 "Built target ccdarksens_core"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles --progress-num=5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20 "Built target ccdarksens_core"
 .PHONY : CMakeFiles/ccdarksens_core.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/ccdarksens_core.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles 14
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles 16
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/ccdarksens_core.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles 0
 .PHONY : CMakeFiles/ccdarksens_core.dir/rule
@@ -118,7 +124,7 @@ ccdarksens_core: CMakeFiles/ccdarksens_core.dir/rule
 # codegen rule for target.
 CMakeFiles/ccdarksens_core.dir/codegen:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/ccdarksens_core.dir/build.make CMakeFiles/ccdarksens_core.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles --progress-num=5,6,7,8,9,10,11,12,13,14,15,16,17,18 "Finished codegen for target ccdarksens_core"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles --progress-num=5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20 "Finished codegen for target ccdarksens_core"
 .PHONY : CMakeFiles/ccdarksens_core.dir/codegen
 
 # clean rule for target.
@@ -133,12 +139,12 @@ CMakeFiles/ccdarksens_core.dir/clean:
 CMakeFiles/ccdarksens_sensitivity.dir/all: CMakeFiles/ccdarksens_core.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/ccdarksens_sensitivity.dir/build.make CMakeFiles/ccdarksens_sensitivity.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/ccdarksens_sensitivity.dir/build.make CMakeFiles/ccdarksens_sensitivity.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles --progress-num=19,20 "Built target ccdarksens_sensitivity"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles --progress-num=25,26 "Built target ccdarksens_sensitivity"
 .PHONY : CMakeFiles/ccdarksens_sensitivity.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/ccdarksens_sensitivity.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles 16
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles 18
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/ccdarksens_sensitivity.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles 0
 .PHONY : CMakeFiles/ccdarksens_sensitivity.dir/rule
@@ -150,7 +156,7 @@ ccdarksens_sensitivity: CMakeFiles/ccdarksens_sensitivity.dir/rule
 # codegen rule for target.
 CMakeFiles/ccdarksens_sensitivity.dir/codegen:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/ccdarksens_sensitivity.dir/build.make CMakeFiles/ccdarksens_sensitivity.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles --progress-num=19,20 "Finished codegen for target ccdarksens_sensitivity"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles --progress-num=25,26 "Finished codegen for target ccdarksens_sensitivity"
 .PHONY : CMakeFiles/ccdarksens_sensitivity.dir/codegen
 
 # clean rule for target.
@@ -165,12 +171,12 @@ CMakeFiles/ccdarksens_sensitivity.dir/clean:
 CMakeFiles/ccdarksens_sensitivity_fast.dir/all: CMakeFiles/ccdarksens_core.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/ccdarksens_sensitivity_fast.dir/build.make CMakeFiles/ccdarksens_sensitivity_fast.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/ccdarksens_sensitivity_fast.dir/build.make CMakeFiles/ccdarksens_sensitivity_fast.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles --progress-num=23,24 "Built target ccdarksens_sensitivity_fast"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles --progress-num=29,30 "Built target ccdarksens_sensitivity_fast"
 .PHONY : CMakeFiles/ccdarksens_sensitivity_fast.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/ccdarksens_sensitivity_fast.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles 16
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles 18
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/ccdarksens_sensitivity_fast.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles 0
 .PHONY : CMakeFiles/ccdarksens_sensitivity_fast.dir/rule
@@ -182,7 +188,7 @@ ccdarksens_sensitivity_fast: CMakeFiles/ccdarksens_sensitivity_fast.dir/rule
 # codegen rule for target.
 CMakeFiles/ccdarksens_sensitivity_fast.dir/codegen:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/ccdarksens_sensitivity_fast.dir/build.make CMakeFiles/ccdarksens_sensitivity_fast.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles --progress-num=23,24 "Finished codegen for target ccdarksens_sensitivity_fast"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles --progress-num=29,30 "Finished codegen for target ccdarksens_sensitivity_fast"
 .PHONY : CMakeFiles/ccdarksens_sensitivity_fast.dir/codegen
 
 # clean rule for target.
@@ -197,12 +203,12 @@ CMakeFiles/ccdarksens_sensitivity_fast.dir/clean:
 CMakeFiles/ccdarksens_sensitivity_cluster_mc.dir/all: CMakeFiles/ccdarksens_core.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/ccdarksens_sensitivity_cluster_mc.dir/build.make CMakeFiles/ccdarksens_sensitivity_cluster_mc.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/ccdarksens_sensitivity_cluster_mc.dir/build.make CMakeFiles/ccdarksens_sensitivity_cluster_mc.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles --progress-num=21,22 "Built target ccdarksens_sensitivity_cluster_mc"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles --progress-num=27,28 "Built target ccdarksens_sensitivity_cluster_mc"
 .PHONY : CMakeFiles/ccdarksens_sensitivity_cluster_mc.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/ccdarksens_sensitivity_cluster_mc.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles 16
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles 18
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/ccdarksens_sensitivity_cluster_mc.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles 0
 .PHONY : CMakeFiles/ccdarksens_sensitivity_cluster_mc.dir/rule
@@ -214,7 +220,7 @@ ccdarksens_sensitivity_cluster_mc: CMakeFiles/ccdarksens_sensitivity_cluster_mc.
 # codegen rule for target.
 CMakeFiles/ccdarksens_sensitivity_cluster_mc.dir/codegen:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/ccdarksens_sensitivity_cluster_mc.dir/build.make CMakeFiles/ccdarksens_sensitivity_cluster_mc.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles --progress-num=21,22 "Finished codegen for target ccdarksens_sensitivity_cluster_mc"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles --progress-num=27,28 "Finished codegen for target ccdarksens_sensitivity_cluster_mc"
 .PHONY : CMakeFiles/ccdarksens_sensitivity_cluster_mc.dir/codegen
 
 # clean rule for target.
@@ -266,7 +272,7 @@ CMakeFiles/ccdarksens_check_dmelectron.dir/all: CMakeFiles/ccdarksens_core.dir/a
 
 # Build rule for subdir invocation for target.
 CMakeFiles/ccdarksens_check_dmelectron.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles 16
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles 18
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/ccdarksens_check_dmelectron.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles 0
 .PHONY : CMakeFiles/ccdarksens_check_dmelectron.dir/rule
@@ -298,7 +304,7 @@ CMakeFiles/ccdarksens_check_dmelectron_chain_cluster_mc.dir/all: CMakeFiles/ccda
 
 # Build rule for subdir invocation for target.
 CMakeFiles/ccdarksens_check_dmelectron_chain_cluster_mc.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles 16
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles 18
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/ccdarksens_check_dmelectron_chain_cluster_mc.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles 0
 .PHONY : CMakeFiles/ccdarksens_check_dmelectron_chain_cluster_mc.dir/rule
@@ -317,6 +323,70 @@ CMakeFiles/ccdarksens_check_dmelectron_chain_cluster_mc.dir/codegen:
 CMakeFiles/ccdarksens_check_dmelectron_chain_cluster_mc.dir/clean:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/ccdarksens_check_dmelectron_chain_cluster_mc.dir/build.make CMakeFiles/ccdarksens_check_dmelectron_chain_cluster_mc.dir/clean
 .PHONY : CMakeFiles/ccdarksens_check_dmelectron_chain_cluster_mc.dir/clean
+
+#=============================================================================
+# Target rules for target CMakeFiles/ccdarksens_scan_dmelectron_grid.dir
+
+# All Build rule for target.
+CMakeFiles/ccdarksens_scan_dmelectron_grid.dir/all: CMakeFiles/ccdarksens_core.dir/all
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ccdarksens_scan_dmelectron_grid.dir/build.make CMakeFiles/ccdarksens_scan_dmelectron_grid.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ccdarksens_scan_dmelectron_grid.dir/build.make CMakeFiles/ccdarksens_scan_dmelectron_grid.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles --progress-num=23,24 "Built target ccdarksens_scan_dmelectron_grid"
+.PHONY : CMakeFiles/ccdarksens_scan_dmelectron_grid.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/ccdarksens_scan_dmelectron_grid.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles 18
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/ccdarksens_scan_dmelectron_grid.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles 0
+.PHONY : CMakeFiles/ccdarksens_scan_dmelectron_grid.dir/rule
+
+# Convenience name for target.
+ccdarksens_scan_dmelectron_grid: CMakeFiles/ccdarksens_scan_dmelectron_grid.dir/rule
+.PHONY : ccdarksens_scan_dmelectron_grid
+
+# codegen rule for target.
+CMakeFiles/ccdarksens_scan_dmelectron_grid.dir/codegen:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ccdarksens_scan_dmelectron_grid.dir/build.make CMakeFiles/ccdarksens_scan_dmelectron_grid.dir/codegen
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles --progress-num=23,24 "Finished codegen for target ccdarksens_scan_dmelectron_grid"
+.PHONY : CMakeFiles/ccdarksens_scan_dmelectron_grid.dir/codegen
+
+# clean rule for target.
+CMakeFiles/ccdarksens_scan_dmelectron_grid.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ccdarksens_scan_dmelectron_grid.dir/build.make CMakeFiles/ccdarksens_scan_dmelectron_grid.dir/clean
+.PHONY : CMakeFiles/ccdarksens_scan_dmelectron_grid.dir/clean
+
+#=============================================================================
+# Target rules for target CMakeFiles/ccdarksens_plot_dmelectron_limit.dir
+
+# All Build rule for target.
+CMakeFiles/ccdarksens_plot_dmelectron_limit.dir/all: CMakeFiles/ccdarksens_core.dir/all
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ccdarksens_plot_dmelectron_limit.dir/build.make CMakeFiles/ccdarksens_plot_dmelectron_limit.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ccdarksens_plot_dmelectron_limit.dir/build.make CMakeFiles/ccdarksens_plot_dmelectron_limit.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles --progress-num=21,22 "Built target ccdarksens_plot_dmelectron_limit"
+.PHONY : CMakeFiles/ccdarksens_plot_dmelectron_limit.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/ccdarksens_plot_dmelectron_limit.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles 18
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/ccdarksens_plot_dmelectron_limit.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles 0
+.PHONY : CMakeFiles/ccdarksens_plot_dmelectron_limit.dir/rule
+
+# Convenience name for target.
+ccdarksens_plot_dmelectron_limit: CMakeFiles/ccdarksens_plot_dmelectron_limit.dir/rule
+.PHONY : ccdarksens_plot_dmelectron_limit
+
+# codegen rule for target.
+CMakeFiles/ccdarksens_plot_dmelectron_limit.dir/codegen:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ccdarksens_plot_dmelectron_limit.dir/build.make CMakeFiles/ccdarksens_plot_dmelectron_limit.dir/codegen
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/diegovenegasvargas/Documents/CCDarkSens/build/CMakeFiles --progress-num=21,22 "Finished codegen for target ccdarksens_plot_dmelectron_limit"
+.PHONY : CMakeFiles/ccdarksens_plot_dmelectron_limit.dir/codegen
+
+# clean rule for target.
+CMakeFiles/ccdarksens_plot_dmelectron_limit.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ccdarksens_plot_dmelectron_limit.dir/build.make CMakeFiles/ccdarksens_plot_dmelectron_limit.dir/clean
+.PHONY : CMakeFiles/ccdarksens_plot_dmelectron_limit.dir/clean
 
 #=============================================================================
 # Special targets to cleanup operation of make.

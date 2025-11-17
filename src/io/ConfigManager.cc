@@ -3,6 +3,7 @@
 #include <memory>
 #include <stdexcept>
 #include <utility>
+#include <cmath>
 
 #include <nlohmann/json.hpp>
 
@@ -15,20 +16,18 @@ ConfigManager::ConfigManager(std::string path) : path_(std::move(path)) {}
 void ConfigManager::parse() {
   std::ifstream in(path_);
   if (!in) throw std::runtime_error("Cannot open config: " + path_);
-  nlohmann::json j; 
+  nlohmann::json j;
   in >> j;
 
   parse_run_(j.at("run"));
-  if (j.contains("detector"))     parse_detector_(j.at("detector"));
-  if (j.contains("experiment"))   parse_experiment_(j.at("experiment"));
+  if (j.contains("detector"))   parse_detector_(j.at("detector"));
+  if (j.contains("experiment")) parse_experiment_(j.at("experiment"));
   if (j.contains("backgrounds")) parse_backgrounds_(j.at("backgrounds"));
-  if (j.contains("response")) parse_response_(j.at("response"));
-  if (j.contains("model")) parse_model_(j.at("model"));
+  if (j.contains("response"))   parse_response_(j.at("response"));
+  if (j.contains("model"))      parse_model_(j.at("model"));
 }
 
 void ConfigManager::parse_run_(const nlohmann::json& j) {
-  // run_.label     = j.at("label").get<std::string>();
-  // run_.outdir    = j.at("outdir").get<std::string>();
   run_.label     = j.value("label", std::string{});
   run_.outdir    = j.value("outdir", std::string{});
   run_.cl        = j.value("cl", 0.90);
@@ -213,6 +212,82 @@ void ConfigManager::parse_backgrounds_(const nlohmann::json& jb) {
 }
 
 
+// ---- NEW: helper to expand QE-Dark-style axis spec into a list of doubles ----
+//
+// Accepts any of:
+//   - plain array: [0.5, 1.0, 2.0]
+//   - {"values": [...]}
+//   - {"linspace": { "start": ..., "stop": ..., "num": N, "endpoint": true/false }}
+//   - {"logspace": { "start_exp": ..., "stop_exp": ..., "num": N, "endpoint": true/false }}
+//
+static void expand_axis_(const nlohmann::json& jaxis,
+                         std::vector<double>& out_values)
+{
+  out_values.clear();
+
+  auto append_values = [&](const nlohmann::json& arr) {
+    for (const auto& x : arr) {
+      if (!x.is_number()) continue;
+      out_values.push_back(x.get<double>());
+    }
+  };
+
+  // Plain array
+  if (jaxis.is_array()) {
+    append_values(jaxis);
+  }
+
+  // "values": [...]
+  if (jaxis.contains("values")) {
+    append_values(jaxis.at("values"));
+  }
+
+  // "linspace": {start, stop, num, endpoint}
+  if (jaxis.contains("linspace")) {
+    const auto& jl    = jaxis.at("linspace");
+    const double a    = jl.at("start").get<double>();
+    const double b    = jl.at("stop").get<double>();
+    const int    num  = jl.at("num").get<int>();
+    const bool   endp = jl.value("endpoint", true);
+    if (num > 0) {
+      if (num == 1) {
+        out_values.push_back(a);
+      } else {
+        const double span = (b - a);
+        const double step = endp ? (span / (num - 1)) : (span / num);
+        for (int i = 0; i < num; ++i) {
+          out_values.push_back(a + i * step);
+        }
+      }
+    }
+  }
+
+  // "logspace": {start_exp, stop_exp, num, endpoint}
+  if (jaxis.contains("logspace")) {
+    const auto& jl    = jaxis.at("logspace");
+    const double aexp = jl.at("start_exp").get<double>();
+    const double bexp = jl.at("stop_exp").get<double>();
+    const int    num  = jl.at("num").get<int>();
+    const bool   endp = jl.value("endpoint", true);
+    if (num > 0) {
+      if (num == 1) {
+        out_values.push_back(std::pow(10.0, aexp));
+      } else {
+        const double span_exp = (bexp - aexp);
+        const double step_exp = endp ? (span_exp / (num - 1)) : (span_exp / num);
+        for (int i = 0; i < num; ++i) {
+          const double e = aexp + i * step_exp;
+          out_values.push_back(std::pow(10.0, e));
+        }
+      }
+    }
+  }
+
+  // We keep the values in the order they were appended; no sorting or dedup.
+}
+
+
+
 void ConfigManager::parse_model_(const nlohmann::json& jm) {
   // Use .value(...) with defaults so we never throw if keys are missing.
   model_.type              = jm.value("type", "dm_electron");
@@ -226,6 +301,36 @@ void ConfigManager::parse_model_(const nlohmann::json& jm) {
   model_.Emin_eV           = jm.value("Emin_eV", 0.0);
   model_.Emax_eV           = jm.value("Emax_eV", 20.0);
   model_.nbins             = jm.value("nbins", 200);
+
+  // ---- NEW: optional QE-Dark style grid ----
+  model_.has_grid = false;
+  model_.grid_mchi.values.clear();
+  model_.grid_mchi.format.clear();
+  model_.grid_sigma.values.clear();
+  model_.grid_sigma.format.clear();
+
+  if (jm.contains("grid")) {
+    const auto& jg = jm.at("grid");
+    model_.has_grid = true;
+
+    if (jg.contains("mchi_MeV")) {
+      expand_axis_(jg.at("mchi_MeV"), model_.grid_mchi.values);
+    }
+    if (jg.contains("sigma_e_cm2")) {
+      expand_axis_(jg.at("sigma_e_cm2"), model_.grid_sigma.values);
+    }
+
+    // Optional: reuse QE-Dark formatting hints if present:
+    //   "options": { "format": { "mchi": ".6f", "sigma": ".1e" } }
+    if (jm.contains("options")) {
+      const auto& jo = jm.at("options");
+      if (jo.contains("format")) {
+        const auto& jf = jo.at("format");
+        model_.grid_mchi.format  = jf.value("mchi", std::string{});
+        model_.grid_sigma.format = jf.value("sigma", std::string{});
+      }
+    }
+  }
 }
 
 
