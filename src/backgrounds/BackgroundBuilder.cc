@@ -37,8 +37,8 @@ void BackgroundBuilder::SetTiming(double livetime_days, double duty_cycle, const
 }
 
 void BackgroundBuilder::SetDarkCurrent(const DarkCurrentConfig& dccfg) {
-  if (dccfg.lambda_e_per_pix_per_exposure < 0.0)
-    throw std::invalid_argument("lambda must be >= 0");
+  if (dccfg.lambda_e_per_pix_per_year < 0.0)
+    throw std::invalid_argument("lambda_e_per_pix_per_year must be >= 0");
   dccfg_ = dccfg;
 }
 
@@ -54,12 +54,22 @@ std::unique_ptr<TH1D> BackgroundBuilder::BuildBkgAsimov() {
   if (n_exposures <= 0) throw std::runtime_error("Derived n_exposures <= 0");
   n_exposures_used_ = n_exposures;
 
+  // Convert λ_year -> λ_exp (e-/pix/exposure)
+  const double year_s = 365.25 * 86400.0;
+  const double lambda_per_exp =
+    (tcfg_.exposure_time_s > 0.0)
+      ? dccfg_.lambda_e_per_pix_per_year * (tcfg_.exposure_time_s / year_s)
+      : 0.0;
+
   // Build per-pixel Poisson histogram (unit normalized), then scale
-  PoissonDarkCurrentBackground pix_pois(dccfg_.lambda_e_per_pix_per_exposure, /*norm=*/1.0);
+  PoissonDarkCurrentBackground pix_pois(lambda_per_exp, /*norm=*/1.0);
   auto h = pix_pois.MakeHist(ne_min_, ne_max_);
 
   // Scale to all pixels and all exposures, then apply global norm
-  const double scale = static_cast<double>(n_active_pixels_) * static_cast<double>(n_exposures) * dccfg_.norm_scale;
+  const double scale =
+    static_cast<double>(n_active_pixels_) *
+    static_cast<double>(n_exposures) *
+    dccfg_.norm_scale;
   h->Scale(scale);
 
   // Apply pattern efficiency if provided

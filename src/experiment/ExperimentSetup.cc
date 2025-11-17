@@ -29,7 +29,8 @@ ExperimentSetup::ExperimentSetup(ExperimentConfig cfg,
 
 ExperimentSummary ExperimentSetup::prepare_summary() const {
   ExperimentSummary s;
-  s.exposure_kg_day = detector_mass_kg_ * cfg_.livetime_days * cfg_.duty_cycle;
+  // s.exposure_kg_day = detector_mass_kg_ * cfg_.livetime_days * cfg_.duty_cycle;
+  s.exposure_kg_year = cfg_.livetime_days * cfg_.duty_cycle * detector_mass_kg_ / 365; // NEED to fix for later
   s.binning = cfg_.binning;
   s.rng_seed_used = rng_seed_;
   s.mode_string = mode_to_string(cfg_.mode);

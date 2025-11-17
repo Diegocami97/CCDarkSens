@@ -1,13 +1,15 @@
 #include "ccdarksens/backgrounds/PoissonDarkCurrent.hh"
 #include <TH1D.h>
 #include <cmath>
+#include <vector>
 
 namespace ccdarksens {
 
 static double pois_pmf(int n, double lambda) {
   if (lambda <= 0.0) return (n==0) ? 1.0 : 0.0;
   double logp = -lambda + n*std::log(lambda);
-  double lf = 0.0; for (int k=2;k<=n;++k) lf += std::log(double(k));
+  double lf = 0.0;
+  for (int k=2;k<=n;++k) lf += std::log(double(k));
   return std::exp(logp - lf);
 }
 

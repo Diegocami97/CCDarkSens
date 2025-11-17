@@ -27,13 +27,20 @@ struct RunHeader {
 };
 
 struct BackgroundJSON {
-  // minimal fields we need now
-  double lambda_e_per_pix_per_exposure = 0.0;
+  // Dark current in e-/pixel/year
+  double lambda_e_per_pix_per_year = 0.0;
   double norm_scale = 1.0;
 
   // pattern efficiency (flat for MVP)
   bool   has_flat_eps = false;
   double flat_eps = 1.0;
+
+  // flat energy background (dR/dE) in events/(kg·year·keV)
+  bool   has_flat_bkg = false;
+  double flat_bkg_norm_per_kg_year = 0.0;  // events / (kg·year·keV)
+  double flat_bkg_Emin_eV = 0.0;
+  double flat_bkg_Emax_eV = 0.0;
+  int    flat_bkg_nbins   = 0;
 };
 
 struct TimingJSON {

@@ -102,6 +102,13 @@ target_link_libraries(ccdarksens_check_dmelectron
           ROOT::Core ROOT::RIO ROOT::Hist ROOT::Graf ROOT::Gpad
           nlohmann_json::nlohmann_json)
 
+add_executable(ccdarksens_check_dmelectron_chain_cluster_mc
+  apps/ccdarksens_check_dmelectron_chain_cluster_mc.cc)
+target_link_libraries(ccdarksens_check_dmelectron_chain_cluster_mc
+  PRIVATE ccdarksens_core
+          ROOT::Core ROOT::RIO ROOT::Hist ROOT::Graf ROOT::Gpad
+          nlohmann_json::nlohmann_json)
+
 
 
 message(STATUS "CXX standard: ${CMAKE_CXX_STANDARD}")

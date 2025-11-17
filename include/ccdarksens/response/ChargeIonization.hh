@@ -14,7 +14,7 @@ public:
   explicit ChargeIonization(std::string table_csv);
 
   std::unique_ptr<TH1D> FoldToNe(const TH1D& dRdE,
-                                 double exposure_kg_day,
+                                 double exposure_kg_year,
                                  int ne_min, int ne_max) const;
 
   int MaxNeFromTable() const { return static_cast<int>(pn_given_E_.size()); }

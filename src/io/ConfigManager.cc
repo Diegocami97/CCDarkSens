@@ -109,13 +109,65 @@ void ConfigManager::parse_response_(const nlohmann::json& jr) {
 }
 
 
+// void ConfigManager::parse_backgrounds_(const nlohmann::json& jb) {
+//   if (jb.contains("dark_current")) {
+//     const auto& jd = jb.at("dark_current");
+//     bkg_.lambda_e_per_pix_per_exposure = jd.value("lambda_e_per_pix_per_exposure", 0.0);
+//     bkg_.norm_scale = jd.value("norm_scale", 1.0);
+//   }
+//   if (jb.contains("pattern_efficiency")) {
+//     const auto& je = jb.at("pattern_efficiency");
+//     const std::string type = je.value("type","flat");
+//     if (type == "flat") {
+//       bkg_.has_flat_eps = true;
+//       bkg_.flat_eps = je.value("epsilon", 1.0);
+//     }
+//   }
+
+//   // timing knobs live under experiment (but expose via timing_)
+//   // Find them from the already-parsed experiment block in the original nlohmann::json:
+//   // (we still have j in this scope? If not, read from jb's parent; simplest: require backgrounds to also include timing)
+//   // For clarity now, we’ll pull from a sibling "experiment" via the stored exp_cfg_ — but we need exposure_time_s & n_exposures.
+//   // Easiest: require they sit under "experiment" and re-open here:
+//   // (If you want, we can move this logic to parse_experiment_ later.)
+
+//   // Try parent: we can't access parent here; instead, read from a convenience duplication in backgrounds if present:
+//   if (jb.contains("timing")) {
+//     const auto& jt = jb.at("timing");
+//     if (jt.contains("n_exposures") && !jt.at("n_exposures").is_null())
+//       timing_.n_exposures_override = jt.at("n_exposures").get<int>();
+//     timing_.exposure_time_s = jt.value("exposure_time_s", 0.0);
+//   }
+// }
 
 void ConfigManager::parse_backgrounds_(const nlohmann::json& jb) {
   if (jb.contains("dark_current")) {
     const auto& jd = jb.at("dark_current");
-    bkg_.lambda_e_per_pix_per_exposure = jd.value("lambda_e_per_pix_per_exposure", 0.0);
+
+    // New preferred key: lambda_e_per_pix_per_year
+    if (jd.contains("lambda_e_per_pix_per_year")) {
+      bkg_.lambda_e_per_pix_per_year =
+        jd.value("lambda_e_per_pix_per_year", 0.0);
+    } else if (jd.contains("lambda_e_per_pix_per_exposure")) {
+      // Optional backward compatibility
+      const double lam_exp =
+        jd.value("lambda_e_per_pix_per_exposure", 0.0);
+      const double year_s = 365.25 * 86400.0;
+      const double exp_s  = jb.contains("timing")
+                            ? jb.at("timing").value("exposure_time_s", 0.0)
+                            : 0.0;
+      if (exp_s > 0.0) {
+        bkg_.lambda_e_per_pix_per_year = lam_exp * (year_s / exp_s);
+      } else {
+        bkg_.lambda_e_per_pix_per_year = 0.0;
+      }
+    } else {
+      bkg_.lambda_e_per_pix_per_year = 0.0;
+    }
+
     bkg_.norm_scale = jd.value("norm_scale", 1.0);
   }
+
   if (jb.contains("pattern_efficiency")) {
     const auto& je = jb.at("pattern_efficiency");
     const std::string type = je.value("type","flat");
@@ -125,21 +177,41 @@ void ConfigManager::parse_backgrounds_(const nlohmann::json& jb) {
     }
   }
 
-  // timing knobs live under experiment (but expose via timing_)
-  // Find them from the already-parsed experiment block in the original nlohmann::json:
-  // (we still have j in this scope? If not, read from jb's parent; simplest: require backgrounds to also include timing)
-  // For clarity now, we’ll pull from a sibling "experiment" via the stored exp_cfg_ — but we need exposure_time_s & n_exposures.
-  // Easiest: require they sit under "experiment" and re-open here:
-  // (If you want, we can move this logic to parse_experiment_ later.)
-
-  // Try parent: we can't access parent here; instead, read from a convenience duplication in backgrounds if present:
   if (jb.contains("timing")) {
     const auto& jt = jb.at("timing");
     if (jt.contains("n_exposures") && !jt.at("n_exposures").is_null())
       timing_.n_exposures_override = jt.at("n_exposures").get<int>();
     timing_.exposure_time_s = jt.value("exposure_time_s", 0.0);
   }
+
+  // ---- flat background (energy spectrum) ----
+  //
+  // JSON block:
+  //   "flat_background": {
+  //     "norm_per_kg_year_keV": 1.0,
+  //     "Emin_eV": 0.0,
+  //     "Emax_eV": 20000.0,
+  //     "nbins": 200
+  //   }
+  //
+  if (jb.contains("flat_background")) {
+    const auto& jf = jb.at("flat_background");
+    bkg_.has_flat_bkg = true;
+
+    bkg_.flat_bkg_norm_per_kg_year =
+        jf.value("norm_per_kg_year_keV", 0.0);  // events/(kg·year·keV)
+    bkg_.flat_bkg_Emin_eV = jf.value("Emin_eV", 0.0);
+    bkg_.flat_bkg_Emax_eV = jf.value("Emax_eV", 0.0);
+    bkg_.flat_bkg_nbins   = jf.value("nbins", 0);
+  } else {
+    bkg_.has_flat_bkg = false;
+    bkg_.flat_bkg_norm_per_kg_year = 0.0;
+    bkg_.flat_bkg_Emin_eV = 0.0;
+    bkg_.flat_bkg_Emax_eV = 0.0;
+    bkg_.flat_bkg_nbins   = 0;
+  }
 }
+
 
 void ConfigManager::parse_model_(const nlohmann::json& jm) {
   // Use .value(...) with defaults so we never throw if keys are missing.

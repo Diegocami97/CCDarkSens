@@ -80,9 +80,9 @@ std::unique_ptr<TH1D> ChargeIonization::FoldToNe(const TH1D& dRdE,
   for (int i=1;i<=nbins;++i) {
     const double Ei   = dRdE.GetBinCenter(i);
     const double dEi  = dRdE.GetBinWidth(i);
-    const double rate = dRdE.GetBinContent(i);  // events/(kg day eV)
-    // const double counts = rate * dEi * exposure_kg_day;
-    const double counts = rate * dEi;
+    const double rate = dRdE.GetBinContent(i);  // events/(kg year eV)
+    // const double counts = rate * dEi * exposure_kg_year;
+    const double counts = rate * exposure_kg_year * dEi;
     if (counts <= 0) continue;
 
     for (int n=1; n<=k; ++n) {

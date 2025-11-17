@@ -194,6 +194,19 @@ ccdarksens_check_dmelectron/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/ccdarksens_check_dmelectron.dir/build.make CMakeFiles/ccdarksens_check_dmelectron.dir/build
 .PHONY : ccdarksens_check_dmelectron/fast
 
+#=============================================================================
+# Target rules for targets named ccdarksens_check_dmelectron_chain_cluster_mc
+
+# Build rule for target.
+ccdarksens_check_dmelectron_chain_cluster_mc: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 ccdarksens_check_dmelectron_chain_cluster_mc
+.PHONY : ccdarksens_check_dmelectron_chain_cluster_mc
+
+# fast build rule for target.
+ccdarksens_check_dmelectron_chain_cluster_mc/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ccdarksens_check_dmelectron_chain_cluster_mc.dir/build.make CMakeFiles/ccdarksens_check_dmelectron_chain_cluster_mc.dir/build
+.PHONY : ccdarksens_check_dmelectron_chain_cluster_mc/fast
+
 apps/ccdarksens_check_dmelectron.o: apps/ccdarksens_check_dmelectron.cc.o
 .PHONY : apps/ccdarksens_check_dmelectron.o
 
@@ -217,6 +230,30 @@ apps/ccdarksens_check_dmelectron.s: apps/ccdarksens_check_dmelectron.cc.s
 apps/ccdarksens_check_dmelectron.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/ccdarksens_check_dmelectron.dir/build.make CMakeFiles/ccdarksens_check_dmelectron.dir/apps/ccdarksens_check_dmelectron.cc.s
 .PHONY : apps/ccdarksens_check_dmelectron.cc.s
+
+apps/ccdarksens_check_dmelectron_chain_cluster_mc.o: apps/ccdarksens_check_dmelectron_chain_cluster_mc.cc.o
+.PHONY : apps/ccdarksens_check_dmelectron_chain_cluster_mc.o
+
+# target to build an object file
+apps/ccdarksens_check_dmelectron_chain_cluster_mc.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ccdarksens_check_dmelectron_chain_cluster_mc.dir/build.make CMakeFiles/ccdarksens_check_dmelectron_chain_cluster_mc.dir/apps/ccdarksens_check_dmelectron_chain_cluster_mc.cc.o
+.PHONY : apps/ccdarksens_check_dmelectron_chain_cluster_mc.cc.o
+
+apps/ccdarksens_check_dmelectron_chain_cluster_mc.i: apps/ccdarksens_check_dmelectron_chain_cluster_mc.cc.i
+.PHONY : apps/ccdarksens_check_dmelectron_chain_cluster_mc.i
+
+# target to preprocess a source file
+apps/ccdarksens_check_dmelectron_chain_cluster_mc.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ccdarksens_check_dmelectron_chain_cluster_mc.dir/build.make CMakeFiles/ccdarksens_check_dmelectron_chain_cluster_mc.dir/apps/ccdarksens_check_dmelectron_chain_cluster_mc.cc.i
+.PHONY : apps/ccdarksens_check_dmelectron_chain_cluster_mc.cc.i
+
+apps/ccdarksens_check_dmelectron_chain_cluster_mc.s: apps/ccdarksens_check_dmelectron_chain_cluster_mc.cc.s
+.PHONY : apps/ccdarksens_check_dmelectron_chain_cluster_mc.s
+
+# target to generate assembly for a file
+apps/ccdarksens_check_dmelectron_chain_cluster_mc.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ccdarksens_check_dmelectron_chain_cluster_mc.dir/build.make CMakeFiles/ccdarksens_check_dmelectron_chain_cluster_mc.dir/apps/ccdarksens_check_dmelectron_chain_cluster_mc.cc.s
+.PHONY : apps/ccdarksens_check_dmelectron_chain_cluster_mc.cc.s
 
 apps/ccdarksens_sensitivity.o: apps/ccdarksens_sensitivity.cc.o
 .PHONY : apps/ccdarksens_sensitivity.o
@@ -612,6 +649,7 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... gen_qedark_rates"
 	@echo "... ccdarksens_check_dmelectron"
+	@echo "... ccdarksens_check_dmelectron_chain_cluster_mc"
 	@echo "... ccdarksens_core"
 	@echo "... ccdarksens_sensitivity"
 	@echo "... ccdarksens_sensitivity_cluster_mc"
@@ -619,6 +657,9 @@ help:
 	@echo "... apps/ccdarksens_check_dmelectron.o"
 	@echo "... apps/ccdarksens_check_dmelectron.i"
 	@echo "... apps/ccdarksens_check_dmelectron.s"
+	@echo "... apps/ccdarksens_check_dmelectron_chain_cluster_mc.o"
+	@echo "... apps/ccdarksens_check_dmelectron_chain_cluster_mc.i"
+	@echo "... apps/ccdarksens_check_dmelectron_chain_cluster_mc.s"
 	@echo "... apps/ccdarksens_sensitivity.o"
 	@echo "... apps/ccdarksens_sensitivity.i"
 	@echo "... apps/ccdarksens_sensitivity.s"

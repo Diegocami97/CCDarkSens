@@ -21,7 +21,7 @@ struct ExperimentConfig {
 };
 
 struct ExperimentSummary {
-  double exposure_kg_day = 0.0;
+  double exposure_kg_year = 0.0;
   BinningNE binning;
   std::vector<int> roi_bins;
   uint64_t rng_seed_used = 0;

@@ -49,7 +49,7 @@ int main(int argc, char** argv){
 
     std::cout << "[FAST] Run: " << cfg.run().label << "\n"
               << "  Mass [kg]: " << mass_kg << "\n"
-              << "  Exposure [kg·day]: " << summary.exposure_kg_day << "\n"
+              << "  Exposure [kg·day]: " << summary.exposure_kg_year << "\n"
               << "  Duty cycle: " << cfg.experiment_cfg().duty_cycle << "\n"
               << "  Binning n_e: [" << ne_min << "," << ne_max << "]\n";
 
@@ -74,8 +74,8 @@ int main(int argc, char** argv){
     pipe.SetDiffusion(diff);
     pipe.SetPatternEfficiency(pe);
 
-    auto S_raw = ion->FoldToNe(*dRdE, summary.exposure_kg_day, ne_min, ne_max);
-    auto S_obs = pipe.Apply(*dRdE, summary.exposure_kg_day, ne_min, ne_max, 50.0);
+    auto S_raw = ion->FoldToNe(*dRdE, summary.exposure_kg_year, ne_min, ne_max);
+    auto S_obs = pipe.Apply(*dRdE, summary.exposure_kg_year, ne_min, ne_max, 50.0);
 
     // --- Background Asimov (use same ε) ---
     ccdarksens::BackgroundBuilder bld(det.geometry().rows, det.geometry().cols, det.geometry().active_fraction, ne_min, ne_max);
@@ -85,7 +85,8 @@ int main(int argc, char** argv){
     bld.SetTiming(cfg.experiment_cfg().livetime_days, cfg.experiment_cfg().duty_cycle, tcfg);
 
     ccdarksens::DarkCurrentConfig dcc;
-    dcc.lambda_e_per_pix_per_exposure = cfg.backgrounds().lambda_e_per_pix_per_exposure;
+    // Dark current is now configured in e-/pixel/year
+    dcc.lambda_e_per_pix_per_year = cfg.backgrounds().lambda_e_per_pix_per_year;
     dcc.norm_scale = cfg.backgrounds().norm_scale;
     bld.SetDarkCurrent(dcc);
 

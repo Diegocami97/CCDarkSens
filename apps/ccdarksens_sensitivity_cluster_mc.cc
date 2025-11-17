@@ -73,7 +73,19 @@ int main(int argc, char** argv){
     cmc.rows_bin        = cfg.response().cmc.rows_bin;
     cmc.cols_bin        = cfg.response().cmc.cols_bin;
     cmc.pileup_with_dc  = cfg.response().cmc.pileup_with_dc;
-    cmc.lambda_dc_per_pix_per_exposure = cfg.backgrounds().lambda_e_per_pix_per_exposure;
+    // cmc.lambda_dc_per_pix_per_exposure = cfg.backgrounds().lambda_e_per_pix_per_exposure;
+    // Convert λ_year [e-/pix/year] -> λ_exp [e-/pix/exposure]
+    const double lambda_year = cfg.backgrounds().lambda_e_per_pix_per_year;
+    const double year_s      = 365.25 * 86400.0;
+    const double exp_s       = cfg.timing().exposure_time_s;
+    double lambda_exp = 0.0;
+    if (exp_s > 0.0) {
+      lambda_exp = lambda_year * (exp_s / year_s);
+    }
+
+    cmc.lambda_dc_per_pix_per_exposure =
+      cmc.pileup_with_dc ? lambda_exp : 0.0;
+    
     cmc.half_window_pix = 2;
     cmc.enable_MN  = true;
     cmc.enable_MNL = true;
@@ -99,8 +111,9 @@ int main(int argc, char** argv){
     bld.SetTiming(cfg.experiment_cfg().livetime_days, cfg.experiment_cfg().duty_cycle, tcfg);
 
     ccdarksens::DarkCurrentConfig dcc;
-    dcc.lambda_e_per_pix_per_exposure = cfg.backgrounds().lambda_e_per_pix_per_exposure;
-    dcc.norm_scale = cfg.backgrounds().norm_scale;
+    // Store per-year λ; BackgroundBuilder converts internally to per-exposure
+    dcc.lambda_e_per_pix_per_year = cfg.backgrounds().lambda_e_per_pix_per_year;
+    dcc.norm_scale                 = cfg.backgrounds().norm_scale;
     bld.SetDarkCurrent(dcc);
 
     auto pe_bkg = std::make_shared<ccdarksens::PatternEfficiency>();

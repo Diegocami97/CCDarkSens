@@ -42,7 +42,7 @@
 
   "backgrounds": {
     "dark_current": {
-      "lambda_e_per_pix_per_exposure": 1.5e-4,
+      "lambda_e_per_pix_per_year": 1.5e-4,
       "norm_scale": 1.0
     },
     "pattern_efficiency": {

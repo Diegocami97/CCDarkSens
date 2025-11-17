@@ -18,7 +18,7 @@ public:
 
   // Ee_ref_eV: characteristic recoil energy for diffusion sigma (use 0 if beta=0)
   std::unique_ptr<TH1D> Apply(const TH1D& dRdE,
-                              double exposure_kg_day,
+                              double exposure_kg_year,
                               int ne_min, int ne_max,
                               double Ee_ref_eV = 0.0) const;
 
