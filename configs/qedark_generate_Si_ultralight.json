@@ -2,7 +2,7 @@
   "material": "Si",
   "mediator": "massless",
 
-  "halo": { "v0_kms": 220.0, "vE_kms": 232.0, "vesc_kms": 544.0 },
+  "halo": { "v0_kms": 238.0, "vE_kms": 253.7, "vesc_kms": 544.0 },
 
   "detector": {
     "band_gap_eV": 1.2,
@@ -10,13 +10,28 @@
     "binsize_eV": 0.1
   },
 
-  "rates_dir": "data/qedark_rates/Si/massless",
+  "rates_dir": "data/qedark_rates/Si/massless/10_test",
   "filename_template": "dRdE_{material}_{mediator}_m{mchi_MeV}_s{sigma_e_cm2}.csv",
 
-  "grid": {
-    "mchi_MeV": { "linspace": { "start": 0.5, "stop": 10.5, "num": 10, "endpoint": true } },
-    "sigma_e_cm2": { "logspace": { "start_exp": -40, "stop_exp": -34, "num": 6, "endpoint": true } }
-  },
+      "grid": {
+      "mchi_MeV": {
+        "values": [
+            10
+        ]
+      },
+      "sigma_e_cm2": {
+        "logspace": {
+          "start_exp": -46,
+          "stop_exp": -27,
+          "num": 19,
+          "endpoint": true
+        }
+      },
+      "format": {
+        "mchi": ".6f",
+        "sigma": ".1e"
+      }
+    },
 
   "options": {
     "skip_existing": true,

@@ -1,0 +1,105 @@
+{
+  "run": {
+    "label": "scan_dmelectron_grid_cluster_mc",
+    "outdir": "outputs/scan_dmelectron_grid_cluster_mc_heavy",
+    "cl": 0.90,
+    "test_stat": "PLR",
+    "n_toys": 0,
+    "rng_seed": 12345,
+    "verbosity": 1
+  },
+
+  "detector": {
+    "rows": 1300,
+    "cols": 6300,
+    "pixel_size_um": 15.0,
+    "thickness_mm": 0.67,
+    "active_fraction": 0.98,
+    "target_element": "Si",
+    "density_g_cm3": 2.329,
+    "mass_kg": 1.0
+  },
+
+  "experiment": {
+    "mode": "asimov",
+    "livetime_days": 365.25,
+    "duty_cycle": 1.0,
+    "binning": { "ne_min": 0, "ne_max": 25 },
+    "roi_bins": [2, 3, 4, 5]
+  },
+
+  "response": {
+    "mode": "cluster_mc",
+    "cluster_mc": {
+      "n_events_per_ne": 20000,
+      "sigma_readout_e": 0.16,
+      "Qmin_e": 0.3,
+      "Qmax_e": 4.0,
+      "diffusion": {
+        "A_um2": 803.25,
+        "b_umInv": 0.00065,
+        "alpha": 1.0,
+        "beta_per_keV": 0.0
+      },
+      "binning": { "rows_bin": 1, "cols_bin": 1 },
+      "pileup_with_dc": true,
+      "rng_seed": 987654321
+    }
+  },
+
+  "backgrounds": {
+    "dark_current": {
+      "lambda_e_per_pix_per_year": 5.36e-3,
+      "norm_scale": 1.0
+    },
+    "pattern_efficiency": {
+      "type": "flat",
+      "epsilon": 0.95
+    },
+    "timing": {
+      "exposure_time_s": 1700,
+      "n_exposures": null
+    },
+    "flat_background": {
+      "norm_per_kg_year_keV": 1.0,
+      "Emin_eV": 0.0,
+      "Emax_eV": 20.0,
+      "nbins": 200
+    }
+  },
+
+  "model": {
+    "type": "dm_electron",
+    "material": "Si",
+    "mediator": "heavy",
+    "rates_dir": "data/qedark_rates/Si/heavy",
+    "filename_template": "dRdE_{material}_{mediator}_m{mchi_MeV}_s{sigma_e_cm2}.csv",
+
+    "Emin_eV": 0.0,
+    "Emax_eV": 20.0,
+    "nbins": 200,
+
+    "grid": {
+      "mchi_MeV": {
+        "values": [
+          0.53, 0.56, 0.60, 0.64, 0.68, 0.72, 0.76, 0.80, 0.85, 0.90, 1.0,
+          1.2, 1.4, 1.6, 1.9, 2.3, 2.8, 3.5, 4.3, 5.3, 6.5, 8.0, 10.0,
+          13.0, 17.0, 22.0, 28.0, 36.0, 46.0, 60.0, 78.0, 100.0, 130.0,
+          170.0, 220.0, 290.0, 380.0, 500.0, 650.0, 850.0, 1000.0
+        ]
+      },
+      "sigma_e_cm2": {
+        "logspace": {
+          "start_exp": -44,
+          "stop_exp": -28,
+          "num": 81,
+          "endpoint": true
+        }
+      },
+      "format": {
+        "mchi": ".6f",
+        "sigma": ".1e"
+      }
+    }
+  }
+}

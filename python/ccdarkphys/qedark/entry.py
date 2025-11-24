@@ -75,7 +75,7 @@ def compute_dRdE(material: str,
 
     # Notebook constants
     dQ = 0.02 * QEC.alpha * QEC.me_eV   # eV
-    dE = 0.1                             # eV (native energy step)
+    dE = binsize_eV                             # eV (native energy step)
     wk = 2.0 / 137.0                     # ~ 2*alpha
 
     # materials[mat] = [Mcell(kg), Eprefactor, Egap(eV), epsilon(eV), fcrys]
@@ -138,7 +138,9 @@ def compute_dRdE(material: str,
                 continue
 
             # SHM halo η (cm/s)^-1
-            eta = HALO.eta_shm(np.array([vmin]), v0_cm_s, vE_cm_s, vesc_cm_s)[0]
+            eta = HALO.eta_shm_analytic(np.array([vmin]), v0_cm_s, vE_cm_s, vesc_cm_s)[0]
+            # print(f"[debug] vmin={vmin:.2e} cm/s → eta={eta:.2e} (q={q:.2e} eV, Ei={Ei})")
+            # eta = HALO.eta_shm_numeric(np.array([vmin]), v0_cm_s, vE_cm_s, vesc_cm_s)[0]
 
             # array_[qi-1] = Eprefactor * (1/q) * eta * FDM(q,n)^2 * fcrys[qi-1, Ei-1]
             acc += Epref * (1.0 / qsafe) * eta * (FDM(q, FDMn) ** 2) * f_arr[qi - 1, Ei - 1]
@@ -152,13 +154,19 @@ def compute_dRdE(material: str,
 
     # Evaluate notebook rate (sigma_e = 1), then scale by sigma_e
     dRdE_kg_year = np.array([dRdE_notebook("Si", mchi_eV, E, nFDM) for E in E_eV], dtype=float)
+    # print(f"[qedark] computed dRdE for mchi={mchi_eV/1.0e6:.6f} MeV, sigma_e=1 cm²")
+    # print(f"dRdE_kg_year: {dRdE_kg_year}")
     dRdE_kg_year *= float(sigma_e_cm2)
+    # print(f"dRdE_kg_year: {dRdE_kg_year}")
+
     dRdE_kg_year_eV = dRdE_kg_year / dE  # Convert to events / kg / year / eV
 
 
     # Convert to events / g / day / eV
     dRdE_g_day_eV = dRdE_kg_year / 1000.0 / 365.25 / dE
     dRdE_g_day_eV[~np.isfinite(dRdE_g_day_eV)] = 0.0
+    # print(f"dRdE_g_day_eV: {dRdE_kg_year_eV}")
+
     # ---------------------------------------------------------------
 
     # Minimal metadata for CSV header

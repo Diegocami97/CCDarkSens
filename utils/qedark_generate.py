@@ -93,7 +93,7 @@ def main():
             ) + "\n")
         f.write("E,dRdE\n")
         for e, r in zip(Ee, dRdE):
-            f.write(f"{e:.7g},{r:.10g}\n")
+            f.write(f"{e:.16g},{r:.16g}\n")
 
     print(f"[qedark_generate] wrote {args.out_csv}")
 

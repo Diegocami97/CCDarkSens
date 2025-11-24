@@ -66,7 +66,7 @@ def smart_read_two_col_csv(path):
     return np.asarray(E_vals, float), np.asarray(R_vals, float), cols[0], cols[1]
 
 def main(mediator: str):
-    base_dir = Path(f"data/qedark_rates/Si/{mediator}")
+    base_dir = Path(f"data/qedark_rates/Si/{mediator}/10_test")
     if not base_dir.exists():
         print(f"Error: directory {base_dir} not found.")
         sys.exit(1)

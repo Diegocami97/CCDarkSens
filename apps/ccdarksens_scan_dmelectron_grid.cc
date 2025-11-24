@@ -267,6 +267,30 @@ int main(int argc, char** argv)
     ClusterMC clusterMC(cmc, geo);
     auto eps_mc = clusterMC.PrecomputeEpsilon(ne_min, ne_max);
 
+
+    // Overwrite pattern efficiency with DAMIC-M values
+    auto set_eps = [&](int ne, double eps_target) {
+    int bin = eps_mc->FindBin(ne);
+    eps_mc->SetBinContent(bin, eps_target);
+    };
+
+    // 1e: not quoted in the paper; choose something small (toy example)
+    // set_eps(1, 0.01);   // 5% pattern acceptance for 1e (you can tune this)
+
+    // 2–5e: from the publication
+    set_eps(2, 0.38);
+    set_eps(3, 0.65);
+    set_eps(4, 0.79);
+    set_eps(5, 0.86);
+
+    std::cout << "[XCheck] Pattern efficiency eps(ne):\n";
+    for (int ne = 1; ne <= 6; ++ne) {
+    int bin = eps_mc->FindBin(ne);
+    std::cout << "  ne=" << ne << "  eps=" << eps_mc->GetBinContent(bin) << "\n";
+    }
+
+
+
     auto pe = std::make_shared<PatternEfficiency>();
     pe->SetEfficiencyHist(*eps_mc);
 
@@ -395,22 +419,37 @@ int main(int argc, char** argv)
       // Total Asimov background = dark current + flat component
       auto B_asimov = std::unique_ptr<TH1D>(
         static_cast<TH1D*>(B_dc_asimov->Clone("B_asimov_total")));
+      std::cout << "Int(DC) = " << B_dc_asimov->Integral() << "\n";
+
       B_asimov->Add(Bflat_obs.get());
 
       // Keep this histogram for the whole scan (same for all grid points)
       B_dc_asimov.swap(B_asimov);
+      std::cout << "Int(flat) = " << Bflat_obs->Integral() << "\n";
+      std::cout << "Int(total) = " << B_asimov->Integral() << "\n";
+
+      
     }
 
     TH1D& B_asimov = *B_dc_asimov; // alias
+    // Print background summary
+    std::cout << "\n";
+    std::cout << "[XCheck] Background summary (n_e from " << ne_min
+            << " to " << ne_max << ")\n";
 
-    // Make vector of background counts in ROI
-    std::vector<int> roi_bins = summary.roi_bins;
-    std::cout << "[scan] ROI bins: ";
-    for (std::size_t i = 0; i < roi_bins.size(); ++i) {
-      if (i) std::cout << ",";
-      std::cout << roi_bins[i];
+    double B_tot = B_asimov.Integral();
+    std::cout << "[XCheck]  Total B_asimov integral = " << B_tot << " events\n";
+
+    double B_roi = SumROI(B_asimov, summary.roi_bins, ne_min);
+    std::cout << "[XCheck]  ROI B_asimov integral   = " << B_roi << " events\n";
+
+    for (int ne : summary.roi_bins) {
+    int bin = B_asimov.FindBin(ne);
+    std::cout << "[XCheck]    ne=" << std::setw(2) << ne
+                << "  B(ne) = " << B_asimov.GetBinContent(bin) << "\n";
     }
     std::cout << "\n";
+    
 
     // ------------------------------------------------------------------
     // 5) Scan over grid, compute Asimov q(mchi, sigma)
@@ -445,8 +484,34 @@ int main(int argc, char** argv)
                                 /*Emax_keV_for_MC*/ 50.0);
 
         // Compute Asimov PLR q = 2 sum_i [ s_i - b_i log(1 + s_i/b_i) ]
+        if (fabs(mchi - 0.72) < 1e-6 && fabs(sigma_val - 1e-38) < 0.5e-38) {
+            double S_roi = 0.0;
+            for (int ne : summary.roi_bins) {
+                int bin = S_obs->FindBin(ne);
+                S_roi += S_obs->GetBinContent(bin);
+            }
+            std::cout << "[XCheck] mchi=0.72, sigma=1e-38: S_ROI=" << S_roi << "\n";
+        }
+
+        if (fabs(mchi - 4.3) < 1e-6 && fabs(sigma_val - 1e-38) < 0.5e-38) {
+            double S_roi = 0.0;
+            for (int ne : summary.roi_bins) {
+                int bin = S_obs->FindBin(ne);
+                S_roi += S_obs->GetBinContent(bin);
+            }
+            std::cout << "[XCheck] mchi=4.3, sigma=1e-38: S_ROI=" << S_roi << "\n";
+        }
+
+        if (fabs(mchi - 10) < 1e-6 && fabs(sigma_val - 1e-38) < 0.5e-38) {
+            double S_roi = 0.0;
+            for (int ne : summary.roi_bins) {
+                int bin = S_obs->FindBin(ne);
+                S_roi += S_obs->GetBinContent(bin);
+            }
+            std::cout << "[XCheck] mchi=10, sigma=1e-38: S_ROI=" << S_roi << "\n";
+        }
         double q = 0.0;
-        for (int ne : roi_bins) {
+        for (int ne : summary.roi_bins) {
           const int bin = B_asimov.FindBin(ne);
           const double b = B_asimov.GetBinContent(bin);
           const double s = S_obs->GetBinContent(bin);
@@ -461,6 +526,44 @@ int main(int argc, char** argv)
           // if s=0, contribution is 0.
         }
 
+        // ----------------------------------------------------------
+        // Extra prints for sanity checks with two reference points:
+        // Choose a reference mchi & sigma index for extra prints:
+        const double mchi_ref  = 10.0;   // MeV
+        const double mchi_ref2 = 100.0;  // MeV
+
+        // Just pick one sigma index in the middle of the scan as a reference:
+        const int sigma_ref_index = static_cast<int>(sigma_list.size()) / 2;
+        const double sigma_ref    = sigma_list[sigma_ref_index];
+
+        if (std::fabs(mchi - mchi_ref) < 1e-6
+            && std::fabs(sigma_val - sigma_ref) < 1e-30) {
+
+        double S_roi = SumROI(*S_obs, summary.roi_bins, ne_min);
+        double B_roi = SumROI(B_asimov, summary.roi_bins, ne_min);
+
+        // std::cout << "[XCheck] Ref point 1: mchi=" << mchi_ref
+        //             << " MeV, sigma=" << sigma_ref << " cm^2\n"
+        //             << "          S_ROI = " << S_roi << " events\n"
+        //             << "          B_ROI = " << B_roi << " events\n"
+        //             << "          q     = " << q << "\n";
+        }
+
+        if (std::fabs(mchi - mchi_ref2) < 1e-6
+            && std::fabs(sigma_val - sigma_ref) < 1e-30) {
+
+        double S_roi = SumROI(*S_obs, summary.roi_bins, ne_min);
+        double B_roi = SumROI(B_asimov, summary.roi_bins, ne_min);
+
+        // std::cout << "[XCheck] Ref point 2: mchi=" << mchi_ref2
+        //             << " MeV, sigma=" << sigma_ref << " cm^2\n"
+        //             << "          S_ROI = " << S_roi << " events\n"
+        //             << "          B_ROI = " << B_roi << " events\n"
+        //             << "          q     = " << q << "\n";
+        }
+        // ----------------------------------------------------------
+
+        // Store in 2D histogram of q(mchi, sigma)
         h_q.SetBinContent(1 + idx_mchi, 1 + idx_sigma, q);
 
         if (run.verbosity >= 2) {
@@ -471,6 +574,24 @@ int main(int argc, char** argv)
 
         ++idx_sigma;
       }
+        // End of sigma loop
+        // Print q-range per mchi
+        // ----------------------------------------------------------
+        // std::cout << "\n[XCheck] q-range summary per mchi:\n";
+        // for (int ix = 1; ix <= h_q.GetNbinsX(); ++ix) {
+        // const double mchi = h_q.GetXaxis()->GetBinCenter(ix);
+        // double qmin =  1e300;
+        // double qmax = -1e300;
+        // for (int iy = 1; iy <= h_q.GetNbinsY(); ++iy) {
+        //     double qval = h_q.GetBinContent(ix, iy);
+        //     qmin = std::min(qmin, qval);
+        //     qmax = std::max(qmax, qval);
+        // }
+        // std::cout << "[XCheck]  mchi=" << mchi
+        //             << " MeV  q(min,max)=(" << qmin << "," << qmax << ")\n";
+        // }
+        // std::cout << "\n";
+        // ----------------------------------------------------------
       ++idx_mchi;
     }
 
@@ -491,6 +612,7 @@ int main(int argc, char** argv)
     // Save background and a few summaries
     B_asimov.Write("B_asimov");
     h_q.Write("q_mchi_sigma");
+    eps_mc->Write("pattern_efficiency");
 
     fout.Write();
     fout.Close();
