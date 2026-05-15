@@ -1,0 +1,18 @@
+# Ignore heavy generated data; keep only whitelisted reference inputs (see negations below).
+data/**
+!data/Background_efficiencies.csv
+!data/efficiencies_paolo.csv
+!data/Efficiencies_patterns_Nsims1000000_DCTrue_alpha1.csv
+!data/efficiency_per_pattern.csv
+!data/Final_Combined_Image_Data.csv
+!data/p100K_table.csv
+!data/p100K.dat
+!data/previous_limits/
+!data/previous_limits/**
+
+# Build tree
+build/
+
+# macOS / editor
+.DS_Store
+.vscode/
