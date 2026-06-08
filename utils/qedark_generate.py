@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# ============================================================================
+#  CCDarkSens — qedark_generate
+#  Command-line script to generate a single QEDark dR/dE CSV through an importable bridge module with halo and detector metadata headers.
+#
+#  Author: Diego Venegas-Vargas
+# ============================================================================
+
 # utils/qedark_generate.py
 """
 Generate a single QEDark dR/dE CSV using the bridge.
@@ -16,13 +23,14 @@ Example:
 import argparse, importlib, os, sys
 import numpy as np
 
+# Pipeline (RateTable) expects events/(kg·year·eV). Convert from bridge's g/day/eV if needed.
 CSV_HEADER = [
-    "# Differential Rates computed with QEDark",
+    "# Differential Rates computed with QEDark (bridge)",
     "# v0,vE,vesc = [{v0_cm_s},{vE_cm_s},{vesc_cm_s}] cm/s",
     "# mX = {mchi_eV}",
     "# sigma_e = {sigma_e_cm2}",
-    "# rates in units of evts/g/day/eV",
-    "# Ee in units of eV"
+    "# Output units: dR/dE in events / kg / year / eV",
+    "# Columns: E (eV), dRdE (events/kg/year/eV)"
 ]
 
 def main():
@@ -79,7 +87,16 @@ def main():
     )
 
     Ee   = out["E_eV"]
-    dRdE = out["dRdE_g_day_eV"]
+    # Bridge may return events/(g·day·eV); pipeline expects events/(kg·year·eV)
+    dRdE_raw = out.get("dRdE_kg_year_eV") or out.get("dRdE_g_day_eV")
+    if dRdE_raw is None:
+        print("[qedark_generate] ERROR: bridge must return 'dRdE_kg_year_eV' or 'dRdE_g_day_eV'.", file=sys.stderr)
+        sys.exit(4)
+    if "dRdE_g_day_eV" in out and "dRdE_kg_year_eV" not in out:
+        # 1 (g·day·eV)^-1 = 1000*365.25 (kg·year·eV)^-1
+        dRdE = np.asarray(dRdE_raw, dtype=float) * 1000.0 * 365.25
+    else:
+        dRdE = np.asarray(dRdE_raw, dtype=float)
     if Ee.shape != dRdE.shape:
         print("[qedark_generate] ERROR: E and dRdE shapes do not match.", file=sys.stderr)
         sys.exit(5)

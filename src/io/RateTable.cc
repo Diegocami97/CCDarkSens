@@ -1,3 +1,10 @@
+// ============================================================================
+//  CCDarkSens — RateTable
+//  Loads two-column QEDark-style rate CSVs and interpolates dR/dE onto a uniform ROOT energy histogram in events/(kg·year·eV).
+//
+//  Author: Diego Venegas-Vargas
+// ============================================================================
+
 #include "ccdarksens/io/RateTable.hh"
 #include <TH1D.h>
 
@@ -70,15 +77,15 @@ std::unique_ptr<TH1D> RateTable::MakeTH1D(const std::string& name,
   for (int i = 1; i <= nbins; ++i) {
     const double Ec = h->GetBinCenter(i);
 
-    // Binary search for bracketing indices
     if (Ec <= E_eV_.front()) {
-      // h->SetBinContent(i, R_g_day_eV_.front() * g_to_kg); // old method, no need for scaling now
-      h->SetBinContent(i, R_kg_year_eV_.front() );
+      // Below the first tabulated point (≈ band gap) the physical rate is zero.
+      h->SetBinContent(i, 0.0);
       continue;
     }
     if (Ec >= E_eV_.back()) {
-      // h->SetBinContent(i, R_g_day_eV_.back() * g_to_kg);
-      h->SetBinContent(i, R_kg_year_eV_.back()); // old method, no need for scaling now
+      // Above the last tabulated point we can also safely set zero
+      // (or keep the last value if you really want a flat tail).
+      h->SetBinContent(i, 0.0);
       continue;
     }
 

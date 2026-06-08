@@ -1,14 +1,13 @@
 {
   "run": {
-    "label": "scan_dmelectron_grid_cluster_mc",
-    "outdir": "outputs/scan_dmelectron_grid_cluster_mc_heavy",
-    "cl": 0.90,
+    "label": "scan_dmelectron_grid_pattern_mc",
+    "outdir": "outputs/scan_dmelectron_grid_pattern_mc_heavy",
+    "cl": 0.9,
     "test_stat": "PLR",
     "n_toys": 0,
     "rng_seed": 12345,
     "verbosity": 1
   },
-
   "detector": {
     "rows": 1300,
     "cols": 6300,
@@ -19,21 +18,28 @@
     "density_g_cm3": 2.329,
     "mass_kg": 1.0
   },
-
   "experiment": {
     "mode": "asimov",
     "livetime_days": 365,
     "duty_cycle": 1.0,
-    "binning": { "ne_min": 0, "ne_max": 20 },
-    "roi_bins": [2, 3, 4, 5]
+    "binning": {
+      "ne_min": 0,
+      "ne_max": 20
+    },
+    "roi_bins": [
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
-
   "response": {
-    "mode": "cluster_mc",
-    "cluster_mc": {
+    "mode": "pattern",
+    "efficiency_mc": {
       "n_events_per_ne": 20000,
       "sigma_readout_e": 0.16,
-      "Qmin_e": 0.3,
+      "Qmin_e": 0.6,
       "Qmax_e": 4.0,
       "diffusion": {
         "A_um2": 803.25,
@@ -41,16 +47,21 @@
         "alpha": 1.0,
         "beta_per_keV": 0.0
       },
-      "binning": { "rows_bin": 1, "cols_bin": 1 },
+      "half_window_pix": 2,
+      "binning": {
+        "rows_bin": 1,
+        "cols_bin": 1
+      },
       "pileup_with_dc": true,
+      "enable_MN": true,
+      "enable_MNL": true,
       "rng_seed": 987654321
     }
   },
-
   "backgrounds": {
     "dark_current": {
-      "lambda_e_per_pix_per_year": 5.36e-2,
-      "norm_scale": 1
+      "lambda_e_per_pix_per_year": 0.0536,
+      "norm_scale": 1.0
     },
     "pattern_efficiency": {
       "type": "flat",
@@ -61,32 +72,72 @@
       "n_exposures": null
     },
     "flat_background": {
-      "norm_per_kg_year_keV": 1,
+      "norm_per_kg_year_keV": 1.0,
       "Emin_eV": 0.0,
       "Emax_eV": 20.0,
       "nbins": 200
     }
   },
-
   "model": {
     "type": "dm_electron",
     "material": "Si",
     "mediator": "heavy",
     "rates_dir": "data/qedark_rates/Si/heavy/after_eta_fix",
     "filename_template": "dRdE_{material}_{mediator}_m{mchi_MeV}_s{sigma_e_cm2}.csv",
-
     "Emin_eV": 0.0,
     "Emax_eV": 20.0,
     "nbins": 200,
-
     "grid": {
       "mchi_MeV": {
         "values": [
-            0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50,
-            0.53, 0.56, 0.60, 0.64, 0.68, 0.72, 0.76, 0.80, 0.85, 0.90, 1.0,
-            1.2, 1.4, 1.6, 1.9, 2.3, 2.8, 3.5, 4.3, 5.3, 6.5, 8.0, 10.0,
-            13.0, 17.0, 22.0, 28.0, 36.0, 46.0, 60.0, 78.0, 100.0, 130.0,
-            170.0, 220.0, 290.0, 380.0, 500.0, 650.0, 850.0, 1000.0
+          0.2,
+          0.25,
+          0.3,
+          0.35,
+          0.4,
+          0.45,
+          0.5,
+          0.53,
+          0.56,
+          0.6,
+          0.64,
+          0.68,
+          0.72,
+          0.76,
+          0.8,
+          0.85,
+          0.9,
+          1.0,
+          1.2,
+          1.4,
+          1.6,
+          1.9,
+          2.3,
+          2.8,
+          3.5,
+          4.3,
+          5.3,
+          6.5,
+          8.0,
+          10.0,
+          13.0,
+          17.0,
+          22.0,
+          28.0,
+          36.0,
+          46.0,
+          60.0,
+          78.0,
+          100.0,
+          130.0,
+          170.0,
+          220.0,
+          290.0,
+          380.0,
+          500.0,
+          650.0,
+          850.0,
+          1000.0
         ]
       },
       "sigma_e_cm2": {
@@ -102,5 +153,12 @@
         "sigma": ".1e"
       }
     }
+  },
+  "debug": {
+    "pattern_mc_images": true,
+    "pattern_mc_ne_min": 1,
+    "pattern_mc_ne_max": 4,
+    "pattern_mc_n_events": 100,
+    "pattern_mc_Ee_ref_eV": 50.0
   }
 }

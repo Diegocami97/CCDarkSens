@@ -1,3 +1,10 @@
+// ============================================================================
+//  CCDarkSens — PatternEfficiency
+//  Stores and multiplies a per-bin ε(n_e) histogram into target n_e spectra.
+//
+//  Author: Diego Venegas-Vargas
+// ============================================================================
+
 #include "ccdarksens/response/PatternEfficiency.hh"
 #include <TH1D.h>
 #include <algorithm>

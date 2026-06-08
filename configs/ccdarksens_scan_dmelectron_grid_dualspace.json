@@ -1,0 +1,133 @@
+{
+  "run": {
+    "label": "scan_dualspace_pcd",
+    "outdir": "outputs/scan_dualspace",
+    "cl": 0.9,
+    "test_stat": "PLR",
+    "n_toys": 0,
+    "rng_seed": 12345,
+    "verbosity": 1
+  },
+  "detector": {
+    "rows": 1300,
+    "cols": 6300,
+    "pixel_size_um": 15.0,
+    "thickness_mm": 0.67,
+    "active_fraction": 0.98,
+    "target_element": "Si",
+    "density_g_cm3": 2.329,
+    "mass_kg": 1.0
+  },
+  "experiment": {
+    "mode": "asimov",
+    "livetime_days": 365,
+    "duty_cycle": 1.0,
+    "binning": {
+      "ne_min": 0,
+      "ne_max": 20
+    },
+    "roi_bins": [
+      2,
+      3,
+      4,
+      5
+    ]
+  },
+  "response": {
+    "mode": "pcd",
+    "analysis_space": "pcd",
+    "efficiency_mc": {
+      "n_events_per_ne": 20000,
+      "sigma_readout_e": 0.16,
+      "Qmin_e": 0.3,
+      "Qmax_e": 4.0,
+      "A_um2": 803.25,
+      "b_umInv": 0.00065,
+      "alpha": 1.0,
+      "beta_per_keV": 0.0,
+      "half_window_pix": 2,
+      "rows_bin": 1,
+      "cols_bin": 1,
+      "pileup_with_dc": true,
+      "enable_MN": true,
+      "enable_MNL": true,
+      "rng_seed": 987654321
+    },
+    "pattern_classifier": {
+      "Qmin_e": 0.6,
+      "neighbor_Qmax_e": 0.6,
+      "Qmax_e": 4.0,
+      "sigma_res_e": 0.16,
+      "enable_MN": true,
+      "enable_MNL": true,
+      "max_e_per_pixel": 5,
+      "thr_M": 3.5,
+      "thr_MN": 4.0,
+      "thr_MNL": 5.5
+    },
+    "pcd": {
+      "q_min": 0.0,
+      "q_max": 20.0,
+      "nbins": 200,
+      "mc_trials": 50000,
+      "sigma_res_e": 0.21,
+      "Dqmin": 0.5,
+      "Dqmax": 0.5
+    }
+  },
+  "backgrounds": {
+    "dark_current": {
+      "lambda_e_per_pix_per_year": 0.00536,
+      "norm_scale": 1.0
+    },
+    "pattern_efficiency": {
+      "type": "flat",
+      "epsilon": 0.95
+    },
+    "timing": {
+      "exposure_time_s": 1800,
+      "n_exposures": null
+    },
+    "flat_background": {
+      "norm_per_kg_year_keV": 1.0,
+      "Emin_eV": 0.0,
+      "Emax_eV": 20.0,
+      "nbins": 200
+    }
+  },
+  "model": {
+    "type": "dm_electron",
+    "material": "Si",
+    "mediator": "heavy",
+    "rates_dir": "data/qedark_rates/Si/heavy/after_eta_fix",
+    "filename_template": "dRdE_{material}_{mediator}_m{mchi_MeV}_s{sigma_e_cm2}.csv",
+    "Emin_eV": 0.0,
+    "Emax_eV": 20.0,
+    "nbins": 200,
+    "grid": {
+      "mchi_MeV": {
+        "values": [
+          0.53,
+          1.0,
+          10,
+          1000
+        ]
+      },
+      "sigma_e_cm2": {
+        "logspace": {
+          "start_exp": -46,
+          "stop_exp": -27,
+          "num": 97,
+          "endpoint": true
+        }
+      },
+      "format": {
+        "mchi": ".6f",
+        "sigma": ".1e"
+      }
+    }
+  },
+  "debug": {
+    "pattern_mc_images": false
+  }
+}

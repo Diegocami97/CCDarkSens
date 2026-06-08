@@ -1,3 +1,10 @@
+// ============================================================================
+//  CCDarkSens — ccdarksens_check_dmelectron
+//  Minimal check that loads one QEDark dR/dE table from config, scales by exposure, and saves a PDF sanity plot.
+//
+//  Author: Diego Venegas-Vargas
+// ============================================================================
+
 #include "ccdarksens/io/ConfigManager.hh"
 #include "ccdarksens/model/DMElectronModel.hh"
 #include <TCanvas.h>

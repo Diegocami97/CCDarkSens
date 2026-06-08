@@ -1,0 +1,16 @@
+{
+  "_comment": "One grid point per case: dR/dE then S_true(n_e) in electron bin space (observable_bins=ne). D-equal and B-thresh for each scissor gap.",
+  "reference_point": {
+    "mchi_MeV": 10.800876,
+    "sigma_e_cm2": 1.1e-35,
+    "format": { "mchi": ".6f", "sigma": ".1e" }
+  },
+  "run_defaults": {
+    "outdir_base": "outputs/band_gap_one_point_spectra",
+    "observable_bins": "ne",
+    "exposure_note": "0.5 kg·year (mass_kg=0.5, livetime_days=365.25)"
+  },
+  "gaps_eV": [0.1, 0.3, 0.5, 0.7, 0.9, 1.2],
+  "scenarios": ["D-equal", "B-thresh"],
+  "eh_pair_B_thresh_eV": 3.8
+}

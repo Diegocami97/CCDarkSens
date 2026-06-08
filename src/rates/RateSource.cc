@@ -1,3 +1,10 @@
+// ============================================================================
+//  CCDarkSens — RateSource
+//  Utility helpers to create synthetic flat or mono-line dR/dE TH1D spectra for tests and demos.
+//
+//  Author: Diego Venegas-Vargas
+// ============================================================================
+
 #include "ccdarksens/rates/RateSource.hh"
 #include <TH1D.h>
 #include <stdexcept>

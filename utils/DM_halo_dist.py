@@ -1,3 +1,10 @@
+# ============================================================================
+#  CCDarkSens — DM_halo_dist
+#  Reference halo velocity distribution integrals (SHM, Tsallis, etc.) used by QEDark rate calculations.
+#
+#  Author: Diego Venegas-Vargas
+# ============================================================================
+
 import numpy as np
 from scipy.special import gamma, iv, modstruve, hyp2f1, erf
 from scipy import integrate, interpolate

@@ -1,3 +1,10 @@
+// ============================================================================
+//  CCDarkSens — ccdarksens_sensitivity_fast
+//  Fast sensitivity demo that skips ClusterMC and uses flat pattern efficiency with diffusion and dark-current background only.
+//
+//  Author: Diego Venegas-Vargas
+// ============================================================================
+
 #include "ccdarksens/io/ConfigManager.hh"
 #include "ccdarksens/experiment/ExperimentSetup.hh"
 #include "ccdarksens/detector/Detector.hh"
@@ -16,23 +23,9 @@
 #include <vector>
 #include <algorithm>
 
-static std::unique_ptr<TH1D> MakeFlatEfficiency(int ne_min, int ne_max, double eps) {
-  const int nbin = ne_max - ne_min + 1;
-  std::vector<double> edges(nbin + 1);
-  for (int i=0;i<=nbin;++i) edges[i] = (ne_min - 0.5) + i;
-  auto h = std::make_unique<TH1D>("eps_ne","Pattern efficiency; n_{e}; #epsilon", nbin, edges.data());
-  for (int b=1;b<=nbin;++b) h->SetBinContent(b, std::clamp(eps,0.0,1.0));
-  return h;
-}
-
-static double SumROI(const TH1D& h, const std::vector<int>& roi, int ne_min) {
-   double s = 0.0;
-   for (int ne : roi) {
-     const int b = (ne - ne_min + 1);  // 1-based ROOT bin index
-     if (b >= 1 && b <= h.GetNbinsX()) s += h.GetBinContent(b);
-   }
-   return s;
-}
+#include "ccdarksens/utils/AppUtils.hh"
+using ccdarksens::utils::MakeFlatEfficiency;
+using ccdarksens::utils::SumROI;
 
 int main(int argc, char** argv){
   if (argc<2){ std::cerr<<"usage: ccdarksens_sensitivity_fast <config.json>\n"; return 1; }

@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# ============================================================================
+#  CCDarkSens — plot_qedark_rates
+#  Matplotlib utility that plots families of QEDark dRdE CSV files from a mediator directory for visual rate-table QA.
+#
+#  Author: Diego Venegas-Vargas
+# ============================================================================
+
 import sys, glob
 from pathlib import Path
 import numpy as np
@@ -66,7 +73,7 @@ def smart_read_two_col_csv(path):
     return np.asarray(E_vals, float), np.asarray(R_vals, float), cols[0], cols[1]
 
 def main(mediator: str):
-    base_dir = Path(f"data/qedark_rates/Si/{mediator}/10_test")
+    base_dir = Path(f"data/qedark_rates/Si/{mediator}/after_second_fix")
     if not base_dir.exists():
         print(f"Error: directory {base_dir} not found.")
         sys.exit(1)

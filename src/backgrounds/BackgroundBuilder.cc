@@ -1,12 +1,28 @@
+// ============================================================================
+//  CCDarkSens — BackgroundBuilder
+//  Builds Asimov background n_e spectra from per-pixel Poisson dark current scaled to active pixels and number of exposures.
+//
+//  Author: Diego Venegas-Vargas
+// ============================================================================
+
 #include "ccdarksens/backgrounds/BackgroundBuilder.hh"
 #include "ccdarksens/backgrounds/PoissonDarkCurrent.hh"
 #include "ccdarksens/response/PatternEfficiency.hh"
 
 #include <TH1D.h>
+#include <algorithm>
 #include <cmath>
+#include <filesystem>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
 #include <memory>
-#include <stdexcept>
+#include <string>
 #include <vector>
+#include <sstream>
+#include <map>
+
+
 
 namespace ccdarksens {
 
@@ -73,9 +89,24 @@ std::unique_ptr<TH1D> BackgroundBuilder::BuildBkgAsimov() {
   h->Scale(scale);
 
   // Apply pattern efficiency if provided
-  if (pe_) pe_->Apply(*h);
+  if (pe_){
+    std::cout << "[BackgroundBuilder::BuildBkgAsimov] Applying pattern efficiency to background\n";
+    pe_->Apply(*h);
+  }
 
   return h;
 }
+
+std::unique_ptr<TH1D>
+BackgroundBuilder::BuildBkgAsimov_EDependent(
+    const std::vector<double>& /*E_grid_eV*/,
+    const std::vector<std::vector<double>>& /*eps_Ene*/) 
+{
+    // For now, just ignore the E-dependent pattern info
+    // and use the existing Asimov background builder.
+    // Signal is already treated with full E-dependent efficiency.
+    return BuildBkgAsimov();
+}
+
 
 } // namespace ccdarksens

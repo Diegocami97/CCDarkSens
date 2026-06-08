@@ -1,3 +1,10 @@
+// ============================================================================
+//  CCDarkSens — ITestStatistic
+//  Abstract interface for binned negative log-likelihood and likelihood-ratio evaluation on count vectors.
+//
+//  Author: Diego Venegas-Vargas
+// ============================================================================
+
 #pragma once
 
 #include <vector>

@@ -13,6 +13,19 @@ data/**
 # Build tree
 build/
 
+# Run outputs (large ROOT files, PDFs, scan results)
+outputs/
+outplots/
+*.root
+*.pdf
+
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+
 # macOS / editor
 .DS_Store
+**/.DS_Store
 .vscode/

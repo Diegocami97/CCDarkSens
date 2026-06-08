@@ -1,3 +1,10 @@
+// ============================================================================
+//  CCDarkSens — PoissonDarkCurrent
+//  Builds a per-pixel Poisson P(n_e) dark-current histogram for one exposure, used inside BackgroundBuilder scaling.
+//
+//  Author: Diego Venegas-Vargas
+// ============================================================================
+
 #include "ccdarksens/backgrounds/PoissonDarkCurrent.hh"
 #include <TH1D.h>
 #include <cmath>

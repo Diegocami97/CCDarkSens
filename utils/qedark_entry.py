@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# ============================================================================
+#  CCDarkSens — qedark_entry
+#  Standalone QEDark Python port (constants, halo, Si form factor) exposing compute_dRdE and a CLI to write rate CSVs.
+#
+#  Author: Diego Venegas-Vargas
+# ============================================================================
+
 # -*- coding: utf-8 -*-
 """
 QEDark entry point for DM–electron scattering in Silicon (Skipper CCDs).

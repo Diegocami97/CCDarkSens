@@ -1,3 +1,10 @@
+// ============================================================================
+//  CCDarkSens — PoissonDarkCurrent
+//  Header for single-pixel Poisson dark-current spectrum generation in n_e.
+//
+//  Author: Diego Venegas-Vargas
+// ============================================================================
+
 #pragma once
 #include <memory>
 #include <string>

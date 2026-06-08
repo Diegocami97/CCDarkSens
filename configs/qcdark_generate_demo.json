@@ -1,0 +1,36 @@
+{
+  "model_type": "dm_electron",
+  "material": "Si",
+  "mediator": "heavy",
+
+  "halo_type": "SHM",
+
+  "halo": { "v0_kms": 238.0, "vE_kms": 263.0, "vesc_kms": 544.0 },
+
+  "detector": {
+    "band_gap_eV": 1.2,
+    "eh_pair_eV": 3.8,
+    "binsize_eV": 0.1
+  },
+
+  "form_factor_h5": "data/qcdark/demo_Si_f2_qcdark.h5",
+
+  "rates_dir": "data/qcdark_rates/Si/heavy/demo_grid",
+  "filename_template": "dRdE_{material}_{mediator}_m{mchi_MeV}_s{sigma_e_cm2}.csv",
+
+  "grid": {
+    "mchi_MeV": { "values": [10.0, 50.0] },
+    "sigma_e_cm2": { "values": [1e-37] }
+  },
+
+  "options": {
+    "skip_existing": false,
+    "overwrite": false,
+    "compress": false,
+    "parallel": 1,
+    "progress": true,
+    "use_sigma_scaling": true,
+    "sigma_ref": 1e-37,
+    "format": { "mchi": ".6f", "sigma": ".1e" }
+  }
+}

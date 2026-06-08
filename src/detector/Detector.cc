@@ -1,3 +1,10 @@
+// ============================================================================
+//  CCDarkSens — Detector
+//  Computes detector active mass from geometry and material density, with optional mass override from config.
+//
+//  Author: Diego Venegas-Vargas
+// ============================================================================
+
 #include "ccdarksens/detector/Detector.hh"
 #include <cmath>
 #include <stdexcept>

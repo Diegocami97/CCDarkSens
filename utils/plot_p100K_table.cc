@@ -1,3 +1,10 @@
+// ============================================================================
+//  CCDarkSens — plot_p100K_table
+//  ROOT macro that reads the p100K ionization table CSV and plots P(n_e|E) curves and mean n_e versus energy.
+//
+//  Author: Diego Venegas-Vargas
+// ============================================================================
+
 // Run with:
 //   root -l -q 'plot_p100K_table.C("data/p100K_table.csv")'
 #include <TCanvas.h>

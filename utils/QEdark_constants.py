@@ -1,3 +1,10 @@
+# ============================================================================
+#  CCDarkSens — QEdark_constants
+#  Fundamental physical constants and unit conversions shared by the QEDark Python rate code.
+#
+#  Author: Diego Venegas-Vargas
+# ============================================================================
+
 ## define constants
 sec2year = 60*60*24*365.25 # sec/year
 c_light = 299792458 # m / s

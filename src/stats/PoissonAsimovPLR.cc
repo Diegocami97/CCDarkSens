@@ -1,19 +1,17 @@
+// ============================================================================
+//  CCDarkSens — PoissonAsimovPLR
+//  Computes Poisson -ln L and the q = -2ΔlnL ratio used for Asimov and grid-scan hypothesis tests.
+//
+//  Author: Diego Venegas-Vargas
+// ============================================================================
+
 #include "ccdarksens/stats/PoissonAsimovPLR.hh"
+#include "ccdarksens/stats/StatsUtils.hh"
 
 #include <cmath>
 #include <stdexcept>
 
 namespace ccdarksens::stats {
-
-namespace {
-
-inline double safe_log(double x) {
-  // Very small positive floor to avoid log(0)
-  constexpr double kMin = 1e-300;
-  return std::log(x < kMin ? kMin : x);
-}
-
-} // namespace
 
 double PoissonAsimovPLR::EvaluateNLL(const std::vector<double>& data,
                                      const std::vector<double>& model) const {

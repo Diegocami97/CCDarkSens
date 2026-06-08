@@ -1,3 +1,10 @@
+// ============================================================================
+//  CCDarkSens — TestStatisticFactory
+//  Header declaring MakeTestStatistic for constructing likelihood-ratio implementations from config.
+//
+//  Author: Diego Venegas-Vargas
+// ============================================================================
+
 #pragma once
 
 #include <memory>

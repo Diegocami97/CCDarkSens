@@ -1,0 +1,37 @@
+[
+  {
+    "variant": "fewmass_tau_config_exp",
+    "config": "configs/scan_qedark_repro_fewmass_tau_config_exp.json",
+    "note": "Baseline: tau constraint, config exposure (current JSON)."
+  },
+  {
+    "variant": "fewmass_tau_data_exp",
+    "config": "configs/scan_qedark_repro_fewmass_tau_data_exp.json",
+    "note": "Tau constraint, exposure aligned to data_pattern.root."
+  },
+  {
+    "variant": "fewmass_pydme_multibin_config_exp",
+    "config": "configs/scan_qedark_repro_fewmass_pydme_multibin_config_exp.json",
+    "note": "pydme multibin constraint, config exposure (Bp/Br scale)."
+  },
+  {
+    "variant": "fewmass_light_tau_config_exp",
+    "config": "configs/scan_qedark_repro_fewmass_light_tau_config_exp.json",
+    "note": "Light (massless) mediator QEdark, tau constraint, config exposure."
+  },
+  {
+    "variant": "fullgrid_heavy_multibin_config_exp",
+    "config": "configs/scan_qedark_repro_fullgrid_heavy_multibin_config_exp.json",
+    "note": "Full grid heavy, config exposure."
+  },
+  {
+    "variant": "fullgrid_heavy_tau_config_exp",
+    "config": "configs/scan_qedark_repro_fullgrid_heavy_tau_config_exp.json",
+    "note": "Full grid heavy, config exposure."
+  },
+  {
+    "variant": "fullgrid_light_tau_config_exp",
+    "config": "configs/scan_qedark_repro_fullgrid_light_tau_config_exp.json",
+    "note": "Full grid massless, config exposure."
+  }
+]

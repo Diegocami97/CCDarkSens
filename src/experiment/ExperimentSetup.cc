@@ -1,3 +1,10 @@
+// ============================================================================
+//  CCDarkSens — ExperimentSetup
+//  Computes experiment summary quantities (exposure in kg·year, ROI bins, mode string) from JSON experiment settings and detector mass.
+//
+//  Author: Diego Venegas-Vargas
+// ============================================================================
+
 #include "ccdarksens/experiment/ExperimentSetup.hh"
 #include <algorithm>
 #include <stdexcept>
@@ -29,8 +36,9 @@ ExperimentSetup::ExperimentSetup(ExperimentConfig cfg,
 
 ExperimentSummary ExperimentSetup::prepare_summary() const {
   ExperimentSummary s;
-  // s.exposure_kg_day = detector_mass_kg_ * cfg_.livetime_days * cfg_.duty_cycle;
-  s.exposure_kg_year = cfg_.livetime_days * cfg_.duty_cycle * detector_mass_kg_ / 365; // NEED to fix for later
+  // Exposure in kg·year: (livetime_days * duty_cycle) * mass_kg / days_per_year
+  constexpr double days_per_year = 365.25;
+  s.exposure_kg_year = cfg_.livetime_days * cfg_.duty_cycle * detector_mass_kg_ / days_per_year;
   s.binning = cfg_.binning;
   s.rng_seed_used = rng_seed_;
   s.mode_string = mode_to_string(cfg_.mode);
@@ -44,6 +52,8 @@ ExperimentSummary ExperimentSetup::prepare_summary() const {
     std::sort(s.roi_bins.begin(), s.roi_bins.end());
     s.roi_bins.erase(std::unique(s.roi_bins.begin(), s.roi_bins.end()), s.roi_bins.end());
   }
+  s.pattern_roi      = cfg_.pattern_roi;
+  s.observable_bins  = cfg_.observable_bins;
   return s;
 }
 

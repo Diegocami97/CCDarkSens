@@ -1,3 +1,10 @@
+// ============================================================================
+//  CCDarkSens — PatternEfficiency
+//  Header for applying a stored ε(n_e) efficiency histogram to spectra.
+//
+//  Author: Diego Venegas-Vargas
+// ============================================================================
+
 #pragma once
 #include <memory>
 

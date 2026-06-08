@@ -1,3 +1,10 @@
+// ============================================================================
+//  CCDarkSens — DMElectronModel
+//  Resolves and loads QEDark/QCDark rate CSV paths for a given (material, mediator, mχ, σe) and builds a binned dR/dE TH1D spectrum.
+//
+//  Author: Diego Venegas-Vargas
+// ============================================================================
+
 #include "ccdarksens/model/DMElectronModel.hh"
 // #include "ccdarksens/io/RateTable.hh"
 
@@ -6,6 +13,7 @@
 #include <sstream>
 #include <iomanip>
 #include <string>
+#include <cctype>
 
 namespace fs = std::filesystem;
 
@@ -53,7 +61,17 @@ bool DMElectronModel::Configure(const DMElectronConfig& c) {
 
 std::unique_ptr<TH1D> DMElectronModel::MakeSpectrum_E() const {
   if (!table_) return nullptr;
-  return table_->MakeTH1D("S_raw_E", cfg_.Emin_eV, cfg_.Emax_eV, cfg_.nbins);
+  auto sanitize = [](std::string s) {
+    for (char& c : s) {
+      if (c == '.') c = 'p';
+      else if (c == '-') c = 'm';
+      else if (c == '+') c = 'p';
+      else if (!(std::isalnum(static_cast<unsigned char>(c)) || c == '_')) c = '_';
+    }
+    return s;
+  };
+  const std::string name = sanitize("dRdE__mchi_" + format_mchi_6f(cfg_.mchi_MeV) + "__sigma_" + cfg_.sigma_e_cm2);
+  return table_->MakeTH1D(name.c_str(), cfg_.Emin_eV, cfg_.Emax_eV, cfg_.nbins);
 }
 
 } // namespace ccdarksens

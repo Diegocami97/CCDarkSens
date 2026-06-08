@@ -1,3 +1,10 @@
+// ============================================================================
+//  CCDarkSens — ChargeIonization
+//  Header for table-driven P(n_e|E) ionization and dR/dE→n_e folding.
+//
+//  Author: Diego Venegas-Vargas
+// ============================================================================
+
 #pragma once
 #include <memory>
 #include <string>
@@ -18,6 +25,11 @@ public:
                                  int ne_min, int ne_max) const;
 
   int MaxNeFromTable() const { return static_cast<int>(pn_given_E_.size()); }
+
+  // NEW: return P(n_e | E) for ne_min ≤ n_e ≤ ne_max
+  std::vector<double> ProbNeGivenE(double E_eV,
+                                  int ne_min,
+                                  int ne_max) const;
 
 private:
   std::vector<std::pair<std::vector<double>, std::vector<double>>> pn_given_E_;

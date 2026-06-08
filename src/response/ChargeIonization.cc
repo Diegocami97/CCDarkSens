@@ -1,11 +1,24 @@
+// ============================================================================
+//  CCDarkSens — ChargeIonization
+//  Loads P(n_e|E) from a CSV table and folds differential dR/dE spectra into expected n_e count histograms.
+//
+//  Author: Diego Venegas-Vargas
+// ============================================================================
+
 #include "ccdarksens/response/ChargeIonization.hh"
 #include <TH1D.h>
 
 #include <algorithm>
-#include <cctype>
+#include <cmath>
+#include <filesystem>
 #include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <memory>
+#include <string>
+#include <vector>
 #include <sstream>
-#include <stdexcept>
+#include <map>
 
 namespace ccdarksens {
 
@@ -40,11 +53,21 @@ void ChargeIonization::LoadCSV_(const std::string& path) {
   }
   if (E.size()<2 || cols.empty()) throw std::runtime_error("ChargeIonization: malformed table");
 
-  // Normalize rows for robustness
-  for (size_t i=0;i<E.size();++i) {
-    double s=0.0; for (auto& c: cols) s += c[i];
-    if (s>0) for (auto& c: cols) c[i] /= s;
+  // DEBUG: print row-sums at a few energies
+  for (size_t i = 0; i < E.size(); i += std::max<size_t>(1, E.size()/10)) {
+    double s = 0.0;
+    for (auto& c : cols) s += c[i];
+    std::cout << "[ChargeIonization] E=" << E[i]
+              << "  sum P(n>=1|E)=" << s << "\n";
   }
+
+  // Normalize rows for robustness
+  // for (size_t i=0;i<E.size();++i) {
+  //   double s=0.0; for (auto& c: cols) s += c[i];
+  //   if (s>0) for (auto& c: cols) c[i] /= s;
+  // }
+
+
   pn_given_E_.clear();
   for (auto& c : cols) pn_given_E_.push_back({E, c});
 }
@@ -77,11 +100,11 @@ std::unique_ptr<TH1D> ChargeIonization::FoldToNe(const TH1D& dRdE,
   auto h = std::make_unique<TH1D>("S_ne","Signal in n_{e};n_{e};counts",
                                   n_out, edges.data());
 
+  // dRdE bin content = rate [events/(kg·year·eV)]; counts = rate * exposure_kg_year [kg·year] * dE [eV]
   for (int i=1;i<=nbins;++i) {
     const double Ei   = dRdE.GetBinCenter(i);
     const double dEi  = dRdE.GetBinWidth(i);
-    const double rate = dRdE.GetBinContent(i);  // events/(kg year eV)
-    // const double counts = rate * dEi * exposure_kg_year;
+    const double rate = dRdE.GetBinContent(i);  // events/(kg·year·eV)
     const double counts = rate * exposure_kg_year * dEi;
     if (counts <= 0) continue;
 
@@ -96,5 +119,33 @@ std::unique_ptr<TH1D> ChargeIonization::FoldToNe(const TH1D& dRdE,
   }
   return h;
 }
+
+std::vector<double>
+ChargeIonization::ProbNeGivenE(double E_eV,
+                               int ne_min,
+                               int ne_max) const
+{
+    if (ne_max < ne_min)
+        throw std::runtime_error("ProbNeGivenE: invalid ne_min/ne_max");
+
+    int k = MaxNeFromTable();  // number of n>=1 channels
+    int Nn = ne_max - ne_min + 1;
+    std::vector<double> out(Nn, 0.0);
+
+    for (int n = ne_min; n <= ne_max; ++n) {
+        if (n <= 0) continue;
+        if (n > k) continue;
+
+        const auto& entry = pn_given_E_[size_t(n-1)];
+        const auto& Eval  = entry.first;
+        const auto& Pnval = entry.second;
+
+        double p = InterpLinearClamped(Eval, Pnval, E_eV);
+        out[n - ne_min] = p;
+    }
+
+    return out;
+}
+
 
 } // namespace ccdarksens

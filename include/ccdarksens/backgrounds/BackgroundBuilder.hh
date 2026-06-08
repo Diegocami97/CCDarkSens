@@ -1,3 +1,10 @@
+// ============================================================================
+//  CCDarkSens — BackgroundBuilder
+//  Header for timing/dark-current background configuration and Asimov B(n_e) construction.
+//
+//  Author: Diego Venegas-Vargas
+// ============================================================================
+
 #pragma once
 #include <memory>
 #include <optional>
@@ -75,6 +82,11 @@ public:
     return dccfg_.lambda_e_per_pix_per_year *
            (tcfg_.exposure_time_s / year_s);
   }
+
+  // NEW: E-dependent wrapper, currently just forwards to BuildBkgAsimov()
+  std::unique_ptr<TH1D> BuildBkgAsimov_EDependent(
+    const std::vector<double>& E_grid_eV,
+    const std::vector<std::vector<double>>& eps_Ene) ;
 
 private:
   int rows_, cols_, ne_min_, ne_max_;

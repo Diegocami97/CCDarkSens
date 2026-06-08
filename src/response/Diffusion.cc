@@ -1,4 +1,12 @@
+// ============================================================================
+//  CCDarkSens — Diffusion
+//  Applies z-averaged lateral diffusion as a Gaussian smearing kernel on integer n_e histograms with readout noise in quadrature.
+//
+//  Author: Diego Venegas-Vargas
+// ============================================================================
+
 #include "ccdarksens/response/Diffusion.hh"
+#include "ccdarksens/response/DiffusionPhysics.hh"
 #include <TH1D.h>
 #include <cmath>
 #include <vector>
@@ -8,12 +16,7 @@
 namespace ccdarksens {
 
 double Diffusion::sigma_xy_um_(double z_um, double Ee_eV) const {
-  // Ee in keV for the linear term
-  const double Ee_keV = Ee_eV * 1e-3;
-  const double inside = 1.0 - b_umInv_ * z_um;
-  if (inside <= 0.0) return std::numeric_limits<double>::quiet_NaN();
-  const double geom = std::sqrt(-A_um2_ * std::log(inside));
-  return geom * (alpha_ + beta_per_keV_ * Ee_keV);
+  return ComputeSigmaXYUm(z_um, Ee_eV, A_um2_, b_umInv_, alpha_, beta_per_keV_);
 }
 
 double Diffusion::ComputeSigmaElectrons(double Ee_eV, std::size_t nz_steps) const {

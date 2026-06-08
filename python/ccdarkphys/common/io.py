@@ -24,21 +24,25 @@ def sha1sum(path: str) -> str:
             h.update(chunk)
     return h.hexdigest()
 
-CSV_HEADER = [
-    "# Differential Rates computed with CCDarkSens (QEDark entry)",
-    "# material = {material}, mediator = {mediator}, table = {table_path}",
-    "# table_sha1 = {table_sha1}",
-    "# halo (cm/s): v0={v0_cm_s}, vE={vE_cm_s}, vesc={vesc_cm_s}",
-    "# mX (eV) = {mchi_eV}",
-    "# sigma_e (cm^2) = {sigma_e_cm2}",
-    "# Output units: dR/dE in events / kg / year / eV",
-    "# Columns: E (eV), dRdE (events/kg/year/eV)"
-]
+def _csv_header_lines(entry: str) -> list:
+    return [
+        f"# Differential Rates computed with CCDarkSens ({entry} entry)",
+        "# material = {material}, mediator = {mediator}, table = {table_path}",
+        "# table_sha1 = {table_sha1}",
+        "# halo (cm/s): v0={v0_cm_s}, vE={vE_cm_s}, vesc={vesc_cm_s}",
+        "# mX (eV) = {mchi_eV}",
+        "# sigma_e (cm^2) = {sigma_e_cm2}",
+        "# Output units: dR/dE in events / kg / year / eV",
+        "# Columns: E (eV), dRdE (events/kg/year/eV)",
+    ]
 
-def write_csv(out_path: str, E, R, meta: dict) -> None:
+# Kept for callers that expect a static name; first line is the same as _csv_header_lines("QEDark")[0]
+CSV_HEADER = _csv_header_lines("QEDark")
+
+def write_csv(out_path: str, E, R, meta: dict, *, entry: str = "QEDark") -> None:
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     with open(out_path, "w") as f:
-        for line in CSV_HEADER:
+        for line in _csv_header_lines(entry):
             f.write(line.format(**meta) + "\n")
         f.write("E,dRdE\n")
         for e, v in zip(E, R):

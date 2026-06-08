@@ -1,0 +1,45 @@
+{
+  "_comment": "SRDM Asimov check: each mass uses its own CSV xsec grid; minimization runs only on those points. Output includes TTree q_scan_per_mass. TH2D Y-axis is union of all sigmas (sparse columns).",
+  "run": {
+    "label": "scan_srdm_pattern_csv_per_mass_pydme_minuit",
+    "outdir": "outputs/scan_srdm_pattern_csv_per_mass_pydme_minuit",
+    "sigma_grid_mode": "per_mass",
+    "n_toys": 0,
+    "rng_seed": 12345,
+    "verbosity": 1,
+    "cl": 0.9,
+    "test_stat": "PLR",
+    "use_profile_likelihood": true,
+    "data_path": "",
+    "background_source": "bp_br_template",
+    "background_model": "Bp_theta_Br",
+    "background_Bp": [141.4, 0.111, 0.042, 0.019, 2.5e-5, 5.8e-5],
+    "background_Br": [0.039, 0.039, 0.016, 0.052, 0.011, 0.035],
+    "constrain_prior_strength": 98,
+    "constrain_use_gamma_sign": false,
+    "constrain_use_tau_weighted": true,
+    "constrain_n_bins": 1,
+    "theta_lo": 0.5,
+    "theta_hi": 10,
+    "profile_minimizer": "pydme",
+    "dump_spat_point_mchi_MeV": 1.0,
+    "dump_spat_point_sigma_e_cm2": 1.905461E-38,
+    "observable_bins": "pattern"
+  },
+  "detector": {
+    "mass_kg": 0.5
+  },
+  "experiment": {
+    "mode": "asimov",
+    "livetime_days": 2.6,
+    "duty_cycle": 1.0,
+    "roi_bins": [2, 3, 4, 5],
+    "pattern_roi": [11, 21, 111, 31, 22, 211]
+  },
+  "srdm_signal_csv": {
+    "input_dir": "outputs/qcdark_srdm_gamma_0p4645605",
+    "filename_regex": "pattern_signal_summed_mX([0-9]+(?:\\.[0-9]+)?)_full_QCD",
+    "rates_are_per_gram_per_day": true,
+    "signal_rate_scale": 1.0
+  }
+}

@@ -1,3 +1,10 @@
+// ============================================================================
+//  CCDarkSens — RateTable
+//  Header for QEDark rate-table CSV I/O and TH1D spectrum construction in events/(kg·year·eV).
+//
+//  Author: Diego Venegas-Vargas
+// ============================================================================
+
 #pragma once
 #include <memory>
 #include <string>
@@ -15,13 +22,13 @@ struct RateMeta {
   double      binsize_eV   = 0.1;
 };
 
-/// Holds a QEDark rate table (E [eV], dR/dE [events / g / day / eV])
+/// Holds a QEDark rate table (E [eV], dR/dE [events/(kg·year·eV)]). CSV must use events/(kg·year·eV).
 class RateTable {
 public:
   RateTable() = default;
 
   /// Load a 2-column CSV with a single header row; comments (#) are ignored.
-  /// Columns: E_eV, dRdE_g_day_eV
+  /// Columns: E [eV], dRdE [events/(kg·year·eV)].
   /// Returns true on success.
   bool LoadCSV(const std::string& path);
 
@@ -29,7 +36,7 @@ public:
   const std::vector<double>& R_kg_year_eV() const noexcept { return R_kg_year_eV_; }
   const RateMeta& meta() const noexcept { return meta_; }
 
-  /// Build a ROOT spectrum in units of events / kg / day / eV.
+  /// Build a ROOT spectrum: bin content = dR/dE [events/(kg·year·eV)]. Multiply by exposure_kg_year and dE to get counts.
   /// Performs a simple linear interpolation onto [Emin, Emax] with nbins.
   std::unique_ptr<TH1D> MakeTH1D(const std::string& name,
                                  double Emin_eV, double Emax_eV,

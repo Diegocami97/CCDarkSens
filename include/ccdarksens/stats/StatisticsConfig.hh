@@ -1,3 +1,10 @@
+// ============================================================================
+//  CCDarkSens — StatisticsConfig
+//  Header for statistical-method settings (test statistic name, CL, toys, bin selection) derived from run config.
+//
+//  Author: Diego Venegas-Vargas
+// ============================================================================
+
 #pragma once
 
 #include <string>

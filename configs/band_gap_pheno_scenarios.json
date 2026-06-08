@@ -1,0 +1,1026 @@
+{
+  "_comment": "Pheno scenarios. band_gap_eV must match scissor in epsilon_h5. eh_pair_eV affects p100K only (not QCDark2). See docs/band_gap_study_architecture.md and docs/band_gap_study_roadmap.md.",
+  "gap_sweep_eV": [
+    0.1,
+    0.3,
+    0.5,
+    0.7,
+    0.9,
+    1.2
+  ],
+  "gap_sweep_status": {
+    "0.1": {
+      "epsilon": "done",
+      "rates": "done",
+      "scissor_scan": "done",
+      "p100K": "done"
+    },
+    "0.3": {
+      "epsilon": "done",
+      "rates": "done",
+      "scissor_scan": "done",
+      "p100K": "done"
+    },
+    "0.5": {
+      "epsilon": "done",
+      "rates": "done",
+      "scissor_scan": "done",
+      "p100K": "done"
+    },
+    "0.7": {
+      "epsilon": "done",
+      "rates": "done",
+      "scissor_scan": "config_ready",
+      "p100K": "done"
+    },
+    "0.9": {
+      "epsilon": "done",
+      "rates": "done",
+      "scissor_scan": "config_ready",
+      "p100K": "done"
+    },
+    "1.2": {
+      "epsilon": "done",
+      "rates": "done",
+      "scissor_scan": "done",
+      "p100K": "done"
+    }
+  },
+  "reference": {
+    "label": "Si ref (1.2 eV scissor)",
+    "band_gap_eV": 1.2,
+    "eh_pair_eV": 3.8,
+    "scenario": "ref",
+    "epsilon_h5": "data/qcdark2_epsilon/Si/Si_fast_gap1p2.h5",
+    "rates_dir": "data/qcdark2_rates/Si/heavy/Si_fast_gap1p2",
+    "ionization_csv": "data/p100K_table.csv",
+    "scan_config": "configs/scan_dmelectron_band_gap_study_1p2.json",
+    "outdir": "outputs/scan_dmelectron_band_gap_study_1p2"
+  },
+  "scenarios": [
+    {
+      "label": "0.1 eV gap, 0.1 eV e_h (D-equal)",
+      "band_gap_eV": 0.1,
+      "eh_pair_eV": 0.1,
+      "scenario": "D-equal",
+      "epsilon_h5": "data/qcdark2_epsilon/Si/Si_fast_gap0p1.h5",
+      "rates_dir": "data/qcdark2_rates/Si/heavy/Si_fast_gap0p1",
+      "ionization_csv": "data/p100K_gap0p1_eh0p1.csv",
+      "scan_config": "configs/scan_band_gap_pheno_0p1_eh0p1.json",
+      "outdir": "outputs/scan_band_gap_0p1_eh0p1",
+      "phase_c": "pending"
+    },
+    {
+      "label": "0.1 eV gap, 3.8 eV e_h (B-thresh)",
+      "band_gap_eV": 0.1,
+      "eh_pair_eV": 3.8,
+      "scenario": "B-thresh",
+      "epsilon_h5": "data/qcdark2_epsilon/Si/Si_fast_gap0p1.h5",
+      "rates_dir": "data/qcdark2_rates/Si/heavy/Si_fast_gap0p1",
+      "ionization_csv": "data/p100K_gap0p1_eh3p8.csv",
+      "scan_config": "configs/scan_band_gap_pheno_0p1_eh3p8.json",
+      "outdir": "outputs/scan_band_gap_0p1_eh3p8",
+      "phase_c": "pending"
+    },
+    {
+      "label": "0.3 eV gap, 0.3 eV e_h (D-equal)",
+      "band_gap_eV": 0.3,
+      "eh_pair_eV": 0.3,
+      "scenario": "D-equal",
+      "epsilon_h5": "data/qcdark2_epsilon/Si/Si_fast_gap0p3.h5",
+      "rates_dir": "data/qcdark2_rates/Si/heavy/Si_fast_gap0p3",
+      "ionization_csv": "data/p100K_gap0p3_eh0p3.csv",
+      "scan_config": "configs/scan_band_gap_pheno_0p3_eh0p3.json",
+      "outdir": "outputs/scan_band_gap_0p3_eh0p3",
+      "phase_c": "pending"
+    },
+    {
+      "label": "0.3 eV gap, 3.8 eV e_h (B-thresh)",
+      "band_gap_eV": 0.3,
+      "eh_pair_eV": 3.8,
+      "scenario": "B-thresh",
+      "epsilon_h5": "data/qcdark2_epsilon/Si/Si_fast_gap0p3.h5",
+      "rates_dir": "data/qcdark2_rates/Si/heavy/Si_fast_gap0p3",
+      "ionization_csv": "data/p100K_gap0p3_eh3p8.csv",
+      "scan_config": "configs/scan_band_gap_pheno_0p3_eh3p8.json",
+      "outdir": "outputs/scan_band_gap_0p3_eh3p8",
+      "phase_c": "pending"
+    },
+    {
+      "label": "0.5 eV gap, 0.5 eV e_h (D-equal)",
+      "band_gap_eV": 0.5,
+      "eh_pair_eV": 0.5,
+      "scenario": "D-equal",
+      "epsilon_h5": "data/qcdark2_epsilon/Si/Si_fast_gap0p5.h5",
+      "rates_dir": "data/qcdark2_rates/Si/heavy/Si_fast_gap0p5",
+      "ionization_csv": "data/p100K_gap0p5_eh0p5.csv",
+      "scan_config": "configs/scan_band_gap_pheno_0p5_eh0p5.json",
+      "outdir": "outputs/scan_band_gap_0p5_eh0p5",
+      "phase_c": "pending"
+    },
+    {
+      "label": "0.5 eV gap, 3.8 eV e_h (B-thresh)",
+      "band_gap_eV": 0.5,
+      "eh_pair_eV": 3.8,
+      "scenario": "B-thresh",
+      "epsilon_h5": "data/qcdark2_epsilon/Si/Si_fast_gap0p5.h5",
+      "rates_dir": "data/qcdark2_rates/Si/heavy/Si_fast_gap0p5",
+      "ionization_csv": "data/p100K_gap0p5_eh3p8.csv",
+      "scan_config": "configs/scan_band_gap_pheno_0p5_eh3p8.json",
+      "outdir": "outputs/scan_band_gap_0p5_eh3p8",
+      "phase_c": "pending"
+    },
+    {
+      "label": "0.7 eV gap, 0.7 eV e_h (D-equal)",
+      "band_gap_eV": 0.7,
+      "eh_pair_eV": 0.7,
+      "scenario": "D-equal",
+      "epsilon_h5": "data/qcdark2_epsilon/Si/Si_fast_gap0p7.h5",
+      "rates_dir": "data/qcdark2_rates/Si/heavy/Si_fast_gap0p7",
+      "ionization_csv": "data/p100K_gap0p7_eh0p7.csv",
+      "scan_config": "configs/scan_band_gap_pheno_0p7_eh0p7.json",
+      "outdir": "outputs/scan_band_gap_0p7_eh0p7",
+      "phase_c": "pending"
+    },
+    {
+      "label": "0.7 eV gap, 3.8 eV e_h (B-thresh)",
+      "band_gap_eV": 0.7,
+      "eh_pair_eV": 3.8,
+      "scenario": "B-thresh",
+      "epsilon_h5": "data/qcdark2_epsilon/Si/Si_fast_gap0p7.h5",
+      "rates_dir": "data/qcdark2_rates/Si/heavy/Si_fast_gap0p7",
+      "ionization_csv": "data/p100K_gap0p7_eh3p8.csv",
+      "scan_config": "configs/scan_band_gap_pheno_0p7_eh3p8.json",
+      "outdir": "outputs/scan_band_gap_0p7_eh3p8",
+      "phase_c": "pending"
+    },
+    {
+      "label": "0.9 eV gap, 0.9 eV e_h (D-equal)",
+      "band_gap_eV": 0.9,
+      "eh_pair_eV": 0.9,
+      "scenario": "D-equal",
+      "epsilon_h5": "data/qcdark2_epsilon/Si/Si_fast_gap0p9.h5",
+      "rates_dir": "data/qcdark2_rates/Si/heavy/Si_fast_gap0p9",
+      "ionization_csv": "data/p100K_gap0p9_eh0p9.csv",
+      "scan_config": "configs/scan_band_gap_pheno_0p9_eh0p9.json",
+      "outdir": "outputs/scan_band_gap_0p9_eh0p9",
+      "phase_c": "pending"
+    },
+    {
+      "label": "0.9 eV gap, 3.8 eV e_h (B-thresh)",
+      "band_gap_eV": 0.9,
+      "eh_pair_eV": 3.8,
+      "scenario": "B-thresh",
+      "epsilon_h5": "data/qcdark2_epsilon/Si/Si_fast_gap0p9.h5",
+      "rates_dir": "data/qcdark2_rates/Si/heavy/Si_fast_gap0p9",
+      "ionization_csv": "data/p100K_gap0p9_eh3p8.csv",
+      "scan_config": "configs/scan_band_gap_pheno_0p9_eh3p8.json",
+      "outdir": "outputs/scan_band_gap_0p9_eh3p8",
+      "phase_c": "pending"
+    },
+    {
+      "label": "1.2 eV gap, 1.2 eV e_h (D-equal)",
+      "band_gap_eV": 1.2,
+      "eh_pair_eV": 1.2,
+      "scenario": "D-equal",
+      "epsilon_h5": "data/qcdark2_epsilon/Si/Si_fast_gap1p2.h5",
+      "rates_dir": "data/qcdark2_rates/Si/heavy/Si_fast_gap1p2",
+      "ionization_csv": "data/p100K_gap1p2_eh1p2.csv",
+      "scan_config": "configs/scan_band_gap_pheno_1p2_eh1p2.json",
+      "outdir": "outputs/scan_band_gap_1p2_eh1p2",
+      "phase_c": "pending"
+    },
+    {
+      "label": "1.2 eV gap, 3.8 eV e_h (B-thresh)",
+      "band_gap_eV": 1.2,
+      "eh_pair_eV": 3.8,
+      "scenario": "B-thresh",
+      "epsilon_h5": "data/qcdark2_epsilon/Si/Si_fast_gap1p2.h5",
+      "rates_dir": "data/qcdark2_rates/Si/heavy/Si_fast_gap1p2",
+      "ionization_csv": "data/p100K_gap1p2_eh3p8.csv",
+      "scan_config": "configs/scan_band_gap_pheno_1p2_eh3p8.json",
+      "outdir": "outputs/scan_band_gap_1p2_eh3p8",
+      "phase_c": "pending"
+    },
+    {
+      "label": "0.3 eV gap, Si eh ratio (A-ratio)",
+      "band_gap_eV": 0.3,
+      "eh_pair_eV": 0.95,
+      "scenario": "A-ratio",
+      "epsilon_h5": "data/qcdark2_epsilon/Si/Si_fast_gap0p3.h5",
+      "rates_dir": "data/qcdark2_rates/Si/heavy/Si_fast_gap0p3",
+      "ionization_csv": "data/p100K_gap0p3_eh0p95.csv",
+      "scan_config": "configs/scan_band_gap_pheno_0p3_eh0p95.json",
+      "outdir": "outputs/scan_band_gap_0p3_eh0p95",
+      "phase_c": "optional"
+    }
+  ],
+  "scissor_only_scans": [
+    {
+      "band_gap_eV": 0.7,
+      "scan_config": "configs/scan_dmelectron_band_gap_study_0p7.json",
+      "outdir": "outputs/scan_dmelectron_band_gap_study_0p7",
+      "rates_dir": "data/qcdark2_rates/Si/heavy/Si_fast_gap0p7"
+    },
+    {
+      "band_gap_eV": 0.9,
+      "scan_config": "configs/scan_dmelectron_band_gap_study_0p9.json",
+      "outdir": "outputs/scan_dmelectron_band_gap_study_0p9",
+      "rates_dir": "data/qcdark2_rates/Si/heavy/Si_fast_gap0p9"
+    }
+  ],
+  "phase_c": {
+    "description": "12 coupled scans: 6 gaps x (D-equal, B-thresh); ROI n_e 1-5",
+    "runner": "python3 utils/run_band_gap_phase_c.py",
+    "status": "in_progress"
+  },
+  "grid2d": {
+    "description": "2D (gap,eh) scan grid; mediator-specific scan configs live in configs/scan_band_gap_2d_*",
+    "gaps_eV": [
+      0.1,
+      0.3,
+      0.5,
+      0.7,
+      0.9,
+      1.2
+    ],
+    "eh_grid_eV": [
+      0.5,
+      1.0,
+      1.5,
+      2.0,
+      2.5,
+      3.8
+    ],
+    "valid_cells_count": 32,
+    "new_cells_count": 25,
+    "mediators": [
+      "heavy",
+      "light"
+    ],
+    "cells": [
+      {
+        "band_gap_eV": 0.1,
+        "eh_pair_eV": 0.5,
+        "valid": true,
+        "existing_complete": false,
+        "new_cell": true
+      },
+      {
+        "band_gap_eV": 0.1,
+        "eh_pair_eV": 1.0,
+        "valid": true,
+        "existing_complete": false,
+        "new_cell": true
+      },
+      {
+        "band_gap_eV": 0.1,
+        "eh_pair_eV": 1.5,
+        "valid": true,
+        "existing_complete": false,
+        "new_cell": true
+      },
+      {
+        "band_gap_eV": 0.1,
+        "eh_pair_eV": 2.0,
+        "valid": true,
+        "existing_complete": false,
+        "new_cell": true
+      },
+      {
+        "band_gap_eV": 0.1,
+        "eh_pair_eV": 2.5,
+        "valid": true,
+        "existing_complete": false,
+        "new_cell": true
+      },
+      {
+        "band_gap_eV": 0.1,
+        "eh_pair_eV": 3.8,
+        "valid": true,
+        "existing_complete": true,
+        "new_cell": false
+      },
+      {
+        "band_gap_eV": 0.3,
+        "eh_pair_eV": 0.5,
+        "valid": true,
+        "existing_complete": false,
+        "new_cell": true
+      },
+      {
+        "band_gap_eV": 0.3,
+        "eh_pair_eV": 1.0,
+        "valid": true,
+        "existing_complete": false,
+        "new_cell": true
+      },
+      {
+        "band_gap_eV": 0.3,
+        "eh_pair_eV": 1.5,
+        "valid": true,
+        "existing_complete": false,
+        "new_cell": true
+      },
+      {
+        "band_gap_eV": 0.3,
+        "eh_pair_eV": 2.0,
+        "valid": true,
+        "existing_complete": false,
+        "new_cell": true
+      },
+      {
+        "band_gap_eV": 0.3,
+        "eh_pair_eV": 2.5,
+        "valid": true,
+        "existing_complete": false,
+        "new_cell": true
+      },
+      {
+        "band_gap_eV": 0.3,
+        "eh_pair_eV": 3.8,
+        "valid": true,
+        "existing_complete": true,
+        "new_cell": false
+      },
+      {
+        "band_gap_eV": 0.5,
+        "eh_pair_eV": 0.5,
+        "valid": true,
+        "existing_complete": true,
+        "new_cell": false
+      },
+      {
+        "band_gap_eV": 0.5,
+        "eh_pair_eV": 1.0,
+        "valid": true,
+        "existing_complete": false,
+        "new_cell": true
+      },
+      {
+        "band_gap_eV": 0.5,
+        "eh_pair_eV": 1.5,
+        "valid": true,
+        "existing_complete": false,
+        "new_cell": true
+      },
+      {
+        "band_gap_eV": 0.5,
+        "eh_pair_eV": 2.0,
+        "valid": true,
+        "existing_complete": false,
+        "new_cell": true
+      },
+      {
+        "band_gap_eV": 0.5,
+        "eh_pair_eV": 2.5,
+        "valid": true,
+        "existing_complete": false,
+        "new_cell": true
+      },
+      {
+        "band_gap_eV": 0.5,
+        "eh_pair_eV": 3.8,
+        "valid": true,
+        "existing_complete": true,
+        "new_cell": false
+      },
+      {
+        "band_gap_eV": 0.7,
+        "eh_pair_eV": 0.5,
+        "valid": false,
+        "reason": "eh < gap"
+      },
+      {
+        "band_gap_eV": 0.7,
+        "eh_pair_eV": 1.0,
+        "valid": true,
+        "existing_complete": false,
+        "new_cell": true
+      },
+      {
+        "band_gap_eV": 0.7,
+        "eh_pair_eV": 1.5,
+        "valid": true,
+        "existing_complete": false,
+        "new_cell": true
+      },
+      {
+        "band_gap_eV": 0.7,
+        "eh_pair_eV": 2.0,
+        "valid": true,
+        "existing_complete": false,
+        "new_cell": true
+      },
+      {
+        "band_gap_eV": 0.7,
+        "eh_pair_eV": 2.5,
+        "valid": true,
+        "existing_complete": false,
+        "new_cell": true
+      },
+      {
+        "band_gap_eV": 0.7,
+        "eh_pair_eV": 3.8,
+        "valid": true,
+        "existing_complete": true,
+        "new_cell": false
+      },
+      {
+        "band_gap_eV": 0.9,
+        "eh_pair_eV": 0.5,
+        "valid": false,
+        "reason": "eh < gap"
+      },
+      {
+        "band_gap_eV": 0.9,
+        "eh_pair_eV": 1.0,
+        "valid": true,
+        "existing_complete": false,
+        "new_cell": true
+      },
+      {
+        "band_gap_eV": 0.9,
+        "eh_pair_eV": 1.5,
+        "valid": true,
+        "existing_complete": false,
+        "new_cell": true
+      },
+      {
+        "band_gap_eV": 0.9,
+        "eh_pair_eV": 2.0,
+        "valid": true,
+        "existing_complete": false,
+        "new_cell": true
+      },
+      {
+        "band_gap_eV": 0.9,
+        "eh_pair_eV": 2.5,
+        "valid": true,
+        "existing_complete": false,
+        "new_cell": true
+      },
+      {
+        "band_gap_eV": 0.9,
+        "eh_pair_eV": 3.8,
+        "valid": true,
+        "existing_complete": true,
+        "new_cell": false
+      },
+      {
+        "band_gap_eV": 1.2,
+        "eh_pair_eV": 0.5,
+        "valid": false,
+        "reason": "eh < gap"
+      },
+      {
+        "band_gap_eV": 1.2,
+        "eh_pair_eV": 1.0,
+        "valid": false,
+        "reason": "eh < gap"
+      },
+      {
+        "band_gap_eV": 1.2,
+        "eh_pair_eV": 1.5,
+        "valid": true,
+        "existing_complete": false,
+        "new_cell": true
+      },
+      {
+        "band_gap_eV": 1.2,
+        "eh_pair_eV": 2.0,
+        "valid": true,
+        "existing_complete": false,
+        "new_cell": true
+      },
+      {
+        "band_gap_eV": 1.2,
+        "eh_pair_eV": 2.5,
+        "valid": true,
+        "existing_complete": false,
+        "new_cell": true
+      },
+      {
+        "band_gap_eV": 1.2,
+        "eh_pair_eV": 3.8,
+        "valid": true,
+        "existing_complete": true,
+        "new_cell": false
+      }
+    ],
+    "scan_entries": [
+      {
+        "mediator": "heavy",
+        "band_gap_eV": 0.1,
+        "eh_pair_eV": 0.5,
+        "scan_config": "configs/scan_band_gap_2d_heavy_0p1_eh0p5.json",
+        "outdir": "outputs/scan_band_gap_2d_heavy_0p1_eh0p5",
+        "status": "new"
+      },
+      {
+        "mediator": "heavy",
+        "band_gap_eV": 0.1,
+        "eh_pair_eV": 1.0,
+        "scan_config": "configs/scan_band_gap_2d_heavy_0p1_eh1p0.json",
+        "outdir": "outputs/scan_band_gap_2d_heavy_0p1_eh1p0",
+        "status": "new"
+      },
+      {
+        "mediator": "heavy",
+        "band_gap_eV": 0.1,
+        "eh_pair_eV": 1.5,
+        "scan_config": "configs/scan_band_gap_2d_heavy_0p1_eh1p5.json",
+        "outdir": "outputs/scan_band_gap_2d_heavy_0p1_eh1p5",
+        "status": "new"
+      },
+      {
+        "mediator": "heavy",
+        "band_gap_eV": 0.1,
+        "eh_pair_eV": 2.0,
+        "scan_config": "configs/scan_band_gap_2d_heavy_0p1_eh2p0.json",
+        "outdir": "outputs/scan_band_gap_2d_heavy_0p1_eh2p0",
+        "status": "new"
+      },
+      {
+        "mediator": "heavy",
+        "band_gap_eV": 0.1,
+        "eh_pair_eV": 2.5,
+        "scan_config": "configs/scan_band_gap_2d_heavy_0p1_eh2p5.json",
+        "outdir": "outputs/scan_band_gap_2d_heavy_0p1_eh2p5",
+        "status": "new"
+      },
+      {
+        "mediator": "heavy",
+        "band_gap_eV": 0.1,
+        "eh_pair_eV": 3.8,
+        "scan_config": "configs/scan_band_gap_pheno_0p1_eh3p8.json",
+        "outdir": "outputs/scan_band_gap_0p1_eh3p8",
+        "status": "existing_complete"
+      },
+      {
+        "mediator": "heavy",
+        "band_gap_eV": 0.3,
+        "eh_pair_eV": 0.5,
+        "scan_config": "configs/scan_band_gap_2d_heavy_0p3_eh0p5.json",
+        "outdir": "outputs/scan_band_gap_2d_heavy_0p3_eh0p5",
+        "status": "new"
+      },
+      {
+        "mediator": "heavy",
+        "band_gap_eV": 0.3,
+        "eh_pair_eV": 1.0,
+        "scan_config": "configs/scan_band_gap_2d_heavy_0p3_eh1p0.json",
+        "outdir": "outputs/scan_band_gap_2d_heavy_0p3_eh1p0",
+        "status": "new"
+      },
+      {
+        "mediator": "heavy",
+        "band_gap_eV": 0.3,
+        "eh_pair_eV": 1.5,
+        "scan_config": "configs/scan_band_gap_2d_heavy_0p3_eh1p5.json",
+        "outdir": "outputs/scan_band_gap_2d_heavy_0p3_eh1p5",
+        "status": "new"
+      },
+      {
+        "mediator": "heavy",
+        "band_gap_eV": 0.3,
+        "eh_pair_eV": 2.0,
+        "scan_config": "configs/scan_band_gap_2d_heavy_0p3_eh2p0.json",
+        "outdir": "outputs/scan_band_gap_2d_heavy_0p3_eh2p0",
+        "status": "new"
+      },
+      {
+        "mediator": "heavy",
+        "band_gap_eV": 0.3,
+        "eh_pair_eV": 2.5,
+        "scan_config": "configs/scan_band_gap_2d_heavy_0p3_eh2p5.json",
+        "outdir": "outputs/scan_band_gap_2d_heavy_0p3_eh2p5",
+        "status": "new"
+      },
+      {
+        "mediator": "heavy",
+        "band_gap_eV": 0.3,
+        "eh_pair_eV": 3.8,
+        "scan_config": "configs/scan_band_gap_pheno_0p3_eh3p8.json",
+        "outdir": "outputs/scan_band_gap_0p3_eh3p8",
+        "status": "existing_complete"
+      },
+      {
+        "mediator": "heavy",
+        "band_gap_eV": 0.5,
+        "eh_pair_eV": 0.5,
+        "scan_config": "configs/scan_band_gap_pheno_0p5_eh0p5.json",
+        "outdir": "outputs/scan_band_gap_0p5_eh0p5",
+        "status": "existing_complete"
+      },
+      {
+        "mediator": "heavy",
+        "band_gap_eV": 0.5,
+        "eh_pair_eV": 1.0,
+        "scan_config": "configs/scan_band_gap_2d_heavy_0p5_eh1p0.json",
+        "outdir": "outputs/scan_band_gap_2d_heavy_0p5_eh1p0",
+        "status": "new"
+      },
+      {
+        "mediator": "heavy",
+        "band_gap_eV": 0.5,
+        "eh_pair_eV": 1.5,
+        "scan_config": "configs/scan_band_gap_2d_heavy_0p5_eh1p5.json",
+        "outdir": "outputs/scan_band_gap_2d_heavy_0p5_eh1p5",
+        "status": "new"
+      },
+      {
+        "mediator": "heavy",
+        "band_gap_eV": 0.5,
+        "eh_pair_eV": 2.0,
+        "scan_config": "configs/scan_band_gap_2d_heavy_0p5_eh2p0.json",
+        "outdir": "outputs/scan_band_gap_2d_heavy_0p5_eh2p0",
+        "status": "new"
+      },
+      {
+        "mediator": "heavy",
+        "band_gap_eV": 0.5,
+        "eh_pair_eV": 2.5,
+        "scan_config": "configs/scan_band_gap_2d_heavy_0p5_eh2p5.json",
+        "outdir": "outputs/scan_band_gap_2d_heavy_0p5_eh2p5",
+        "status": "new"
+      },
+      {
+        "mediator": "heavy",
+        "band_gap_eV": 0.5,
+        "eh_pair_eV": 3.8,
+        "scan_config": "configs/scan_band_gap_pheno_0p5_eh3p8.json",
+        "outdir": "outputs/scan_band_gap_0p5_eh3p8",
+        "status": "existing_complete"
+      },
+      {
+        "mediator": "heavy",
+        "band_gap_eV": 0.7,
+        "eh_pair_eV": 1.0,
+        "scan_config": "configs/scan_band_gap_2d_heavy_0p7_eh1p0.json",
+        "outdir": "outputs/scan_band_gap_2d_heavy_0p7_eh1p0",
+        "status": "new"
+      },
+      {
+        "mediator": "heavy",
+        "band_gap_eV": 0.7,
+        "eh_pair_eV": 1.5,
+        "scan_config": "configs/scan_band_gap_2d_heavy_0p7_eh1p5.json",
+        "outdir": "outputs/scan_band_gap_2d_heavy_0p7_eh1p5",
+        "status": "new"
+      },
+      {
+        "mediator": "heavy",
+        "band_gap_eV": 0.7,
+        "eh_pair_eV": 2.0,
+        "scan_config": "configs/scan_band_gap_2d_heavy_0p7_eh2p0.json",
+        "outdir": "outputs/scan_band_gap_2d_heavy_0p7_eh2p0",
+        "status": "new"
+      },
+      {
+        "mediator": "heavy",
+        "band_gap_eV": 0.7,
+        "eh_pair_eV": 2.5,
+        "scan_config": "configs/scan_band_gap_2d_heavy_0p7_eh2p5.json",
+        "outdir": "outputs/scan_band_gap_2d_heavy_0p7_eh2p5",
+        "status": "new"
+      },
+      {
+        "mediator": "heavy",
+        "band_gap_eV": 0.7,
+        "eh_pair_eV": 3.8,
+        "scan_config": "configs/scan_band_gap_pheno_0p7_eh3p8.json",
+        "outdir": "outputs/scan_band_gap_0p7_eh3p8",
+        "status": "existing_complete"
+      },
+      {
+        "mediator": "heavy",
+        "band_gap_eV": 0.9,
+        "eh_pair_eV": 1.0,
+        "scan_config": "configs/scan_band_gap_2d_heavy_0p9_eh1p0.json",
+        "outdir": "outputs/scan_band_gap_2d_heavy_0p9_eh1p0",
+        "status": "new"
+      },
+      {
+        "mediator": "heavy",
+        "band_gap_eV": 0.9,
+        "eh_pair_eV": 1.5,
+        "scan_config": "configs/scan_band_gap_2d_heavy_0p9_eh1p5.json",
+        "outdir": "outputs/scan_band_gap_2d_heavy_0p9_eh1p5",
+        "status": "new"
+      },
+      {
+        "mediator": "heavy",
+        "band_gap_eV": 0.9,
+        "eh_pair_eV": 2.0,
+        "scan_config": "configs/scan_band_gap_2d_heavy_0p9_eh2p0.json",
+        "outdir": "outputs/scan_band_gap_2d_heavy_0p9_eh2p0",
+        "status": "new"
+      },
+      {
+        "mediator": "heavy",
+        "band_gap_eV": 0.9,
+        "eh_pair_eV": 2.5,
+        "scan_config": "configs/scan_band_gap_2d_heavy_0p9_eh2p5.json",
+        "outdir": "outputs/scan_band_gap_2d_heavy_0p9_eh2p5",
+        "status": "new"
+      },
+      {
+        "mediator": "heavy",
+        "band_gap_eV": 0.9,
+        "eh_pair_eV": 3.8,
+        "scan_config": "configs/scan_band_gap_pheno_0p9_eh3p8.json",
+        "outdir": "outputs/scan_band_gap_0p9_eh3p8",
+        "status": "existing_complete"
+      },
+      {
+        "mediator": "heavy",
+        "band_gap_eV": 1.2,
+        "eh_pair_eV": 1.5,
+        "scan_config": "configs/scan_band_gap_2d_heavy_1p2_eh1p5.json",
+        "outdir": "outputs/scan_band_gap_2d_heavy_1p2_eh1p5",
+        "status": "new"
+      },
+      {
+        "mediator": "heavy",
+        "band_gap_eV": 1.2,
+        "eh_pair_eV": 2.0,
+        "scan_config": "configs/scan_band_gap_2d_heavy_1p2_eh2p0.json",
+        "outdir": "outputs/scan_band_gap_2d_heavy_1p2_eh2p0",
+        "status": "new"
+      },
+      {
+        "mediator": "heavy",
+        "band_gap_eV": 1.2,
+        "eh_pair_eV": 2.5,
+        "scan_config": "configs/scan_band_gap_2d_heavy_1p2_eh2p5.json",
+        "outdir": "outputs/scan_band_gap_2d_heavy_1p2_eh2p5",
+        "status": "new"
+      },
+      {
+        "mediator": "heavy",
+        "band_gap_eV": 1.2,
+        "eh_pair_eV": 3.8,
+        "scan_config": "configs/scan_band_gap_pheno_1p2_eh3p8.json",
+        "outdir": "outputs/scan_band_gap_1p2_eh3p8",
+        "status": "existing_complete"
+      },
+      {
+        "mediator": "light",
+        "band_gap_eV": 0.1,
+        "eh_pair_eV": 0.5,
+        "scan_config": "configs/scan_band_gap_2d_light_0p1_eh0p5.json",
+        "outdir": "outputs/scan_band_gap_2d_light_0p1_eh0p5",
+        "status": "new"
+      },
+      {
+        "mediator": "light",
+        "band_gap_eV": 0.1,
+        "eh_pair_eV": 1.0,
+        "scan_config": "configs/scan_band_gap_2d_light_0p1_eh1p0.json",
+        "outdir": "outputs/scan_band_gap_2d_light_0p1_eh1p0",
+        "status": "new"
+      },
+      {
+        "mediator": "light",
+        "band_gap_eV": 0.1,
+        "eh_pair_eV": 1.5,
+        "scan_config": "configs/scan_band_gap_2d_light_0p1_eh1p5.json",
+        "outdir": "outputs/scan_band_gap_2d_light_0p1_eh1p5",
+        "status": "new"
+      },
+      {
+        "mediator": "light",
+        "band_gap_eV": 0.1,
+        "eh_pair_eV": 2.0,
+        "scan_config": "configs/scan_band_gap_2d_light_0p1_eh2p0.json",
+        "outdir": "outputs/scan_band_gap_2d_light_0p1_eh2p0",
+        "status": "new"
+      },
+      {
+        "mediator": "light",
+        "band_gap_eV": 0.1,
+        "eh_pair_eV": 2.5,
+        "scan_config": "configs/scan_band_gap_2d_light_0p1_eh2p5.json",
+        "outdir": "outputs/scan_band_gap_2d_light_0p1_eh2p5",
+        "status": "new"
+      },
+      {
+        "mediator": "light",
+        "band_gap_eV": 0.1,
+        "eh_pair_eV": 3.8,
+        "scan_config": "configs/scan_band_gap_light_pheno_0p1_eh3p8.json",
+        "outdir": "outputs/scan_band_gap_light_0p1_eh3p8",
+        "status": "existing_complete"
+      },
+      {
+        "mediator": "light",
+        "band_gap_eV": 0.3,
+        "eh_pair_eV": 0.5,
+        "scan_config": "configs/scan_band_gap_2d_light_0p3_eh0p5.json",
+        "outdir": "outputs/scan_band_gap_2d_light_0p3_eh0p5",
+        "status": "new"
+      },
+      {
+        "mediator": "light",
+        "band_gap_eV": 0.3,
+        "eh_pair_eV": 1.0,
+        "scan_config": "configs/scan_band_gap_2d_light_0p3_eh1p0.json",
+        "outdir": "outputs/scan_band_gap_2d_light_0p3_eh1p0",
+        "status": "new"
+      },
+      {
+        "mediator": "light",
+        "band_gap_eV": 0.3,
+        "eh_pair_eV": 1.5,
+        "scan_config": "configs/scan_band_gap_2d_light_0p3_eh1p5.json",
+        "outdir": "outputs/scan_band_gap_2d_light_0p3_eh1p5",
+        "status": "new"
+      },
+      {
+        "mediator": "light",
+        "band_gap_eV": 0.3,
+        "eh_pair_eV": 2.0,
+        "scan_config": "configs/scan_band_gap_2d_light_0p3_eh2p0.json",
+        "outdir": "outputs/scan_band_gap_2d_light_0p3_eh2p0",
+        "status": "new"
+      },
+      {
+        "mediator": "light",
+        "band_gap_eV": 0.3,
+        "eh_pair_eV": 2.5,
+        "scan_config": "configs/scan_band_gap_2d_light_0p3_eh2p5.json",
+        "outdir": "outputs/scan_band_gap_2d_light_0p3_eh2p5",
+        "status": "new"
+      },
+      {
+        "mediator": "light",
+        "band_gap_eV": 0.3,
+        "eh_pair_eV": 3.8,
+        "scan_config": "configs/scan_band_gap_light_pheno_0p3_eh3p8.json",
+        "outdir": "outputs/scan_band_gap_light_0p3_eh3p8",
+        "status": "existing_complete"
+      },
+      {
+        "mediator": "light",
+        "band_gap_eV": 0.5,
+        "eh_pair_eV": 0.5,
+        "scan_config": "configs/scan_band_gap_light_pheno_0p5_eh0p5.json",
+        "outdir": "outputs/scan_band_gap_light_0p5_eh0p5",
+        "status": "existing_complete"
+      },
+      {
+        "mediator": "light",
+        "band_gap_eV": 0.5,
+        "eh_pair_eV": 1.0,
+        "scan_config": "configs/scan_band_gap_2d_light_0p5_eh1p0.json",
+        "outdir": "outputs/scan_band_gap_2d_light_0p5_eh1p0",
+        "status": "new"
+      },
+      {
+        "mediator": "light",
+        "band_gap_eV": 0.5,
+        "eh_pair_eV": 1.5,
+        "scan_config": "configs/scan_band_gap_2d_light_0p5_eh1p5.json",
+        "outdir": "outputs/scan_band_gap_2d_light_0p5_eh1p5",
+        "status": "new"
+      },
+      {
+        "mediator": "light",
+        "band_gap_eV": 0.5,
+        "eh_pair_eV": 2.0,
+        "scan_config": "configs/scan_band_gap_2d_light_0p5_eh2p0.json",
+        "outdir": "outputs/scan_band_gap_2d_light_0p5_eh2p0",
+        "status": "new"
+      },
+      {
+        "mediator": "light",
+        "band_gap_eV": 0.5,
+        "eh_pair_eV": 2.5,
+        "scan_config": "configs/scan_band_gap_2d_light_0p5_eh2p5.json",
+        "outdir": "outputs/scan_band_gap_2d_light_0p5_eh2p5",
+        "status": "new"
+      },
+      {
+        "mediator": "light",
+        "band_gap_eV": 0.5,
+        "eh_pair_eV": 3.8,
+        "scan_config": "configs/scan_band_gap_light_pheno_0p5_eh3p8.json",
+        "outdir": "outputs/scan_band_gap_light_0p5_eh3p8",
+        "status": "existing_complete"
+      },
+      {
+        "mediator": "light",
+        "band_gap_eV": 0.7,
+        "eh_pair_eV": 1.0,
+        "scan_config": "configs/scan_band_gap_2d_light_0p7_eh1p0.json",
+        "outdir": "outputs/scan_band_gap_2d_light_0p7_eh1p0",
+        "status": "new"
+      },
+      {
+        "mediator": "light",
+        "band_gap_eV": 0.7,
+        "eh_pair_eV": 1.5,
+        "scan_config": "configs/scan_band_gap_2d_light_0p7_eh1p5.json",
+        "outdir": "outputs/scan_band_gap_2d_light_0p7_eh1p5",
+        "status": "new"
+      },
+      {
+        "mediator": "light",
+        "band_gap_eV": 0.7,
+        "eh_pair_eV": 2.0,
+        "scan_config": "configs/scan_band_gap_2d_light_0p7_eh2p0.json",
+        "outdir": "outputs/scan_band_gap_2d_light_0p7_eh2p0",
+        "status": "new"
+      },
+      {
+        "mediator": "light",
+        "band_gap_eV": 0.7,
+        "eh_pair_eV": 2.5,
+        "scan_config": "configs/scan_band_gap_2d_light_0p7_eh2p5.json",
+        "outdir": "outputs/scan_band_gap_2d_light_0p7_eh2p5",
+        "status": "new"
+      },
+      {
+        "mediator": "light",
+        "band_gap_eV": 0.7,
+        "eh_pair_eV": 3.8,
+        "scan_config": "configs/scan_band_gap_light_pheno_0p7_eh3p8.json",
+        "outdir": "outputs/scan_band_gap_light_0p7_eh3p8",
+        "status": "existing_complete"
+      },
+      {
+        "mediator": "light",
+        "band_gap_eV": 0.9,
+        "eh_pair_eV": 1.0,
+        "scan_config": "configs/scan_band_gap_2d_light_0p9_eh1p0.json",
+        "outdir": "outputs/scan_band_gap_2d_light_0p9_eh1p0",
+        "status": "new"
+      },
+      {
+        "mediator": "light",
+        "band_gap_eV": 0.9,
+        "eh_pair_eV": 1.5,
+        "scan_config": "configs/scan_band_gap_2d_light_0p9_eh1p5.json",
+        "outdir": "outputs/scan_band_gap_2d_light_0p9_eh1p5",
+        "status": "new"
+      },
+      {
+        "mediator": "light",
+        "band_gap_eV": 0.9,
+        "eh_pair_eV": 2.0,
+        "scan_config": "configs/scan_band_gap_2d_light_0p9_eh2p0.json",
+        "outdir": "outputs/scan_band_gap_2d_light_0p9_eh2p0",
+        "status": "new"
+      },
+      {
+        "mediator": "light",
+        "band_gap_eV": 0.9,
+        "eh_pair_eV": 2.5,
+        "scan_config": "configs/scan_band_gap_2d_light_0p9_eh2p5.json",
+        "outdir": "outputs/scan_band_gap_2d_light_0p9_eh2p5",
+        "status": "new"
+      },
+      {
+        "mediator": "light",
+        "band_gap_eV": 0.9,
+        "eh_pair_eV": 3.8,
+        "scan_config": "configs/scan_band_gap_light_pheno_0p9_eh3p8.json",
+        "outdir": "outputs/scan_band_gap_light_0p9_eh3p8",
+        "status": "existing_complete"
+      },
+      {
+        "mediator": "light",
+        "band_gap_eV": 1.2,
+        "eh_pair_eV": 1.5,
+        "scan_config": "configs/scan_band_gap_2d_light_1p2_eh1p5.json",
+        "outdir": "outputs/scan_band_gap_2d_light_1p2_eh1p5",
+        "status": "new"
+      },
+      {
+        "mediator": "light",
+        "band_gap_eV": 1.2,
+        "eh_pair_eV": 2.0,
+        "scan_config": "configs/scan_band_gap_2d_light_1p2_eh2p0.json",
+        "outdir": "outputs/scan_band_gap_2d_light_1p2_eh2p0",
+        "status": "new"
+      },
+      {
+        "mediator": "light",
+        "band_gap_eV": 1.2,
+        "eh_pair_eV": 2.5,
+        "scan_config": "configs/scan_band_gap_2d_light_1p2_eh2p5.json",
+        "outdir": "outputs/scan_band_gap_2d_light_1p2_eh2p5",
+        "status": "new"
+      },
+      {
+        "mediator": "light",
+        "band_gap_eV": 1.2,
+        "eh_pair_eV": 3.8,
+        "scan_config": "configs/scan_band_gap_light_pheno_1p2_eh3p8.json",
+        "outdir": "outputs/scan_band_gap_light_1p2_eh3p8",
+        "status": "existing_complete"
+      }
+    ]
+  }
+}

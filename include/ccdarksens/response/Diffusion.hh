@@ -1,3 +1,10 @@
+// ============================================================================
+//  CCDarkSens — Diffusion
+//  Header for parametric lateral-diffusion smearing of n_e histograms.
+//
+//  Author: Diego Venegas-Vargas
+// ============================================================================
+
 #pragma once
 #include <cstddef>
 

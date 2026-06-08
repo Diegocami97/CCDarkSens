@@ -1,0 +1,30 @@
+{
+  "_comment": "Generate QEDark rate tables for the LBC heavy-mediator example scan (800 x 300 grid).",
+  "material": "Si",
+  "mediator": "heavy",
+  "halo": { "v0_kms": 238.0, "vE_kms": 263.0, "vesc_kms": 544.0 },
+  "detector": {
+    "band_gap_eV": 1.2,
+    "eh_pair_eV": 3.8,
+    "binsize_eV": 0.1
+  },
+  "rates_dir": "data/qedark_rates/Si/heavy/long_scan",
+  "filename_template": "dRdE_{material}_{mediator}_m{mchi_MeV}_s{sigma_e_cm2}.csv",
+  "grid": {
+    "mchi_MeV": {
+      "logspace": { "start": 0.2, "stop": 1000.0, "num": 800, "endpoint": true }
+    },
+    "sigma_e_cm2": {
+      "logspace": { "start_exp": -46, "stop_exp": -26, "num": 300, "endpoint": true }
+    },
+    "format": { "mchi": ".6f", "sigma": ".1e" }
+  },
+  "options": {
+    "skip_existing": true,
+    "overwrite": false,
+    "compress": false,
+    "parallel": 8,
+    "progress": true,
+    "format": { "mchi": ".6f", "sigma": ".1e" }
+  }
+}

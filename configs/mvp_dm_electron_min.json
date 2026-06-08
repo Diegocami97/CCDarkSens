@@ -2,7 +2,7 @@
   "run": {
     "label": "mvp_dm_electron",
     "outdir": "outputs/mvp_dm_electron",
-    "cl": 0.90,
+    "cl": 0.9,
     "test_stat": "PLR",
     "n_toys": 0,
     "rng_seed": 12345,
@@ -22,14 +22,27 @@
     "mode": "asimov",
     "livetime_days": 100.0,
     "duty_cycle": 1.0,
-    "binning": { "ne_min": 0, "ne_max": 20 },
+    "binning": {
+      "ne_min": 0,
+      "ne_max": 20
+    },
     "exposure_time_s": 3600,
     "n_exposures": null,
-    "roi_bins": [1, 2, 3, 4, 5]
+    "roi_bins": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ]
   },
   "physics_model": {
     "name": "DM_electron",
-    "masses_GeV": [0.5, 1.0, 2.0],
+    "masses_GeV": [
+      0.5,
+      1.0,
+      2.0
+    ],
     "cross_section_scan": {
       "type": "sigma_e",
       "min": 1e-40,
@@ -39,10 +52,9 @@
     },
     "mediator": "heavy"
   },
-
   "backgrounds": {
     "dark_current": {
-      "lambda_e_per_pix_per_year": 1.5e-4,
+      "lambda_e_per_pix_per_year": 0.00015,
       "norm_scale": 1.0
     },
     "pattern_efficiency": {
@@ -54,29 +66,21 @@
       "n_exposures": null
     }
   },
-
-  
   "response": {
-    "mode": "cluster_mc",          
-    "cluster_mc": {
+    "mode": "pattern",
+    "efficiency_mc": {
       "n_events_per_ne": 20000,
       "sigma_readout_e": 0.16,
       "Qmin_e": 0.3,
       "Qmax_e": 4.0,
-      "diffusion": {
-        "A_um2": 803.25,
-        "b_umInv": 0.00065,
-        "alpha": 1.0,
-        "beta_per_keV": 0.0
-      },
-      "binning": { "rows_bin": 1, "cols_bin": 1 },
       "pileup_with_dc": false,
-      "rng_seed": 987654321
+      "rng_seed": 987654321,
+      "A_um2": 803.25,
+      "b_umInv": 0.00065,
+      "alpha": 1.0,
+      "beta_per_keV": 0.0,
+      "rows_bin": 1,
+      "cols_bin": 1
     }
   }
-
-
-
-
 }
-

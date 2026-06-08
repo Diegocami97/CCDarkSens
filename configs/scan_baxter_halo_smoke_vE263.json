@@ -1,0 +1,186 @@
+{
+  "_comment": "Baxter halo smoke (baxter_smoke_vE263)",
+  "run": {
+    "label": "baxter_smoke_vE263",
+    "outdir": "outputs/scan_baxter_halo_smoke_vE263",
+    "cl": 0.9,
+    "test_stat": "PLR",
+    "n_toys": 0,
+    "rng_seed": 12345,
+    "verbosity": 1,
+    "use_profile_likelihood": true,
+    "data_path": "build/data_pattern.root",
+    "background_source": "bp_br_template",
+    "background_model": "Bp_theta_Br",
+    "background_Bp": [
+      141.4,
+      0.111,
+      0.042,
+      0.019,
+      2.5e-05,
+      5.8e-05
+    ],
+    "background_Br": [
+      0.039,
+      0.039,
+      0.016,
+      0.052,
+      0.011,
+      0.035
+    ],
+    "observed_counts": [
+      144,
+      0,
+      0,
+      1,
+      0,
+      0
+    ],
+    "constrain_prior_strength": 98,
+    "constrain_use_gamma_sign": false,
+    "constrain_use_tau_weighted": true,
+    "constrain_n_bins": 1,
+    "theta_lo": 0.5,
+    "theta_hi": 10,
+    "profile_minimizer": "pydme",
+    "pydme_style_ul": true
+  },
+  "detector": {
+    "rows": 1300,
+    "cols": 6300,
+    "pixel_size_um": 15.0,
+    "thickness_mm": 0.67,
+    "active_fraction": 0.98,
+    "target_element": "Si",
+    "density_g_cm3": 2.329,
+    "mass_kg": 0.01523
+  },
+  "experiment": {
+    "mode": "asimov",
+    "livetime_days": 85.356,
+    "duty_cycle": 1.0,
+    "binning": {
+      "ne_min": 2,
+      "ne_max": 20
+    },
+    "roi_bins": [
+      2,
+      3,
+      4,
+      5
+    ],
+    "pattern_roi": [
+      11,
+      21,
+      111,
+      31,
+      22,
+      211
+    ],
+    "observable_bins": "pattern"
+  },
+  "response": {
+    "mode": "pattern",
+    "analysis_space": "pattern",
+    "efficiency_mc": {
+      "efficiency_csv": "data/Efficiencies_patterns_Nsims1000000_DCTrue_alpha1.csv",
+      "n_events_per_ne": 1000000,
+      "sigma_readout_e": 0.16,
+      "Qmin_e": 0.6,
+      "Qmax_e": 20.0,
+      "A_um2": 803.25,
+      "b_umInv": 0.00065,
+      "alpha": 1.0,
+      "beta_per_keV": 0.0,
+      "half_window_pix": 2,
+      "row_length": 32,
+      "rows_bin": 1,
+      "cols_bin": 1,
+      "pileup_with_dc": false,
+      "enable_MN": true,
+      "enable_MNL": true,
+      "use_2d_image_efficiency": false,
+      "rng_seed": 987654321
+    },
+    "pattern_image": {
+      "nrows_binned": 3,
+      "ncols": 50,
+      "row_binning": 100,
+      "col_binning": 1,
+      "pixel_size_um": 15.0,
+      "sigma_readout_e": 0.16,
+      "lambda_dc": 0.00041,
+      "rng_seed": 987654321
+    },
+    "pattern_classifier": {
+      "max_e_per_pixel": 5,
+      "Qmin_e": 0.6,
+      "neighbor_Qmax_e": 0.6,
+      "thr_M": 3.5,
+      "thr_MN": 4.0,
+      "thr_MNL": 5.5
+    },
+    "pcd": {
+      "q_min": 0.0,
+      "q_max": 20.0,
+      "nbins": 200,
+      "mc_trials": 50000
+    }
+  },
+  "backgrounds": {
+    "dark_current": {
+      "lambda_e_per_pix_per_year": 5.86,
+      "norm_scale": 1.0
+    },
+    "pattern_efficiency": {
+      "type": "flat",
+      "epsilon": 0.95
+    },
+    "timing": {
+      "exposure_time_s": 1800,
+      "n_exposures": null
+    },
+    "flat_background": {
+      "norm_per_kg_year_keV": 1.0,
+      "Emin_eV": 2,
+      "Emax_eV": 20,
+      "nbins": 200
+    },
+    "background_efficiency_csv": "outputs/scan_pattern/Background_efficiencies.csv"
+  },
+  "model": {
+    "type": "dm_electron",
+    "material": "Si",
+    "mediator": "heavy",
+    "rates_dir": "data/qedark_rates/Si/heavy/baxter_smoke_vE263",
+    "filename_template": "dRdE_{material}_{mediator}_m{mchi_MeV}_s{sigma_e_cm2}.csv",
+    "Emin_eV": 2,
+    "Emax_eV": 20,
+    "nbins": 200,
+    "example_point": {
+      "mchi_MeV": 0.5,
+      "sigma_e_cm2": 1e-27
+    },
+    "grid": {
+      "mchi_MeV": {
+        "values": [
+          1.0,
+          2.0,
+          5.5
+        ]
+      },
+      "sigma_e_cm2": {
+        "logspace": {
+          "start_exp": -46,
+          "stop_exp": -26,
+          "num": 300,
+          "endpoint": true
+        }
+      },
+      "format": {
+        "mchi": ".6f",
+        "sigma": ".1e"
+      }
+    }
+  }
+}

@@ -1,3 +1,10 @@
+// ============================================================================
+//  CCDarkSens — RateSource
+//  Header for synthetic dR/dE histogram factory helpers used in tests.
+//
+//  Author: Diego Venegas-Vargas
+// ============================================================================
+
 #pragma once
 #include <memory>
 

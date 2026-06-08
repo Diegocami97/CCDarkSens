@@ -51,6 +51,8 @@
         "unordered_map": "cpp",
         "variant": "cpp",
         "vector": "cpp",
-        "map": "cpp"
+        "map": "cpp",
+        "filesystem": "cpp",
+        "iomanip": "cpp"
     }
 }

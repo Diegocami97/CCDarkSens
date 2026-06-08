@@ -1,3 +1,10 @@
+// ============================================================================
+//  CCDarkSens — PoissonAsimovPLR
+//  Header for the Poisson Asimov profile-likelihood-ratio test statistic.
+//
+//  Author: Diego Venegas-Vargas
+// ============================================================================
+
 #pragma once
 
 #include "ccdarksens/stats/ITestStatistic.hh"

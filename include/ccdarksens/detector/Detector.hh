@@ -1,3 +1,10 @@
+// ============================================================================
+//  CCDarkSens — Detector
+//  Header for detector geometry, target material, and mass computation.
+//
+//  Author: Diego Venegas-Vargas
+// ============================================================================
+
 #pragma once
 #include <optional>
 #include <string>

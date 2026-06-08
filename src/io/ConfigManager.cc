@@ -1,3 +1,10 @@
+// ============================================================================
+//  CCDarkSens — ConfigManager
+//  Parses the framework JSON config into typed run, detector, experiment, background, response, and model structures.
+//
+//  Author: Diego Venegas-Vargas
+// ============================================================================
+
 #include "ccdarksens/io/ConfigManager.hh"
 #include <fstream>
 #include <memory>
@@ -36,6 +43,34 @@ void ConfigManager::parse_run_(const nlohmann::json& j) {
   run_.rng_seed  = j.value("rng_seed", 12345ULL);
   run_.verbosity = j.value("verbosity", 1);
   run_.exposure_kg_year = j.value("exposure_kg_year", 0.0);
+  run_.dump_point_spectra_root = j.value("dump_point_spectra_root", false);
+  run_.use_profile_likelihood = j.value("use_profile_likelihood", false);
+  run_.data_path = j.value("data_path", std::string{});
+  run_.single_bin_likelihood = j.value("single_bin_likelihood", false);
+  if (j.contains("constrain_scale_prior_mean") && j.contains("constrain_scale_prior_sigma")) {
+    run_.constrain_scale_prior_mean = j.at("constrain_scale_prior_mean").get<double>();
+    run_.constrain_scale_prior_sigma = j.at("constrain_scale_prior_sigma").get<double>();
+  }
+  run_.background_source = j.value("background_source", std::string("dc_flat_migration"));
+  run_.background_model = j.value("background_model", std::string("scale"));
+  if (j.contains("background_Bp") && j["background_Bp"].is_array()) {
+    run_.background_Bp.clear();
+    for (const auto& v : j["background_Bp"]) run_.background_Bp.push_back(v.get<double>());
+  }
+  if (j.contains("background_Br") && j["background_Br"].is_array()) {
+    run_.background_Br.clear();
+    for (const auto& v : j["background_Br"]) run_.background_Br.push_back(v.get<double>());
+  }
+  run_.constrain_prior_strength = j.value("constrain_prior_strength", 0.0);
+  run_.constrain_use_gamma_sign = j.value("constrain_use_gamma_sign", false);
+  run_.constrain_use_tau_weighted = j.value("constrain_use_tau_weighted", false);
+  run_.constrain_n_bins = j.value("constrain_n_bins", 1);
+  run_.theta_lo = j.value("theta_lo", 0.5);
+  run_.theta_hi = j.value("theta_hi", 10.0);
+  run_.profile_likelihood_plot_mchi = j.value("profile_likelihood_plot_mchi", 0.0);
+  run_.profile_minimizer = j.value("profile_minimizer", std::string("brent"));
+  run_.pydme_style_ul = j.value("pydme_style_ul", false);
+  run_.smooth_ul_envelope = j.value("smooth_ul_envelope", false);
 }
 
 void ConfigManager::parse_detector_(const nlohmann::json& j) {
@@ -79,10 +114,35 @@ void ConfigManager::parse_experiment_(const nlohmann::json& j) {
 
   if (j.contains("roi_bins"))
     exp_cfg_.roi_bins = j.at("roi_bins").get<std::vector<int>>();
+  if (j.contains("pattern_roi"))
+    exp_cfg_.pattern_roi = j.at("pattern_roi").get<std::vector<int>>();
+  if (j.contains("observable_bins"))
+    exp_cfg_.observable_bins = j.at("observable_bins").get<std::string>();
 }
 
 void ConfigManager::parse_response_(const nlohmann::json& jr) {
+  // Read detector-response backend mode
   response_.mode = jr.value("mode", std::string("fast"));
+  // Decide default analysis_space from mode:
+  //   mode == "pcd"  → default to PCD space
+  //   otherwise      → default to pattern/n_e space
+  const std::string default_space =
+      (response_.mode == "pcd") ? std::string("pcd") : std::string("pattern");
+
+  // Allow optional override in JSON: "analysis_space": "pattern" | "pcd"
+  response_.analysis_space = jr.value("analysis_space", default_space);
+
+  // --- PCD block: configure q-binning and MC trials for P(q|n_e) ---
+  if (jr.contains("pcd")) {
+    const auto& jp = jr.at("pcd");
+    response_.pcd.q_min       = jp.value("q_min",       response_.pcd.q_min);
+    response_.pcd.q_max       = jp.value("q_max",       response_.pcd.q_max);
+    response_.pcd.nbins       = jp.value("nbins",       response_.pcd.nbins);
+    response_.pcd.mc_trials   = jp.value("mc_trials",   response_.pcd.mc_trials);
+    response_.pcd.sigma_res_e = jp.value("sigma_res_e", response_.pcd.sigma_res_e);
+    response_.pcd.Dqmin       = jp.value("Dqmin",       response_.pcd.Dqmin);
+    response_.pcd.Dqmax       = jp.value("Dqmax",       response_.pcd.Dqmax);
+  }
 
   if (jr.contains("cluster_mc")) {
     const auto& jc = jr.at("cluster_mc");
@@ -105,6 +165,114 @@ void ConfigManager::parse_response_(const nlohmann::json& jr) {
     response_.cmc.pileup_with_dc = jc.value("pileup_with_dc", false);
     response_.cmc.rng_seed       = jc.value("rng_seed", static_cast<uint64_t>(987654321ULL));
   }
+
+  // --- EfficiencyMC block (canonical key: efficiency_mc; legacy alias: pattern_mc) ---
+  const nlohmann::json* j_emc = nullptr;
+  if (jr.contains("efficiency_mc"))
+    j_emc = &jr.at("efficiency_mc");
+  else if (jr.contains("pattern_mc"))
+    j_emc = &jr.at("pattern_mc");
+
+  if (j_emc) {
+    const auto& jp = *j_emc;
+    auto& p = response_.emc;
+
+    p.n_events_per_ne = jp.value("n_events_per_ne", p.n_events_per_ne);
+    p.sigma_readout_e = jp.value("sigma_readout_e", p.sigma_readout_e);
+    p.Qmin_e          = jp.value("Qmin_e",          p.Qmin_e);
+    p.Qmax_e          = jp.value("Qmax_e",          p.Qmax_e);
+    if (jp.contains("diffusion")) {
+      const auto& jd = jp.at("diffusion");
+      p.A_um2        = jd.value("A_um2",        p.A_um2);
+      p.b_umInv      = jd.value("b_umInv",      p.b_umInv);
+      p.alpha        = jd.value("alpha",        p.alpha);
+      p.beta_per_keV = jd.value("beta_per_keV", p.beta_per_keV);
+    } else {
+      p.A_um2        = jp.value("A_um2",        p.A_um2);
+      p.b_umInv      = jp.value("b_umInv",      p.b_umInv);
+      p.alpha        = jp.value("alpha",        p.alpha);
+      p.beta_per_keV = jp.value("beta_per_keV", p.beta_per_keV);
+    }
+    if (jp.contains("binning")) {
+      const auto& jb = jp.at("binning");
+      p.rows_bin = jb.value("rows_bin", p.rows_bin);
+      p.cols_bin = jb.value("cols_bin", p.cols_bin);
+    } else {
+      p.rows_bin = jp.value("rows_bin", p.rows_bin);
+      p.cols_bin = jp.value("cols_bin", p.cols_bin);
+    }
+    p.half_window_pix = jp.value("half_window_pix", p.half_window_pix);
+    p.pileup_with_dc  = jp.value("pileup_with_dc",  p.pileup_with_dc);
+    p.enable_MN       = jp.value("enable_MN",       p.enable_MN);
+    p.enable_MNL      = jp.value("enable_MNL",      p.enable_MNL);
+    p.rng_seed        = jp.value("rng_seed",        p.rng_seed);
+    p.row_length = jp.value("row_length", p.row_length);
+    p.use_2d_image_efficiency = jp.value("use_2d_image_efficiency", p.use_2d_image_efficiency);
+    // accepted_labels are derived from experiment.pattern_roi in the apps
+  }
+  // --- Pattern Classifier: inherit shared params from efficiency_mc when not set ---
+  if (jr.contains("pattern_classifier")) {
+    const auto& jc = jr.at("pattern_classifier");
+    auto& pc = response_.pattern_classifier;
+    // Shared with efficiency_mc: default from emc so config can specify once under efficiency_mc
+    pc.Qmin_e          = jc.value("Qmin_e",          response_.emc.Qmin_e);
+    pc.neighbor_Qmax_e  = jc.value("neighbor_Qmax_e", pc.neighbor_Qmax_e);
+    pc.Qmax_e          = jc.value("Qmax_e",          response_.emc.Qmax_e);
+    pc.sigma_res_e     = jc.value("sigma_res_e",    response_.emc.sigma_readout_e);
+    pc.enable_MN       = jc.value("enable_MN",       response_.emc.enable_MN);
+    pc.enable_MNL      = jc.value("enable_MNL",      response_.emc.enable_MNL);
+    pc.max_e_per_pixel = jc.value("max_e_per_pixel", pc.max_e_per_pixel);
+    pc.thr_M           = jc.value("thr_M",           pc.thr_M);
+    pc.thr_MN          = jc.value("thr_MN",           pc.thr_MN);
+    pc.thr_MNL         = jc.value("thr_MNL",         pc.thr_MNL);
+    pc.allow_pattern_zero = jc.value("allow_pattern_zero", pc.allow_pattern_zero);
+    pc.single_pixel_use_round = jc.value("single_pixel_use_round", pc.single_pixel_use_round);
+  }
+
+  // 2D image size and binning for pattern efficiency (notebook-style)
+  if (jr.contains("charge_ionization")) {
+    const auto& ji = jr.at("charge_ionization");
+    auto& ci = response_.charge_ionization;
+    ci.table_csv   = ji.value("table_csv", ci.table_csv);
+    ci.band_gap_eV = ji.value("band_gap_eV", ci.band_gap_eV);
+    ci.eh_pair_eV  = ji.value("eh_pair_eV", ci.eh_pair_eV);
+    if (ji.contains("scenario"))
+      ci.scenario = ji.at("scenario").get<std::string>();
+  }
+
+  if (jr.contains("pattern_image")) {
+    const auto& pi = jr.at("pattern_image");
+    auto& pimg = response_.pattern_image;
+    pimg.nrows_binned   = pi.value("nrows_binned",   pimg.nrows_binned);
+    pimg.ncols          = pi.value("ncols",         pimg.ncols);
+    pimg.row_binning    = pi.value("row_binning",   pimg.row_binning);
+    pimg.col_binning    = pi.value("col_binning",   pimg.col_binning);
+    pimg.pixel_size_um  = pi.value("pixel_size_um", pimg.pixel_size_um);
+    pimg.sigma_readout_e= pi.value("sigma_readout_e", pimg.sigma_readout_e);
+    pimg.lambda_dc      = pi.value("lambda_dc",     pimg.lambda_dc);
+    pimg.rng_seed       = pi.value("rng_seed",      static_cast<uint64_t>(pimg.rng_seed));
+  }
+
+  if (!j_emc) {
+    // Copy from ClusterMC for backward compatibility when no efficiency_mc / pattern_mc block
+    response_.emc.n_events_per_ne = response_.cmc.n_events_per_ne;
+    response_.emc.sigma_readout_e = response_.cmc.sigma_readout_e;
+    response_.emc.Qmin_e          = response_.cmc.Qmin_e;
+    response_.emc.Qmax_e          = response_.cmc.Qmax_e;
+    response_.emc.A_um2           = response_.cmc.A_um2;
+    response_.emc.b_umInv         = response_.cmc.b_umInv;
+    response_.emc.alpha           = response_.cmc.alpha;
+    response_.emc.beta_per_keV    = response_.cmc.beta_per_keV;
+    response_.emc.rows_bin        = response_.cmc.rows_bin;
+    response_.emc.cols_bin        = response_.cmc.cols_bin;
+    response_.emc.pileup_with_dc  = response_.cmc.pileup_with_dc;
+    response_.emc.rng_seed        = response_.cmc.rng_seed;
+  }
+  
+
+
+
+
 }
 
 
@@ -209,6 +377,12 @@ void ConfigManager::parse_backgrounds_(const nlohmann::json& jb) {
     bkg_.flat_bkg_Emax_eV = 0.0;
     bkg_.flat_bkg_nbins   = 0;
   }
+
+  if (jb.contains("background_efficiency_csv")) {
+    bkg_.background_efficiency_csv = jb.at("background_efficiency_csv").get<std::string>();
+  } else {
+    bkg_.background_efficiency_csv.clear();
+  }
 }
 
 
@@ -265,8 +439,23 @@ static void expand_axis_(const nlohmann::json& jaxis,
   // "logspace": {start_exp, stop_exp, num, endpoint}
   if (jaxis.contains("logspace")) {
     const auto& jl    = jaxis.at("logspace");
-    const double aexp = jl.at("start_exp").get<double>();
-    const double bexp = jl.at("stop_exp").get<double>();
+    double aexp = 0.0;
+    double bexp = 0.0;
+    // Support both:
+    //  - logspace in log10 space: {start_exp, stop_exp}
+    //  - logspace in literal space (e.g. MeV): {start, stop}
+    if (jl.contains("start_exp") && jl.contains("stop_exp")) {
+      aexp = jl.at("start_exp").get<double>();
+      bexp = jl.at("stop_exp").get<double>();
+    } else {
+      const double start = jl.at("start").get<double>();
+      const double stop  = jl.at("stop").get<double>();
+      if (start <= 0.0 || stop <= 0.0) {
+        throw std::runtime_error("ConfigManager logspace(start/stop) requires start,stop > 0");
+      }
+      aexp = std::log10(start);
+      bexp = std::log10(stop);
+    }
     const int    num  = jl.at("num").get<int>();
     const bool   endp = jl.value("endpoint", true);
     if (num > 0) {

@@ -1,3 +1,10 @@
+// ============================================================================
+//  CCDarkSens — TestStatisticFactory
+//  Factory that instantiates the configured binned test statistic (currently PoissonAsimovPLR) from StatisticsConfig.
+//
+//  Author: Diego Venegas-Vargas
+// ============================================================================
+
 #include "ccdarksens/stats/TestStatisticFactory.hh"
 
 #include <algorithm>

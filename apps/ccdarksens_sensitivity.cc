@@ -1,3 +1,10 @@
+// ============================================================================
+//  CCDarkSens — ccdarksens_sensitivity
+//  Baseline background-only sensitivity demo wiring ChargeIonization, Diffusion, flat ε(n_e), and Poisson dark-current backgrounds from JSON config.
+//
+//  Author: Diego Venegas-Vargas
+// ============================================================================
+
 #include "ccdarksens/io/ConfigManager.hh"
 #include "ccdarksens/experiment/ExperimentSetup.hh"
 #include "ccdarksens/detector/Detector.hh"
@@ -18,16 +25,8 @@
 #include <vector>
 #include <algorithm>
 
-// helper: build a flat epsilon(ne) TH1D aligned to [ne_min, ne_max] integer bins
-static std::unique_ptr<TH1D> MakeFlatEfficiency(int ne_min, int ne_max, double epsilon) {
-    const int nbin = ne_max - ne_min + 1;
-    std::vector<double> edges(nbin + 1);
-    for (int i = 0; i <= nbin; ++i) edges[i] = (ne_min - 0.5) + i;
-
-    auto h = std::make_unique<TH1D>("eps_ne", "Pattern efficiency; n_{e}; #epsilon", nbin, edges.data());
-    for (int b = 1; b <= nbin; ++b) h->SetBinContent(b, std::clamp(epsilon, 0.0, 1.0));
-    return h;
-}
+#include "ccdarksens/utils/AppUtils.hh"
+using ccdarksens::utils::MakeFlatEfficiency;
 
 // helper: print first N bins of a TH1D with integer centers
 static void PrintFirstBins(const TH1D& h, int n_to_print = 10) {

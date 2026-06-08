@@ -1,0 +1,47 @@
+{
+  "_comment": "Debug-only config for ccdarksens_scan_srdm_pattern_csv in threshold_toys mode (verbosity=2). Reads sigma_threshold from the most recent smoke band Phase 0 output and writes qtarget_threshold.root under outputs/_debug_threshold_toys.",
+  "run": {
+    "label": "_debug_threshold",
+    "outdir": "outputs/_debug_threshold_toys",
+    "sigma_grid_mode": "per_mass",
+    "n_toys": 0,
+    "rng_seed": 12345,
+    "verbosity": 2,
+    "cl": 0.9,
+    "test_stat": "PLR",
+    "use_profile_likelihood": true,
+    "background_source": "bp_br_template",
+    "background_model": "Bp_theta_Br",
+    "background_Bp": [141.4, 0.111, 0.042, 0.019, 2.5e-5, 5.8e-5],
+    "background_Br": [0.039, 0.039, 0.016, 0.052, 0.011, 0.035],
+    "observed_counts": [144, 0, 0, 1, 0, 0],
+    "constrain_prior_strength": 98,
+    "constrain_use_gamma_sign": false,
+    "constrain_use_tau_weighted": false,
+    "constrain_n_bins": 4450,
+    "theta_lo": 0.5,
+    "theta_hi": 10,
+    "profile_minimizer": "pydme",
+    "observable_bins": "pattern",
+    "mode": "threshold_toys",
+    "threshold_toys": {
+      "sigma_threshold_graph_path": "outputs/band_srdm_pattern_csv_per_mass_pydme_match_smoke_both/_toys/sigma_threshold.root",
+      "n_threshold_toys": 200,
+      "percentile": 0.9,
+      "rng_seed": 7777
+    }
+  },
+  "detector": {"mass_kg": 0.5},
+  "experiment": {
+    "livetime_days": 2.6,
+    "duty_cycle": 1.0,
+    "roi_bins": [2, 3, 4, 5],
+    "pattern_roi": [11, 21, 111, 31, 22, 211]
+  },
+  "srdm_signal_csv": {
+    "input_dir": "outputs/qcdark_srdm_gamma_0p4645605",
+    "filename_regex": "pattern_signal_summed_mX([0-9]+(?:\\.[0-9]+)?)_full_QCD",
+    "rates_are_per_gram_per_day": true,
+    "signal_rate_scale": 1.0
+  }
+}

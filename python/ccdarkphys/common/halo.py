@@ -1,6 +1,10 @@
 """
 Standard Halo Model helper(s): eta_SHM(vmin; v0, vE, vesc).
-All velocities in cm/s. Returns dimensionless η(vmin).
+All velocities in cm/s. Returns η(vmin) in (cm/s)^-1.
+
+Local DM density for rate codes is the single constant ``constants.rho_X_eVcm3`` (set
+that file if you change ρ_χ). ``qedark.entry`` uses ``eta_shm_numeric`` here; the
+QCDark-style kernel keeps its own SHM η (see ``qcdark.kernel``).
 """
 
 from __future__ import annotations
@@ -84,19 +88,31 @@ def eta_shm_analytic(vmin_cm_s: np.ndarray,
 
     eta = (term1 - term2) / (2.0 * vE * N)
 
+    # # Hard kinematic cutoff: no DM above vesc + vE
+    # eta[vmin > (vesc + vE)] = 0.0
+
+    # # Numerical fix:
+    # # For vmin in the extreme high tail, the analytic expression can give
+    # # tiny negative values from cancellation. We interpret those as small
+    # # positive contributions (like the numerical integral does), and flip
+    # # the sign instead of forcing them to zero.
+    # neg = eta < 0.0
+    # eta[neg] = -eta[neg]
+
+    # # Clean up NaNs / Infs
+    # eta[~np.isfinite(eta)] = 0.0
+    
     # Hard kinematic cutoff: no DM above vesc + vE
     eta[vmin > (vesc + vE)] = 0.0
 
     # Numerical fix:
-    # For vmin in the extreme high tail, the analytic expression can give
-    # tiny negative values from cancellation. We interpret those as small
-    # positive contributions (like the numerical integral does), and flip
-    # the sign instead of forcing them to zero.
-    neg = eta < 0.0
-    eta[neg] = -eta[neg]
+    # Tiny negative values from cancellations should be treated as zero.
+    eta[eta < 0.0] = 0.0
 
     # Clean up NaNs / Infs
     eta[~np.isfinite(eta)] = 0.0
+
+
 
     return eta
 

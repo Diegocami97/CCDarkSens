@@ -1,0 +1,70 @@
+{
+  "_comment": "Same SRDM pydme-match analysis as scan_srdm_pattern_csv_per_mass_pydme_match.json, but band.outer_toys = 5000 for smoother toy-MC median and ±1σ/±2σ ribbons. Run: build/ccdarksens_band configs/scan_srdm_pattern_csv_per_mass_pydme_match_band_n5000.json",
+  "run": {
+    "label": "scan_srdm_pattern_csv_per_mass_pydme_match",
+    "outdir": "outputs/scan_srdm_pattern_csv_per_mass_pydme_match",
+    "sigma_grid_mode": "per_mass",
+    "n_toys": 0,
+    "rng_seed": 12345,
+    "verbosity": 1,
+    "cl": 0.9,
+    "test_stat": "PLR",
+    "use_profile_likelihood": true,
+    "background_source": "bp_br_template",
+    "background_model": "Bp_theta_Br",
+    "background_Bp": [141.4, 0.111, 0.042, 0.019, 2.5e-5, 5.8e-5],
+    "background_Br": [0.039, 0.039, 0.016, 0.052, 0.011, 0.035],
+    "observed_counts": [144, 0, 0, 1, 0, 0],
+    "constrain_prior_strength": 98,
+    "constrain_use_gamma_sign": false,
+    "constrain_use_tau_weighted": false,
+    "constrain_n_bins": 4450,
+    "theta_lo": 0.5,
+    "theta_hi": 10,
+    "profile_minimizer": "pydme",
+    "dump_spat_point_mchi_MeV": 1.0,
+    "dump_spat_point_sigma_e_cm2": 1.905461E-38,
+    "observable_bins": "pattern"
+  },
+  "detector": {
+    "mass_kg": 0.5
+  },
+  "experiment": {
+    "livetime_days": 2.6,
+    "duty_cycle": 1.0,
+    "roi_bins": [2, 3, 4, 5],
+    "pattern_roi": [11, 21, 111, 31, 22, 211]
+  },
+  "srdm_signal_csv": {
+    "input_dir": "outputs/qcdark_srdm_gamma_0p4645605",
+    "filename_regex": "pattern_signal_summed_mX([0-9]+(?:\\.[0-9]+)?)_full_QCD",
+    "rates_are_per_gram_per_day": true,
+    "signal_rate_scale": 1.0
+  },
+  "_band_comment": "Outer B-only toys: 5000. Phase-1 threshold toys unchanged (n_threshold_toys). band.outdir is separate from the n_toys=200 run.",
+  "band": {
+    "scan_binary": "build/ccdarksens_scan_srdm_pattern_csv",
+    "n_toys": 5000,
+    "outdir": "outputs/band_srdm_pattern_csv_per_mass_pydme_match_n5000",
+    "rng_seed": 777701,
+    "n_workers": 0,
+    "threshold": "both",
+    "n_threshold_toys": 5000,
+    "threshold_percentile": 0.90,
+    "threshold_seed": 8888,
+    "background_bp_key": "run.background_Bp",
+    "background_br_key": "run.background_Br",
+    "ul_graph_name": "upper_limit_sigma_e_mchi_graph",
+    "save_per_toy_curves": true,
+    "keep_per_toy_outputs": true,
+    "abort_on_failure": false,
+    "min_success_fraction": 0.95,
+    "quantiles": {
+      "median": 0.50,
+      "low_1sigma": 0.16,
+      "high_1sigma": 0.84,
+      "low_2sigma": 0.025,
+      "high_2sigma": 0.975
+    }
+  }
+}

@@ -1,3 +1,10 @@
+// ============================================================================
+//  CCDarkSens — DMElectronModel
+//  Header for DM-electron model configuration and QEDark rate-table spectrum loading.
+//
+//  Author: Diego Venegas-Vargas
+// ============================================================================
+
 #pragma once
 #include <memory>
 #include <string>

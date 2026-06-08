@@ -1,4 +1,29 @@
-# python/qedark_bridge.py
+# ============================================================================
+#  CCDarkSens — qedark_bridge
+#  Thin adapter between the DAMIC-M collaboration QEDark4DAMIC class and the
+#  CCDarkSens ccdarkphys rate-generation pipeline.
+#
+#  Provides a single compute_dRdE() function with the same signature as the
+#  ccdarkphys.qedark.entry module so that both backends are interchangeable.
+#
+#  Requires: QEDark4DAMIC installed in the active Python environment.
+#  See python/ccdarkphys/qedark/entry.py for the self-contained fallback.
+#
+#  Author: Diego Venegas-Vargas
+# ============================================================================
+"""
+Adapter from QEDark4DAMIC (DAMIC-M collaboration class) to the CCDarkSens
+ccdarkphys rate-generation interface.
+
+Usage:
+    from qedark_bridge import compute_dRdE
+    result = compute_dRdE("Si", "heavy", mchi_eV=1e6, sigma_e_cm2=1e-37,
+                           E_eV=E_array, halo=halo_dict)
+    # result["dRdE_g_day_eV"]  — events / g / day / eV
+
+The mediator string maps to QEDark nFDM: "heavy"/"massive" → 0, "light"/"massless" → 2.
+Halo dict must contain v0_cm_s, vE_cm_s, vesc_cm_s (all in cm/s).
+"""
 import numpy as np
 
 # Use the canonical class used by the collaboration.

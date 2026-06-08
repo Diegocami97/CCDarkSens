@@ -22,11 +22,9 @@ import numpy as np
 from ccdarkphys.common import constants as QEC
 from ccdarkphys.common import halo as HALO
 from ccdarkphys.common import io as CIO
+from ccdarkphys.common.mediator_map import MEDIATOR_TO_FDM_INDEX
 
-_MEDIATOR_TO_INDEX = {
-    "heavy": 0, "massive": 0, "0": 0, 0: 0,
-    "light": 2, "massless": 2, "2": 2, 2: 2,
-}
+_MEDIATOR_TO_INDEX = MEDIATOR_TO_FDM_INDEX
 
 def _load_si_table_as_notebook(nE: int, nq: int) -> np.ndarray:
     """
@@ -108,64 +106,59 @@ def compute_dRdE(material: str,
     # Halo params vector as in the notebook helpers
     vparams = [v0_cm_s, vE_cm_s, vesc_cm_s]  # not passed explicitly; kept for reference
 
-    # dRdE(material, mX, Ee, FDMn, 'shm', params) → events / kg / year at that Ee
-    def dRdE_notebook(material: str, mX: float, Ee: float, FDMn: int) -> float:
-        if Ee < materials[material][2]:   # Egap
+    # Precompute η(vmin) on a 1D grid once per spectrum (avoids ~nE*nq nquad calls)
+    vmax_cut = (vesc_cm_s + vE_cm_s) * 1.1
+    vmin_min_cm_s = 1.0e5
+    vmin_max_cm_s = vmax_cut * 1.01
+    n_eta_grid = 500  # larger → less interpolation error in η(vmin)
+    vmin_grid = np.logspace(
+        np.log10(max(vmin_min_cm_s, 1.0)),
+        np.log10(max(vmin_max_cm_s, vmin_min_cm_s * 1.1)),
+        num=n_eta_grid,
+        dtype=float,
+    )
+    eta_grid = HALO.eta_shm_numeric(vmin_grid, v0_cm_s, vE_cm_s, vesc_cm_s)
+
+    # q grid (1..nq) in eV
+    q_arr = np.arange(1, nq + 1, dtype=float) * dQ
+    q_safe = np.maximum(q_arr, 1e-12)
+    if nFDM == 0:
+        FDM_sq_arr = np.ones_like(q_arr)
+    else:
+        FDM_sq_arr = (QEC.alpha * QEC.me_eV / q_safe) ** (2 * nFDM)
+
+    Mcell, Epref, Egap, epsilon, f_arr = materials["Si"]
+    prefactor = (QEC.ccms**2) * QEC.sec_per_year * (QEC.rho_X_eVcm3 / mchi_eV) * (1.0 / Mcell) \
+                * QEC.alpha * (QEC.me_eV**2) / (mu_Xe(mchi_eV)**2)
+
+    def rate_at_E(Ee: float) -> float:
+        """Vectorized over q: one η interpolation and one sum per E."""
+        if Ee < Egap:
             return 0.0
-
-        qunit = dQ
-        Mcell, Epref, Egap, epsilon, f_arr = materials[material]
-
-        # Energy bin index in 0.1 eV steps (Ei-1 used for array indexing)
         Ei = int(np.floor(Ee * 10.0))
         if Ei < 1 or Ei > nE:
             return 0.0
-
-        # Prefactor [(kg-year)^-1] when sigma_e = 1 cm^2; we multiply sigma_e outside
-        prefactor = (QEC.ccms**2) * QEC.sec_per_year * (QEC.rho_X_eVcm3 / mX) * (1.0 / Mcell) \
-                    * QEC.alpha * (QEC.me_eV**2) / (mu_Xe(mX)**2)
-
-        # Sum over q grid
-        acc = 0.0
-        for qi in range(1, nq + 1):
-            q = qi * qunit
-            # vmin = (q/(2 mX) + Ee/q) * c   (in cm/s)
-            qsafe = max(q, 1e-12)
-            vmin = (q / (2.0 * mX) + Ee / qsafe) * QEC.ccms
-
-            # rough kinematic cutoff as notebook
-            if vmin > (vesc_cm_s + vE_cm_s) * 1.1:
-                continue
-
-            # SHM halo η (cm/s)^-1
-            eta = HALO.eta_shm_analytic(np.array([vmin]), v0_cm_s, vE_cm_s, vesc_cm_s)[0]
-            # print(f"[debug] vmin={vmin:.2e} cm/s → eta={eta:.2e} (q={q:.2e} eV, Ei={Ei})")
-            # eta = HALO.eta_shm_numeric(np.array([vmin]), v0_cm_s, vE_cm_s, vesc_cm_s)[0]
-
-            # array_[qi-1] = Eprefactor * (1/q) * eta * FDM(q,n)^2 * fcrys[qi-1, Ei-1]
-            acc += Epref * (1.0 / qsafe) * eta * (FDM(q, FDMn) ** 2) * f_arr[qi - 1, Ei - 1]
-
-        # This is for sigma_e = 1 cm^2; scale by sigma_e outside
-        return prefactor * acc  # [(kg-year)^-1 at Ee]
+        vmin_arr = (q_arr / (2.0 * mchi_eV) + Ee / q_safe) * QEC.ccms
+        mask_skip = vmin_arr > vmax_cut
+        eta_arr = np.interp(vmin_arr, vmin_grid, eta_grid)
+        eta_arr[mask_skip] = 0.0
+        fcrys_col = f_arr[:, Ei - 1]
+        integrand = Epref * (1.0 / q_safe) * eta_arr * FDM_sq_arr * fcrys_col
+        integrand[mask_skip] = 0.0
+        return float(prefactor * np.sum(integrand))
 
     # Native energy grid (0.1 eV) starting at Egap
     E_min = materials["Si"][2]
     E_eV = E_min + np.arange(nE, dtype=float) * dE
 
-    # Evaluate notebook rate (sigma_e = 1), then scale by sigma_e
-    dRdE_kg_year = np.array([dRdE_notebook("Si", mchi_eV, E, nFDM) for E in E_eV], dtype=float)
-    # print(f"[qedark] computed dRdE for mchi={mchi_eV/1.0e6:.6f} MeV, sigma_e=1 cm²")
-    # print(f"dRdE_kg_year: {dRdE_kg_year}")
+    # Notebook dRdE returns integrated rate per dE bin [events/(kg·year)]. True dR/dE = value/dE → events/(kg·year·eV).
+    dRdE_kg_year = np.array([rate_at_E(E) for E in E_eV], dtype=float)
     dRdE_kg_year *= float(sigma_e_cm2)
-    # print(f"dRdE_kg_year: {dRdE_kg_year}")
+    dRdE_kg_year_eV = dRdE_kg_year / dE
 
-    dRdE_kg_year_eV = dRdE_kg_year / dE  # Convert to events / kg / year / eV
-
-
-    # Convert to events / g / day / eV
-    dRdE_g_day_eV = dRdE_kg_year / 1000.0 / 365.25 / dE
+    # Derived units for g/day if needed elsewhere
+    dRdE_g_day_eV = dRdE_kg_year_eV / 1000.0 / 365.25
     dRdE_g_day_eV[~np.isfinite(dRdE_g_day_eV)] = 0.0
-    # print(f"dRdE_g_day_eV: {dRdE_kg_year_eV}")
 
     # ---------------------------------------------------------------
 
