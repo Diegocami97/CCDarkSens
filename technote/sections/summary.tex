@@ -1,0 +1,39 @@
+\section{Parameter Summary: Si vs.\ \SrCdSb{} Across All Channels}
+\label{sec:summary}
+
+\begin{center}
+\begin{longtable}{@{}p{3.6cm}p{3.7cm}p{4.2cm}p{2.8cm}@{}}
+\toprule
+Quantity & Standard Si & \SrCdSb{} (HypMat) & Status for \SrCdSb{} \\
+\midrule
+\endhead
+Band gap (DM-e / ionization) & 1.2~eV (QEDark) / 1.11~eV (darkelf) &
+  0.34~eV (indirect, working value) & Scissors proxy (Section~\ref{sec:dme-hypmat}) \\
+Band gap (dark photon, direct) & $\approx3.4$~eV (measured) &
+  2.1~eV (scissors direct) & Model-dependent per variant (Section~\ref{sec:darkphoton-hypmat}) \\
+$\ehpair$ (mean $e$-$h$ pair energy) & 3.8~eV (measured) &
+  1.7778~eV (Klein: $2.67\times0.34+0.87$) & Phenomenological (Section~\ref{sec:klein}) \\
+Density $\rhoT$ & 2.329~g/cm$^3$ &
+  5.76~g/cm$^3$ (corrected from 8.0 placeholder) & Crystallographic \\
+DM-e crystal form factor & \texttt{Si\_f2.txt} / \texttt{Si\_comp.h5} (native Si DFT) &
+  Scissor-shifted Si (\texttt{Si\_fast\_gap0p34.h5}) & Si-proxy — shape not native \\
+Dark photon $\varepsilon(\omega)$ & Measured optical data &
+  Drude ($\varepsilon_\infty=\{1,12\}$) or QCDark2-ELF (Si proxy) & Bracketed / proxy \\
+Migdal ELF $\Im[-1/\varepsilon(\omega,k)]$ & \texttt{Si\_mermin.dat} &
+  \textbf{Not available} & \textbf{Out of scope} (Section~\ref{sec:migdal}) \\
+Valence electrons/cell (DM-e) & 4 (native) &
+  4 (inherited from Si proxy, unresolved) & Open assumption \\
+Valence electrons (Drude $\omega_p$) & n/a &
+  $Z_\mathrm{val}=16$/formula unit (Sr+2Cd+2Sb) & Used only in dark photon channel \\
+SHM $(v_0,v_E,\vesc)$ & $(238,263,544)$~km/s & same & Not material-dependent \\
+\bottomrule
+\end{longtable}
+\end{center}
+
+\paragraph{Reading this table honestly:} for \SrCdSb{}, the dark-photon
+channel is the most defensible (its rate formula is exact given
+$\varepsilon(\omega)$; only $\varepsilon(\omega)$ itself is
+bracketed/modeled). The DM-electron channel is a genuine sensitivity trend,
+not a quantitative prediction, because the crystal form factor's shape is
+inherited from Si. The Migdal channel does not currently exist for this
+material and would require new ELF input data, not a config change.

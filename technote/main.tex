@@ -1,0 +1,84 @@
+\documentclass[11pt]{article}
+
+% ---------------------------------------------------------------------------
+% Packages
+% ---------------------------------------------------------------------------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{siunitx}
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+\usepackage[margin=1in]{geometry}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{natbib}
+
+% ---------------------------------------------------------------------------
+% Convenience macros — physics notation used throughout
+% ---------------------------------------------------------------------------
+\newcommand{\Egap}{E_\mathrm{gap}}
+\newcommand{\ehpair}{\varepsilon_h}
+\newcommand{\SrCdSb}{\ensuremath{\mathrm{SrCd_2Sb_2}}}
+\newcommand{\chidm}{\chi}
+\newcommand{\rhochi}{\rho_\chi}
+\newcommand{\rhoT}{\rho_T}
+\newcommand{\FDM}{F_\mathrm{DM}}
+\newcommand{\sigmae}{\sigma_e}
+\newcommand{\sigman}{\sigma_n}
+\newcommand{\munuc}{\mu_{\chidm N}}
+\newcommand{\mue}{\mu_{\chidm e}}
+\newcommand{\ELF}{\mathrm{ELF}}
+\newcommand{\vmin}{v_\mathrm{min}}
+\newcommand{\vesc}{v_\mathrm{esc}}
+\newcommand{\todo}[1]{\textcolor{red}{\textbf{[TODO: #1]}}}
+
+% ---------------------------------------------------------------------------
+% Title
+% ---------------------------------------------------------------------------
+\title{Signal Models in CCDarkSens: \\[2pt]
+\large QEDark/QCDark2 DM--Electron Scattering, Dark Photon Absorption, \\
+and the Migdal Effect — Standard Silicon and \SrCdSb{} Projections}
+\author{Diego Venegas-Vargas}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+CCDarkSens is a general dark matter sensitivity framework for DAMIC-M,
+built around a detector-response and profile-likelihood-ratio (PLR)
+pipeline that is agnostic to the physical process generating the
+deposited-energy spectrum $dR/dE$. This technote documents its signal
+channels: DM--electron scattering, dark photon (hidden photon) absorption,
+the Migdal effect, and elastic WIMP--nucleus scattering. For the first
+three, it derives the rate formulas from first principles, presents the
+standard silicon benchmark case, and gives the narrow-gap \SrCdSb{}
+(``HypMat'') projection case with explicit, itemized assumptions. It also
+derives the shared charge-ionization model (Klein's formula and the
+$P(n_e\mid E)$ table) and documents a numerical-binning correctness issue
+specific to the dark photon channel's monochromatic signal. This document
+is a LaTeX rendering of \texttt{docs/DM\_Signal\_Models\_Physics\_Reference.md}
+in the CCDarkSens repository, intended as source material for a
+collaboration-facing technote.
+\end{abstract}
+
+\tableofcontents
+
+\input{sections/intro.tex}
+\input{sections/dm_electron.tex}
+\input{sections/dark_photon.tex}
+\input{sections/migdal.tex}
+\input{sections/wimp.tex}
+\input{sections/ionization.tex}
+\input{sections/pipeline.tex}
+\input{sections/summary.tex}
+
+\nocite{*}
+\bibliographystyle{plainnat}
+\bibliography{refs}
+
+\end{document}

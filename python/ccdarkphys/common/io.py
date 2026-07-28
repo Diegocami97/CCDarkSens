@@ -47,3 +47,16 @@ def write_csv(out_path: str, E, R, meta: dict, *, entry: str = "QEDark") -> None
         f.write("E,dRdE\n")
         for e, v in zip(E, R):
             f.write(f"{e:.8g},{v:.10g}\n")
+
+def write_csv_generic(out_path: str, E, R, header_lines: list) -> None:
+    """Same E,dRdE body format as write_csv, but with caller-supplied header
+    text instead of the DM-electron-specific template (halo velocities,
+    sigma_e) — for backends (dark photon, Migdal) whose metadata doesn't fit
+    that template."""
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    with open(out_path, "w") as f:
+        for line in header_lines:
+            f.write(line + "\n")
+        f.write("E,dRdE\n")
+        for e, v in zip(E, R):
+            f.write(f"{e:.8g},{v:.10g}\n")

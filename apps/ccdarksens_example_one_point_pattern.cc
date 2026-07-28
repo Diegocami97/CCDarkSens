@@ -240,12 +240,25 @@ int main(int argc, char** argv)
     emc_cfg.pix_cfg.sigma_readout_e = emj.sigma_readout_e;
     emc_cfg.pix_cfg.rng_seed = emj.rng_seed;
     emc_cfg.seed = emj.rng_seed;
+    // Accepted labels follow the analysis space (see scan app for rationale):
+    // pattern mode -> multi-pixel pattern_roi; n_e mode -> single-pixel patterns
+    // implied by roi_bins (one pixel with n_e electrons).
     emc_cfg.accepted_labels.clear();
-    for (int code : summary.pattern_roi) {
-      PatternLabel lab;
-      lab.isolated = true;
-      lab.q = ccdarksens::DecodePatternCode(code);
-      if (!lab.q.empty()) emc_cfg.accepted_labels.push_back(lab);
+    if (use_pattern_bins) {
+      for (int code : summary.pattern_roi) {
+        PatternLabel lab;
+        lab.isolated = true;
+        lab.q = ccdarksens::DecodePatternCode(code);
+        if (!lab.q.empty()) emc_cfg.accepted_labels.push_back(lab);
+      }
+    } else {
+      for (int ne : summary.roi_bins) {
+        if (ne <= 0) continue;
+        PatternLabel lab;
+        lab.isolated = true;
+        lab.q = {ne};  // single pixel holding n_e electrons (valid for n_e <= 9)
+        emc_cfg.accepted_labels.push_back(lab);
+      }
     }
     if (emc_cfg.accepted_labels.empty()) {
       PatternLabel lab;
@@ -360,13 +373,6 @@ int main(int argc, char** argv)
     auto t_eff_end = std::chrono::steady_clock::now();
     double t_eff_s = std::chrono::duration<double>(t_eff_end - t_eff_start).count();
     std::cout << "[example-one] Pattern efficiency computation took " << std::fixed << std::setprecision(2) << t_eff_s << " s\n";
-    int bin1 = h_eps_ne->FindBin(1);
-    h_eps_ne->SetBinContent(bin1, 1.0);
-    h_eps_ne->SetBinError(bin1, 0.0);
-    h_eps_ne->SetBinContent(h_eps_ne->FindBin(2), 0.38);
-    h_eps_ne->SetBinContent(h_eps_ne->FindBin(3), 0.65);
-    h_eps_ne->SetBinContent(h_eps_ne->FindBin(4), 0.79);
-    h_eps_ne->SetBinContent(h_eps_ne->FindBin(5), 0.86);
 
     PixelSimulatorConfig pix_cfg_pcd;
     pix_cfg_pcd.mode = PixelSimMode::LocalPatch;

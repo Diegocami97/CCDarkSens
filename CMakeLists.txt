@@ -21,6 +21,8 @@ add_library(ccdarksens_core
     src/io/ConfigManager.cc
     src/io/RateTable.cc
     src/model/DMElectronModel.cc
+    src/model/DarkPhotonModel.cc
+    src/model/MigdalModel.cc
 
     # Experiment / detector
     src/experiment/ExperimentSetup.cc

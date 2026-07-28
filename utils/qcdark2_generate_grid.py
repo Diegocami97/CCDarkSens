@@ -17,22 +17,13 @@ Usage (from repository root)::
 
 from __future__ import annotations
 
-import importlib.util
 import json
 import os
 import sys
 from pathlib import Path
 
 _REPO_ROOT = Path(__file__).resolve().parents[1]
-
-
-def _load_driver():
-    path = Path(__file__).resolve().parent / "qedark_generate_grid.py"
-    spec = importlib.util.spec_from_file_location("qedark_generate_grid", path)
-    mod = importlib.util.module_from_spec(spec)
-    assert spec.loader is not None
-    spec.loader.exec_module(mod)
-    return mod
+_UTILS_DIR = Path(__file__).resolve().parent
 
 
 def main() -> None:
@@ -54,8 +45,11 @@ def main() -> None:
         cfg["epsilon_h5"] = str(p.resolve())
 
     sys.path.insert(0, str(_REPO_ROOT / "python"))
-    driver = _load_driver()
-    driver.run_from_config(cfg)
+    if str(_UTILS_DIR) not in sys.path:
+        sys.path.insert(0, str(_UTILS_DIR))
+    from qedark_generate_grid import run_from_config
+
+    run_from_config(cfg)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,116 @@
+\section{Charge Ionization Model (Shared by All Three Channels)}
+\label{sec:ionization}
+
+\subsection{Klein's formula: mean electron--hole pair creation energy}
+\label{sec:klein}
+
+Once a deposited energy $\omega\geq\Egap$ is fixed, the \textbf{mean} number
+of electron--hole pairs created is set by the mean pair-creation energy
+$\ehpair$ (historically called the ``Fano'' or ``ionization'' energy):
+\begin{equation}
+\langle n_e\rangle = \frac{\omega - \Egap}{\ehpair}\,.
+\end{equation}
+For real silicon, $\ehpair=3.8$~eV is \textbf{directly measured} (100~K,
+PRD 102, 063026) — not derived from a formula. For a hypothetical material
+with no measurement, \citet{Klein1968} proposed an empirical linear
+relation between $\ehpair$ and the band gap, calibrated across several
+elemental and compound semiconductors (Si, Ge, GaAs, CdS, \ldots):
+\begin{equation}
+\ehpair \approx a\,\Egap + b\,.
+\end{equation}
+CCDarkSens uses this class of relation with the coefficients
+\begin{equation}
+\boxed{\ehpair = 2.67\,\Egap + 0.87\ \text{eV}}
+\end{equation}
+which for \SrCdSb{} ($\Egap=0.34$~eV) gives
+\begin{equation}
+\ehpair = 2.67\times0.34 + 0.87 = 0.9078 + 0.87 = \mathbf{1.7778}\ \text{eV}\,.
+\end{equation}
+This value (\texttt{configs/darkphoton\_one\_point\_eu5in2sb6.json} and the
+Sr2Cb2Sd scan configs) \textbf{supersedes} the earlier
+$\ehpair=1.6$~eV placeholder used in the original HypMat unified-model
+document. Note the repository also contains a second, coarser Klein-type
+fit — the widely cited Alig--Bloom form $\ehpair = 2.8\Egap+0.5$~eV — used
+only in exploratory heatmap plots
+(\texttt{utils/plot\_band\_gap\_2d\_heatmap.py}); it is \textbf{not} the
+parameterization used for the production \SrCdSb{} configs and is noted
+here only to avoid confusion between the two curves if both appear in a
+figure.
+
+The actual $n_e$ for a given $\omega$ is \textbf{not sharp} — it follows a
+Fano-broadened distribution $P(n_e\mid\omega)$, captured in a lookup table
+(Section~\ref{sec:pne-table}), not by rounding $\langle n_e\rangle$.
+
+\subsection{Ionization scenarios: the ``D-equal'' convention and its siblings}
+
+Because there is \textbf{no known fundamental relation} $\ehpair(\Egap)$
+valid for arbitrary low-gap materials (Klein's fit is itself only a
+phenomenological average over a handful of real semiconductors),
+CCDarkSens's band-gap phenomenology framework treats $(\Egap,\ehpair)$ as
+two \textbf{independently specifiable} knobs and labels each combination
+with a scenario ID:
+
+\begin{center}
+\begin{tabular}{@{}p{2cm}p{2.7cm}p{3.6cm}p{5.5cm}@{}}
+\toprule
+Scenario ID & $\Egap$ & $\ehpair$ & Interpretation \\
+\midrule
+\textbf{ref} & 1.2~eV & 3.8~eV & Reference Si, unscaled \texttt{p100K\_table.csv} \\
+\textbf{B-thresh} & $\Egap$ (new) & 3.8~eV (fixed, Si-like) & Lower the threshold only, keep Si's pair scale \\
+\textbf{D-equal} & $\Egap$ (new) & $=\Egap$ (new) & Aggressive equal-scale pheno; not real bulk Si \\
+\textbf{A-ratio} & $\Egap$ (new) & $3.8\times\Egap/1.2$ & Preserve Si's $\ehpair/\Egap$ ratio \\
+\textbf{Klein} & $\Egap$ (new) & $2.67\Egap+0.87$ & Section~\ref{sec:klein} relation; used for \SrCdSb{} \\
+\textbf{C-grid} & user & user & Free 2D grid, no rule \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The \SrCdSb{} production configs use the \textbf{Klein} scenario
+specifically (\texttt{ion\_scenario: "Klein"} in
+\texttt{configs/Sr2Cb2Sd/write\_configs.py}), i.e.\ $\ehpair$ is
+\emph{not} pinned equal to $\Egap$ (that would be D-equal) nor fixed at
+Si's 3.8~eV (B-thresh) — it follows the Klein formula above.
+
+\subsection{The $P(n_e\mid E)$ table and the anchored energy map}
+\label{sec:pne-table}
+
+The full ionization model is a table $P(n_e\mid E)$: CSV columns
+$E_{r,\mathrm{eV}}, P_1, P_2, \ldots, P_k$, loaded by
+\texttt{ChargeIonization::LoadCSV\_} and consumed by
+\texttt{ChargeIonization::FoldToNe}, which convolves a $dR/dE$ histogram
+against this table (weighted by exposure) to produce the observable $n_e$
+spectrum.
+
+For materials without a dedicated Monte Carlo $P(n_e\mid E)$ calculation,
+the table is \textbf{rescaled from the Si reference table}
+\texttt{data/p100K\_table.csv} ($\Egap=1.2$~eV, $\ehpair=3.8$~eV, 100~K) via
+the anchored energy map:
+\begin{equation}
+E'(E) = \Egap^\mathrm{ref} + \bigl(E - \Egap^\mathrm{new}\bigr)\times
+\frac{\ehpair^\mathrm{ref}}{\ehpair^\mathrm{new}} \qquad \text{for } E \geq \Egap^\mathrm{new}\,,
+\end{equation}
+\begin{equation}
+P_\mathrm{new}(n_e\mid E) = \begin{cases}
+0 & E < \Egap^\mathrm{new} \\
+P_\mathrm{ref}\bigl(n_e \mid E'(E)\bigr) & \text{otherwise}
+\end{cases}
+\end{equation}
+(linear interpolation on the reference table). \textbf{Physical
+interpretation:} the map asks ``at what energy does bulk Si have the same
+\emph{fractional} excitation above threshold as the new material at energy
+$E$?'' — it anchors the ionization \emph{shape} (Fano broadening,
+multiplicity structure) to Si's measured behavior while relocating the
+\emph{threshold and scale} to the new material's $(\Egap,\ehpair)$.
+
+For \SrCdSb{} ($\Egap=0.34$~eV, $\ehpair=1.7778$~eV via Klein):
+\begin{equation}
+E'(E) = 1.2 + (E-0.34)\times\frac{3.8}{1.7778} = 1.2 + (E-0.34)\times2.138\,,
+\end{equation}
+built by \texttt{utils/build\_p100K\_scaled.py --band-gap-eV 0.34
+--eh-pair-eV 1.7778 --scenario Klein}.
+
+\paragraph{What this does and does not claim:} the turn-on energy
+(0.34~eV) and the mean-$n_e$ scale (via $\ehpair$) are physically motivated
+(Klein's relation, however approximate); the detailed \emph{shape} of
+$P(n_e\mid E)$ — Fano factor, sub-gap phonon tail — is inherited from Si
+and is \textbf{not} a first-principles \SrCdSb{} calculation.

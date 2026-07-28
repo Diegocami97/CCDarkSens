@@ -217,6 +217,9 @@ void EfficiencyMC::PrintExampleRows(int ne, double Ee_eV, int n_examples,
 // Precompute epsilon(n_e) with pattern-efficiency weights from CSV:
 //   epsilon(n_e) = sum_{label in accepted_labels} P(label | n_e) * Eff_csv(code, n_e)
 // where code = EncodePatternCode(label.q).
+//
+// Fast path (efficiency_csv provided): skip MC entirely and use CSV values
+// directly as eps(ne) = sum_{accepted label L} Eff_csv(L, ne).
 // -----------------------------------------------------------------------------
 std::unique_ptr<TH1D>
 EfficiencyMC::PrecomputeEpsilonWithPatternEff(
@@ -228,14 +231,28 @@ EfficiencyMC::PrecomputeEpsilonWithPatternEff(
       "EfficiencyMC::PrecomputeEpsilonWithPatternEff: missing ChargeTransport or PatternClassifier");
   }
 
-  // Build the pattern table via MC: pattern_table_[ne_true] = { PatternLabel -> P(L | ne_true) }
-  BuildPatternTable(ne_min, ne_max, Ee_eV);
-
   const int nbins = ne_max - ne_min + 1;
   auto h = std::make_unique<TH1D>("eps_mc_csv",
                                   "EfficiencyMC Efficiency with CSV weights",
                                   nbins, ne_min - 0.5, ne_max + 0.5);
   h->Sumw2();
+
+  // CSV-only fast path: efficiency_csv provided → use CSV values directly as eps(ne), skip MC
+  if (!pattern_eff.empty()) {
+    for (int ne = ne_min; ne <= ne_max; ++ne) {
+      double eps_val = 0.0;
+      for (const auto& lab : cfg_.accepted_labels) {
+        int code = EncodePatternCode(lab.q);
+        auto it_w = pattern_eff.find({code, ne});
+        if (it_w != pattern_eff.end()) eps_val += it_w->second;
+      }
+      h->SetBinContent(ne - ne_min + 1, eps_val);
+    }
+    return h;
+  }
+
+  // Full MC path: build pattern table, then weight by CSV
+  BuildPatternTable(ne_min, ne_max, Ee_eV);
 
   // Loop over true n_e
   for (int ne = ne_min; ne <= ne_max; ++ne) {

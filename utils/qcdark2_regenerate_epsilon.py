@@ -1,10 +1,4 @@
 #!/usr/bin/env python3
-# ============================================================================
-#  CCDarkSens — qcdark2_regenerate_epsilon
-#  Regenerate QCDark2 dielectric-function HDF5 files with scissor band-gap control
-#
-#  Author: Diego Venegas-Vargas
-# ============================================================================
 """
 Regenerate QCDark2 dielectric-function HDF5 files (proper band-gap control via scissor).
 
@@ -43,10 +37,50 @@ import h5py
 import numpy as np
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-# Set CCDARK_QCDARK2_DIR to your local QCDark2 checkout, or pass --qcdark2 on the CLI.
-_qcdark2_env = os.environ.get("CCDARK_QCDARK2_DIR", "")
-DEFAULT_QCDARK2 = Path(_qcdark2_env) if _qcdark2_env else Path("QCDark2")
-DEFAULT_VENV_PY = DEFAULT_QCDARK2 / ".venv" / "bin" / "python3"
+FALLBACK_QCDARK2 = Path("/Users/diegovenegasvargas/Documents/Software/QCDark2")
+
+
+def _looks_like_qcdark2_root(path: Path) -> bool:
+    p = path.expanduser().resolve()
+    return p.is_dir() and ((p / "qcdark2").is_dir() or (p / "pyproject.toml").is_file())
+
+
+def _infer_qcdark2_root_from_python() -> Path | None:
+    exe = Path(sys.executable).resolve()
+    parts = exe.parts
+    if ".venv" not in parts:
+        return None
+    root = Path(*parts[: parts.index(".venv")])
+    return root if _looks_like_qcdark2_root(root) else None
+
+
+def _resolve_qcdark2_root(cli_root: Path | None) -> Path:
+    if cli_root is not None:
+        root = cli_root.expanduser().resolve()
+        if not _looks_like_qcdark2_root(root):
+            raise FileNotFoundError(
+                f"QCDark2 root not found: {root}\n"
+                "Set CCDARK_QCDARK2_DIR or pass --qcdark2-root to your checkout."
+            )
+        return root
+
+    candidates: list[Path] = []
+    if env := os.environ.get("CCDARK_QCDARK2_DIR", "").strip():
+        candidates.append(Path(env))
+    inferred = _infer_qcdark2_root_from_python()
+    if inferred is not None:
+        candidates.append(inferred)
+    candidates.extend([REPO_ROOT / "QCDark2", FALLBACK_QCDARK2, Path("QCDark2")])
+
+    for cand in candidates:
+        if _looks_like_qcdark2_root(cand):
+            return cand.expanduser().resolve()
+
+    raise FileNotFoundError(
+        "Could not locate QCDark2 checkout.\n"
+        "  export CCDARK_QCDARK2_DIR=/path/to/QCDark2\n"
+        "  or: python3 utils/qcdark2_regenerate_epsilon.py --qcdark2-root /path/to/QCDark2 ..."
+    )
 
 
 def _resolve_python(qcdark2_root: Path, python_exe: str | None) -> Path:
@@ -67,9 +101,12 @@ def _render_template(template_path: Path, scissor_eV: float) -> str:
 
 
 def _run_qcdark2(python: Path, qcdark2_root: Path, input_path: Path) -> None:
+    if not qcdark2_root.is_dir():
+        raise FileNotFoundError(f"QCDark2 cwd does not exist: {qcdark2_root}")
     env = os.environ.copy()
     env["PYTHONPATH"] = str(qcdark2_root) + os.pathsep + env.get("PYTHONPATH", "")
     cmd = [str(python), "-m", "qcdark2.dielectric_pyscf", str(input_path)]
+    print(f"[qcdark2] cwd={qcdark2_root}")
     print(f"[qcdark2] {' '.join(cmd)}")
     subprocess.run(cmd, cwd=str(qcdark2_root), env=env, check=True)
 
@@ -130,7 +167,12 @@ def package_epsilon(
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--qcdark2-root", type=Path, default=DEFAULT_QCDARK2)
+    ap.add_argument(
+        "--qcdark2-root",
+        type=Path,
+        default=None,
+        help="QCDark2 checkout (default: CCDARK_QCDARK2_DIR, active .venv, or ~/Documents/Software/QCDark2)",
+    )
     ap.add_argument("--python", default=None, help="Python with qcdark2+pyscf (default: QCDark2/.venv)")
     ap.add_argument("--input", type=Path, help="Ready-to-run .in file")
     ap.add_argument("--template", type=Path, help=".in template with {SCISSOR} placeholders")
@@ -141,7 +183,7 @@ def main() -> None:
     ap.add_argument("--out", type=Path, help="Output .h5 for --package-only")
     args = ap.parse_args()
 
-    qcdark2_root = args.qcdark2_root.expanduser().resolve()
+    qcdark2_root = _resolve_qcdark2_root(args.qcdark2_root)
     python = _resolve_python(qcdark2_root, args.python)
 
     if args.package_only:

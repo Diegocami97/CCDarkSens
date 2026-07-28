@@ -491,6 +491,13 @@ void ConfigManager::parse_model_(const nlohmann::json& jm) {
   model_.Emax_eV           = jm.value("Emax_eV", 20.0);
   model_.nbins             = jm.value("nbins", 200);
 
+  // DM-nucleon coupling fields (used when type == "migdal")
+  model_.target_nucleus    = jm.value("target_nucleus", std::string("Si28"));
+  model_.nuclear_A         = jm.value("nuclear_A", 28);
+  model_.nuclear_Z         = jm.value("nuclear_Z", 14);
+  model_.sigma_n_cm2       = jm.value("sigma_n_cm2", std::string("1e-40"));
+  model_.epsilon_ref       = jm.value("epsilon_ref", std::string(""));
+
   // ---- NEW: optional QE-Dark style grid ----
   model_.has_grid = false;
   model_.grid_mchi.values.clear();

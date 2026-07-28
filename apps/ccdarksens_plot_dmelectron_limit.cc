@@ -19,6 +19,8 @@
 #include <TH2D.h>
 #include <TList.h>
 #include <TGraph.h>
+#include <TGraphAsymmErrors.h>
+#include <TGraphSmooth.h>
 #include <TTree.h>
 #include <TError.h>
 #include <TCanvas.h>
@@ -26,6 +28,7 @@
 #include <TLegend.h>
 #include <TAxis.h>
 #include <TApplication.h>
+#include <TNamed.h>
 #include <TROOT.h>
 #include <TSystem.h>
 #include <fstream>
@@ -55,12 +58,31 @@ static std::string ResolveOutputPath(const std::string& rel) {
   return std::string(gSystem->pwd()) + "/" + rel;
 }
 
+static std::string SanitizeName(const std::string& s) {
+  std::string out;
+  for (char c : s) out += (std::isalnum(static_cast<unsigned char>(c)) || c == '_') ? c : '_';
+  // Collapse runs of underscores
+  std::string result;
+  bool prev_under = false;
+  for (char c : out) {
+    if (c == '_' && prev_under) continue;
+    result += c;
+    prev_under = (c == '_');
+  }
+  // Strip trailing underscore
+  while (!result.empty() && result.back() == '_') result.pop_back();
+  return result;
+}
+
 static bool SaveMainLimitOutputs(TCanvas* c,
                                  const std::vector<TGraph*>& glimits,
                                  TH2D* hq,
                                  const std::string& out_pdf,
                                  const std::string& out_root,
-                                 const char* phase) {
+                                 const char* phase,
+                                 const std::vector<std::pair<TGraph*, std::string>>& literature = {},
+                                 const std::vector<std::pair<TGraph*, std::string>>& store_only = {},
+                                 const std::vector<std::string>& limit_labels = {}) {
   if (!c) {
     std::cerr << "[limit] (" << phase << ") Canvas unavailable; skip save.\n";
     return false;
@@ -72,10 +94,22 @@ static bool SaveMainLimitOutputs(TCanvas* c,
   c->SaveAs(out_pdf.c_str());
   {
     TFile fout(out_root.c_str(), "RECREATE");
-    for (TGraph* g : glimits) {
-      if (g) g->Write();
+    for (std::size_t ig = 0; ig < glimits.size(); ++ig) {
+      TGraph* g = glimits[ig];
+      if (!g) continue;
+      if (ig < limit_labels.size() && !limit_labels[ig].empty()) {
+        const std::string safe = SanitizeName(limit_labels[ig]);
+        if (!safe.empty()) g->SetName(safe.c_str());
+      }
+      g->Write();
     }
     if (hq) hq->Write();
+    for (const auto& [g, name] : literature) {
+      if (g) { g->SetName(name.c_str()); g->Write(); }
+    }
+    for (const auto& [g, name] : store_only) {
+      if (g) { g->SetName(name.c_str()); g->Write(); }
+    }
     fout.Close();
   }
   const bool pdf_ok =
@@ -121,7 +155,7 @@ static bool SaveLimitContoursCsv(const std::string& path,
     std::cerr << "[limit] ERROR: cannot open CSV for write: " << path << "\n";
     return false;
   }
-  out << "# DM-e upper-limit contour: mchi_MeV vs sigma_e_cm2\n";
+  out << "# Upper-limit contour: mchi_MeV vs sigma_e_cm2 (dark_photon: mA_eV vs epsilon)\n";
   out << "# q_threshold=" << q_threshold << "\n";
   const bool multi = (glimits.size() > 1);
   if (multi) {
@@ -838,6 +872,156 @@ TGraph* LoadExclusionCSV(const std::string& csv_path,
   return g;
 }
 
+// Dark photon literature CSVs use several column layouts; mass is in keV, ε in
+// column k/limit.  x_col/y_col are 0-based field indices after comma-splitting.
+static bool LineLooksLikeCSVHeader(const std::string& line)
+{
+  for (char c : line) {
+    if (c == ',' || c == ' ' || c == '\t' || c == '\r') continue;
+    return std::isalpha(static_cast<unsigned char>(c));
+  }
+  return false;
+}
+
+static std::vector<double> SplitCSVDoubles(const std::string& line)
+{
+  std::vector<double> vals;
+  std::string field;
+  std::stringstream ss(line);
+  while (std::getline(ss, field, ',')) {
+    if (field.empty()) continue;
+    try {
+      vals.push_back(std::stod(field));
+    } catch (...) {
+      // skip non-numeric tokens
+    }
+  }
+  return vals;
+}
+
+TGraph* LoadDarkPhotonLimitCSV(const std::string& csv_path,
+                             int x_col,
+                             int y_col,
+                             double x_scale,
+                             Color_t line_color = kGray + 2,
+                             Style_t line_style = 1,
+                             Width_t line_width = 2,
+                             double y_scale = 1.0)
+{
+  std::ifstream in(csv_path);
+  if (!in.is_open()) {
+    std::cerr << "[exclusion] ERROR: cannot open CSV file " << csv_path << "\n";
+    return nullptr;
+  }
+
+  std::vector<double> xs;
+  std::vector<double> ys;
+  std::string line;
+
+  while (std::getline(in, line)) {
+    if (line.empty()) continue;
+    if (line[0] == '#') continue;
+    if (LineLooksLikeCSVHeader(line)) continue;
+
+    const std::vector<double> fields = SplitCSVDoubles(line);
+    if (x_col < 0 || y_col < 0 ||
+        static_cast<std::size_t>(x_col) >= fields.size() ||
+        static_cast<std::size_t>(y_col) >= fields.size()) {
+      continue;
+    }
+
+    const double x = fields[static_cast<std::size_t>(x_col)] * x_scale;
+    const double y = fields[static_cast<std::size_t>(y_col)] * y_scale;
+    if (!(x > 0.0 && y > 0.0 && std::isfinite(x) && std::isfinite(y))) continue;
+
+    xs.push_back(x);
+    ys.push_back(y);
+  }
+
+  if (xs.empty()) {
+    std::cerr << "[exclusion] WARNING: no valid points found in " << csv_path << "\n";
+    return nullptr;
+  }
+
+  auto* g = new TGraph(static_cast<int>(xs.size()));
+  g->SetName(("g_dp_" + csv_path).c_str());
+  g->SetTitle("");
+  for (int i = 0; i < static_cast<int>(xs.size()); ++i) {
+    g->SetPoint(i, xs[i], ys[i]);
+  }
+  g->SetLineColor(line_color);
+  g->SetLineStyle(line_style);
+  g->SetLineWidth(line_width);
+  return g;
+}
+
+struct DarkPhotonXenonNtBracket {
+  TGraph* lo = nullptr;
+  TGraph* hi = nullptr;
+  TGraphAsymmErrors* band = nullptr;
+};
+
+static DarkPhotonXenonNtBracket LoadDarkPhotonXenonNtHPBracket(
+    const std::string& csv_path,
+    double mass_scale,
+    Color_t color,
+    Style_t line_style = 7,
+    Width_t line_width = 3)
+{
+  DarkPhotonXenonNtBracket out;
+  std::ifstream in(csv_path);
+  if (!in.is_open()) {
+    std::cerr << "[exclusion] ERROR: cannot open CSV file " << csv_path << "\n";
+    return out;
+  }
+
+  std::vector<double> xs;
+  std::vector<double> ylo;
+  std::vector<double> yhi;
+  std::string line;
+  while (std::getline(in, line)) {
+    if (line.empty() || line[0] == '#') continue;
+    if (LineLooksLikeCSVHeader(line)) continue;
+    const std::vector<double> fields = SplitCSVDoubles(line);
+    if (fields.size() < 3) continue;
+    const double x = fields[0] * mass_scale;
+    const double lo = fields[1];
+    const double hi = fields[2];
+    if (!(x > 0.0 && lo > 0.0 && hi > 0.0)) continue;
+    xs.push_back(x);
+    ylo.push_back(lo);
+    yhi.push_back(hi);
+  }
+  if (xs.empty()) {
+    std::cerr << "[exclusion] WARNING: no valid XENONnT HP bracket points in "
+              << csv_path << "\n";
+    return out;
+  }
+
+  out.lo = new TGraph(static_cast<int>(xs.size()));
+  out.hi = new TGraph(static_cast<int>(xs.size()));
+  out.band = new TGraphAsymmErrors(static_cast<int>(xs.size()));
+  for (int i = 0; i < static_cast<int>(xs.size()); ++i) {
+    out.lo->SetPoint(i, xs[i], ylo[i]);
+    out.hi->SetPoint(i, xs[i], yhi[i]);
+    const double ymid = 0.5 * (ylo[i] + yhi[i]);
+    const double dy = 0.5 * std::abs(yhi[i] - ylo[i]);
+    out.band->SetPoint(i, xs[i], ymid);
+    out.band->SetPointError(i, 0.0, 0.0, dy, dy);
+  }
+
+  for (TGraph* g : {out.lo, out.hi}) {
+    g->SetLineColor(color);
+    g->SetLineStyle(line_style);
+    g->SetLineWidth(line_width);
+  }
+  out.band->SetFillColor(color);
+  out.band->SetFillStyle(3005);
+  out.band->SetLineColor(color);
+  out.band->SetLineWidth(0);
+  return out;
+}
+
 
 
 TGraph* LoadMassLimitDAT(const std::string& filename,
@@ -991,6 +1175,23 @@ void UpdateRangesFromGraph(double& xmin, double& xmax,
   }
 }
 
+static void UpdateRangesFromGraphWindow(double& xmin, double& xmax,
+                                      double& ymin, double& ymax,
+                                      const TGraph* g,
+                                      double xwin_lo, double xwin_hi)
+{
+  if (!g) return;
+  for (int i = 0; i < g->GetN(); ++i) {
+    double x, y;
+    g->GetPoint(i, x, y);
+    if (x < xwin_lo || x > xwin_hi) continue;
+    xmin = std::min(xmin, x);
+    xmax = std::max(xmax, x);
+    ymin = std::min(ymin, y);
+    ymax = std::max(ymax, y);
+  }
+}
+
 TGraph* MakeFilledBand(const TGraph* g,
                        double y_bottom,
                        int fill_color,
@@ -1032,7 +1233,9 @@ TGraph* MakeFilledBand(const TGraph* g,
 TGraph* MakeFilledBandAbove(const TGraph* g,
                             double y_top,
                             int fill_color,
-                            double alpha = 0.25)
+                            double alpha = 0.25,
+                            double x_left  = -1.0,
+                            double x_right = -1.0)
 {
   if (!g) return nullptr;
 
@@ -1048,14 +1251,28 @@ TGraph* MakeFilledBandAbove(const TGraph* g,
   std::sort(pts.begin(), pts.end(),
             [](const auto& a, const auto& b){ return a.first < b.first; });
 
-  TGraph* gf = new TGraph(n + 2);
-  for (int i = 0; i < n; ++i) {
-    gf->SetPoint(i, pts[i].first, pts[i].second);
-  }
+  const double xl = (x_left  > 0.0) ? x_left  : pts.front().first;
+  const double xr = (x_right > 0.0) ? x_right : pts.back().first;
 
-  // close polygon at the TOP of the plot
-  gf->SetPoint(n,   pts.back().first,  y_top);   // top-right
-  gf->SetPoint(n+1, pts.front().first, y_top);   // top-left
+  // Build polygon that fills between the curve and y_top over [xl, xr].
+  // When xl/xr extend beyond the curve, the gap region is filled to y_top.
+  //
+  // Vertex order:
+  //   curve drop-in at left (only if xl < pts.front().x)
+  //   curve points left → right
+  //   curve drop-out at right (only if xr > pts.back().x)
+  //   close along top from xr → xl
+  bool extend_left  = (xl < pts.front().first);
+  bool extend_right = (xr > pts.back().first);
+  int extra = (extend_left ? 1 : 0) + (extend_right ? 1 : 0) + 2;  // +2 for top corners
+  TGraph* gf = new TGraph(n + extra);
+
+  int ip = 0;
+  if (extend_left)  gf->SetPoint(ip++, pts.front().first, y_top);  // drop from top to curve start
+  for (int i = 0; i < n; ++i) gf->SetPoint(ip++, pts[i].first, pts[i].second);
+  if (extend_right) gf->SetPoint(ip++, pts.back().first, y_top);   // rise from curve end to top
+  gf->SetPoint(ip++, xr, y_top);  // top-right
+  gf->SetPoint(ip++, xl, y_top);  // top-left (ROOT closes back to first point)
 
   gf->SetName((std::string(g->GetName()) + "_fill_above").c_str());
   gf->SetTitle("");
@@ -1163,6 +1380,92 @@ TGraph* MakeUnionBandAbove(const std::vector<const TGraph*>& graphs,
 
 
 
+// Extract a 90% CL upper-limit TGraph from a scan ROOT file by scanning the q TH2D
+// column-by-column (same as --from-qhist), so band curves are consistent with the central line.
+TGraph* ExtractLimitCurveFromRoot(const std::string& path, double q_thr = 2.71) {
+    TFile* f = TFile::Open(path.c_str(), "READ");
+    if (!f || f->IsZombie()) {
+        std::cerr << "[dc-band] ERROR: cannot open " << path << "\n";
+        return nullptr;
+    }
+    TH2D* h = dynamic_cast<TH2D*>(f->Get("q_mchi_sigma_pattern"));
+    if (!h) h = dynamic_cast<TH2D*>(f->Get("q_mchi_sigma"));
+    if (!h) {
+        std::cerr << "[dc-band] ERROR: no q TH2D in " << path << "\n";
+        f->Close(); return nullptr;
+    }
+    h->SetDirectory(nullptr);
+    f->Close();
+    std::vector<double> xs, ys;
+    for (int ix = 1; ix <= h->GetNbinsX(); ++ix) {
+        double mchi = h->GetXaxis()->GetBinCenter(ix);
+        double sigma_ul = -1;
+        for (int iy = 1; iy <= h->GetNbinsY(); ++iy) {
+            if (h->GetBinContent(ix, iy) > q_thr) {
+                sigma_ul = h->GetYaxis()->GetBinCenter(iy); break;
+            }
+        }
+        if (sigma_ul > 0) { xs.push_back(mchi); ys.push_back(sigma_ul); }
+    }
+    if (xs.empty()) return nullptr;
+    return new TGraph(xs.size(), xs.data(), ys.data());
+}
+
+// Log-linear interpolation of TGraph at x.
+static double InterpGraphLogLog(TGraph* g, double x) {
+    int n = g->GetN();
+    double* gx = g->GetX(); double* gy = g->GetY();
+    if (x <= gx[0])   return gy[0];
+    if (x >= gx[n-1]) return gy[n-1];
+    for (int i = 0; i < n-1; ++i) {
+        if (x >= gx[i] && x <= gx[i+1]) {
+            double t = (std::log(x)-std::log(gx[i])) / (std::log(gx[i+1])-std::log(gx[i]));
+            return std::exp(std::log(gy[i]) + t*(std::log(gy[i+1])-std::log(gy[i])));
+        }
+    }
+    return gy[n-1];
+}
+
+// Build a closed filled-polygon band whose bottom = point-wise min and top = point-wise max
+// over g_lo, g_hi, and g_cen. Uses the INTERSECTION x-range of all three curves and clips
+// y values to [ymin_clip, ymax_clip] to avoid ROOT hatching artefacts from off-axis polygons.
+TGraph* MakeDcBandPolygon(TGraph* g_lo, TGraph* g_hi, TGraph* g_cen,
+                           double ymin_clip = 1e-40, double ymax_clip = 1e40) {
+    // Intersection of x-ranges: only build where all three curves have coverage
+    auto xrange = [](TGraph* g) -> std::pair<double,double> {
+        return {g->GetX()[0], g->GetX()[g->GetN()-1]};
+    };
+    double xlo = std::max({xrange(g_lo).first,  xrange(g_hi).first,  xrange(g_cen).first});
+    double xhi = std::min({xrange(g_lo).second, xrange(g_hi).second, xrange(g_cen).second});
+    if (xlo >= xhi) return nullptr;
+
+    std::vector<double> allx;
+    for (TGraph* g : {g_lo, g_hi, g_cen}) {
+        for (int i = 0; i < g->GetN(); ++i) {
+            double x, y; g->GetPoint(i, x, y);
+            if (x >= xlo && x <= xhi) allx.push_back(x);
+        }
+    }
+    std::sort(allx.begin(), allx.end());
+    allx.erase(std::unique(allx.begin(), allx.end()), allx.end());
+
+    int n = allx.size();
+    std::vector<double> lo(n), hi(n);
+    for (int i = 0; i < n; ++i) {
+        double x = allx[i];
+        double a = InterpGraphLogLog(g_lo,  x);
+        double b = InterpGraphLogLog(g_hi,  x);
+        double c = InterpGraphLogLog(g_cen, x);
+        lo[i] = std::max(std::min({a,b,c}), ymin_clip);
+        hi[i] = std::min(std::max({a,b,c}), ymax_clip);
+    }
+    std::vector<double> bx, by;
+    for (int i = 0; i < n; ++i)    { bx.push_back(allx[i]); by.push_back(lo[i]); }
+    for (int i = n-1; i >= 0; --i) { bx.push_back(allx[i]); by.push_back(hi[i]); }
+    bx.push_back(allx[0]); by.push_back(lo[0]);
+    return new TGraph(bx.size(), bx.data(), by.data());
+}
+
 int main(int argc, char** argv)
 {
   // ---------------------------------------------------------------------------
@@ -1183,6 +1486,13 @@ int main(int argc, char** argv)
               << "  Optional flags:\n"
               << "    --from-qhist    Build limit from q(mchi,sigma) histogram even if upper_limit_sigma_e_mchi exists.\n"
               << "    --draw-both     Draw stored UL and pydme bisection diagnostic (or q-map if bisection graph absent).\n"
+              << "    --dark-photon   Dark photon absorption plot (m_{A'} vs #varepsilon); "
+              << "loads data/previous_limits/dark_photon/ (.csv and .txt).\n"
+              << "    --dc-band-lo <root>  (dark-photon) Lower band edge scan (best DC). Combined with --dc-band-hi,\n"
+              << "                         draws a hatched band and only the central (positional) line.\n"
+              << "    --dc-band-hi <root>  Upper band edge scan (worst DC).\n"
+              << "    --migdal        Migdal effect plot (m_{chi} vs sigma_n); "
+              << "loads data/previous_limits/Migdal_heavy/ (combine with --heavy or --light).\n"
               << "    --band <band.root>   Overlay Brazilian band (median + ribbons) from ccdarksens_band.\n"
               << "    --band-mode asymptotic|toy_mc|both   Band threshold variant (default: auto).\n"
               << "    --band-per-toy-hists   Also write dme_band_per_toy_sigma.pdf (+ .root) from TTree band_per_toy\n"
@@ -1195,6 +1505,9 @@ int main(int argc, char** argv)
               << "    --reference-scan <root> <legend>  Solid reference curve (e.g. Si 1.2 eV / 3.8 eV);\n"
               << "                      reuses an existing input if the path matches.\n"
               << "    --show-damic    Overlay canonical paper-export QEdark limit (ScienceRun2024_results-1).\n"
+              << "    --plain-legend  Use CLI labels in the legend without (q-map) / (UL, q-grid) suffixes.\n"
+              << "    --legend-left   Place legend on the left (compact, two-line labels).\n"
+              << "    --legend-right  Place legend on the right (compact, two-line labels).\n"
               << "    --batch         Non-interactive: save immediately, no GUI (no axis editing).\n"
               << "  Without --batch: PDF/ROOT are written before the GUI opens; close the window to\n"
               << "  overwrite with final axis ranges (or use --batch for a one-shot save).\n"
@@ -1206,6 +1519,8 @@ int main(int argc, char** argv)
 
   bool force_from_qhist = false;
   bool draw_both = false;
+  bool dark_photon = false;
+  bool migdal_mode = false;
   double q_thr = 2.71; // default ~90% CL, 1 dof
   std::string mediator = "heavy";
 
@@ -1224,6 +1539,12 @@ int main(int argc, char** argv)
   std::string out_root_cli;
   std::string out_csv_cli;
   bool show_damic = false;
+  bool plain_legend = false;
+  bool legend_left = false;
+  bool legend_right = false;
+  bool smooth_curves = false;
+  std::string dc_band_lo_path;  // --dc-band-lo: best DC scan (band lower edge)
+  std::string dc_band_hi_path;  // --dc-band-hi: worst DC scan (band upper edge)
 
   std::vector<std::string> in_paths;
   std::vector<std::string> legend_labels;
@@ -1231,6 +1552,11 @@ int main(int argc, char** argv)
   std::string reference_scan_label;
   int reference_input_index = -1;
   size_t reference_graph_index = static_cast<size_t>(-1);
+  // --store-only <rootfile> <label>: extract limit curve and write to ROOT output, but do not draw
+  std::vector<std::pair<std::string, std::string>> store_only_paths;
+
+  // Axis range overrides (optional; auto-determined from data if not set)
+  double axis_x_min = -1, axis_x_max = -1, axis_y_min = -1, axis_y_max = -1;
 
   auto looks_like_root = [](const std::string& s) -> bool {
     if (s.size() < 5) return false;
@@ -1286,6 +1612,18 @@ int main(int argc, char** argv)
       draw_both = true;
       continue;
     }
+    if (tok_lc == "--dark-photon") {
+      dark_photon = true;
+      continue;
+    }
+    if (tok_lc == "--migdal") {
+      migdal_mode = true;
+      continue;
+    }
+    if (tok_lc == "--x-min" && i + 1 < argc) { axis_x_min = std::stod(argv[++i]); continue; }
+    if (tok_lc == "--x-max" && i + 1 < argc) { axis_x_max = std::stod(argv[++i]); continue; }
+    if (tok_lc == "--y-min" && i + 1 < argc) { axis_y_min = std::stod(argv[++i]); continue; }
+    if (tok_lc == "--y-max" && i + 1 < argc) { axis_y_max = std::stod(argv[++i]); continue; }
     if (tok_lc == "--band") {
       if (i + 1 < argc) {
         band_path = argv[++i];
@@ -1336,6 +1674,30 @@ int main(int argc, char** argv)
       show_damic = true;
       continue;
     }
+    if (tok_lc == "--plain-legend") {
+      plain_legend = true;
+      continue;
+    }
+    if (tok_lc == "--smooth-curve") {
+      smooth_curves = true;
+      continue;
+    }
+    if (tok_lc == "--legend-left") {
+      legend_left = true;
+      continue;
+    }
+    if (tok_lc == "--legend-right") {
+      legend_right = true;
+      continue;
+    }
+    if (tok_lc == "--dc-band-lo") {
+      if (i + 1 < argc) dc_band_lo_path = argv[++i];
+      continue;
+    }
+    if (tok_lc == "--dc-band-hi") {
+      if (i + 1 < argc) dc_band_hi_path = argv[++i];
+      continue;
+    }
     if (tok_lc == "--reference-scan") {
       if (i + 2 < argc) {
         reference_scan_path = argv[++i];
@@ -1346,8 +1708,23 @@ int main(int argc, char** argv)
       }
       continue;
     }
-    if (tok_lc == "heavy" || tok_lc == "light") {
-      mediator = tok_lc;
+    if (tok_lc == "--store-only") {
+      if (i + 2 < argc) {
+        std::string so_path  = argv[++i];
+        std::string so_label = argv[++i];
+        store_only_paths.emplace_back(so_path, so_label);
+      } else {
+        std::cerr << "[limit] ERROR: --store-only requires <rootfile> <label>\n";
+        return 1;
+      }
+      continue;
+    }
+    if (tok_lc == "heavy" || tok_lc == "--heavy") {
+      mediator = "heavy";
+      continue;
+    }
+    if (tok_lc == "light" || tok_lc == "--light") {
+      mediator = "light";
       continue;
     }
 
@@ -1452,7 +1829,10 @@ int main(int argc, char** argv)
         continue;
       }
       if (a_lc == "--from-qhist" || a_lc == "--draw-both" ||
-          a_lc == "--band-per-toy-hists" || a_lc == "--show-damic") {
+          a_lc == "--band-per-toy-hists" || a_lc == "--show-damic" ||
+          a_lc == "--plain-legend" || a_lc == "--legend-left" ||
+          a_lc == "--legend-right" || a_lc == "--dark-photon" ||
+          a_lc == "--migdal") {
         continue;
       }
       if (skip_value_flag(a_lc)) {
@@ -1528,6 +1908,11 @@ int main(int argc, char** argv)
 
     bool any_points = false;
 
+    auto legend_with_suffix = [&](const char* suffix) -> std::string {
+      return plain_legend ? legend_labels[idx_file]
+                          : legend_labels[idx_file] + suffix;
+    };
+
     auto build_and_push_ul = [&]() {
       std::vector<double> mchi_vals_local;
       std::vector<double> sigma_lim_vals_local;
@@ -1562,7 +1947,7 @@ int main(int argc, char** argv)
         g_ul->SetPoint(i, mchi_vals_local[i], sigma_lim_vals_local[i]);
       }
       glimits.push_back(g_ul);
-      legend_entries_per_graph.push_back(legend_labels[idx_file] + " (UL, q-grid)");
+      legend_entries_per_graph.push_back(legend_with_suffix(" (UL, q-grid)"));
       mchi_vals.insert(mchi_vals.end(), mchi_vals_local.begin(), mchi_vals_local.end());
       sigma_lim_vals.insert(sigma_lim_vals.end(), sigma_lim_vals_local.begin(), sigma_lim_vals_local.end());
       if (idx_file == 0 && !glimit) glimit = g_ul;
@@ -1591,7 +1976,7 @@ int main(int argc, char** argv)
       for (int i = 0; i < Npoints; ++i)
         g_pb->SetPoint(i, mchi_vals_local[i], sigma_lim_vals_local[i]);
       glimits.push_back(g_pb);
-      legend_entries_per_graph.push_back(legend_labels[idx_file] + " (pydme bisection)");
+      legend_entries_per_graph.push_back(legend_with_suffix(" (pydme bisection)"));
       mchi_vals.insert(mchi_vals.end(), mchi_vals_local.begin(), mchi_vals_local.end());
       sigma_lim_vals.insert(sigma_lim_vals.end(), sigma_lim_vals_local.begin(), sigma_lim_vals_local.end());
       if (idx_file == 0 && !glimit) glimit = g_pb;
@@ -1658,7 +2043,7 @@ int main(int argc, char** argv)
         g_q->SetPoint(i, mchi_vals_local[i], sigma_lim_vals_local[i]);
       }
       glimits.push_back(g_q);
-      legend_entries_per_graph.push_back(legend_labels[idx_file] + " (q-map)");
+      legend_entries_per_graph.push_back(legend_with_suffix(" (q-map)"));
       mchi_vals.insert(mchi_vals.end(), mchi_vals_local.begin(), mchi_vals_local.end());
       sigma_lim_vals.insert(sigma_lim_vals.end(), sigma_lim_vals_local.begin(), sigma_lim_vals_local.end());
       if (idx_file == 0 && !glimit) glimit = g_q;
@@ -1667,14 +2052,6 @@ int main(int argc, char** argv)
 
     if (build_ul) {
       build_and_push_ul();
-    }
-    if (hul) {
-      delete hul;
-      hul = nullptr;
-    }
-    if (g_ul_owned) {
-      delete g_ul_owned;
-      g_ul_owned = nullptr;
     }
 
     if (build_pydme_diag) {
@@ -1685,9 +2062,24 @@ int main(int argc, char** argv)
       }
     } else if (build_q) {
       build_and_push_q();
+      if (!any_points && have_ul_source && force_from_qhist) {
+        std::cerr << "[limit] WARNING: q-map empty or no q=" << q_thr
+                  << " crossings in " << in_path
+                  << "; falling back to upper_limit_sigma_e_mchi(_graph).\n";
+        build_and_push_ul();
+      }
       if (static_cast<int>(idx_file) == reference_input_index) {
         reference_graph_index = glimits.size() - 1;
       }
+    }
+
+    if (hul) {
+      delete hul;
+      hul = nullptr;
+    }
+    if (g_ul_owned) {
+      delete g_ul_owned;
+      g_ul_owned = nullptr;
     }
 
     if (!any_points) {
@@ -1814,49 +2206,116 @@ int main(int argc, char** argv)
 
 
   // ------------------------------------------------------------------
-  // 4) Load external exclusions / theory curves (heavy or light mediator)
+  // 4) Load external exclusions / theory curves
   // ------------------------------------------------------------------
-  const std::string limits_base = "data/previous_limits/" + mediator + "_mediator/";
-  // Canonical 25-point paper figure export (mass_ev); not the hybrid repo txt.
-  const std::string damic_paper_export_heavy =
-      "collab_frameworks/pydme/analysis/DailyModulation/LBC-Sep2024/paper_figures/data/"
-      "LBC_results/ScienceRun2024_results-Pattern/DAMIC-M_2025_QEDark_DMe_heavymediator.txt";
-  const std::string damic_paper_export_light =
-      "collab_frameworks/pydme/analysis/DailyModulation/LBC-Sep2024/paper_figures/data/"
-      "LBC_results/ScienceRun2024_results-Pattern/DAMIC-M_2025_QEDark_DMe_ulightmediator.txt";
-  const std::string damic_file = (mediator == "heavy")
-    ? "DAMIC-M_2025_QEDark_DMe_heavymediator.txt"
-    : "DAMIC-M_2025_QEDark_DMe_ulightmediator.txt";
-  const std::string freeze_file = (mediator == "heavy")
-    ? "Freeze-Out_F1_CMS-community.csv"
-    : "Freeze_in_limit.csv";
-  const std::string srdm_file = (mediator == "heavy")
-    ? "SRDM_limit_heavy.dat"
-    : "SRDM_limit_light.dat";
+  TGraph* g_damic_2025      = nullptr;
+  TGraph* g_sensei          = nullptr;
+  TGraph* g_supercdms       = nullptr;
+  TGraph* g_darkside50      = nullptr;
+  TGraph* g_panda4T         = nullptr;
+  TGraph* g_xenonnT         = nullptr;
+  TGraph* g_xenonnT_hi        = nullptr;
+  TGraphAsymmErrors* g_xenonnT_bracket = nullptr;
+  TGraph* g_damicm_mike     = nullptr;
+  TGraph* g_model           = nullptr;
+  TGraph* g_solar_reflected = nullptr;
+  TGraph* g_srdm            = nullptr;
 
-  TGraph* g_damic_2025 = nullptr;
-  if (show_damic) {
-    const std::string damic_path =
-        (mediator == "heavy") ? damic_paper_export_heavy
-        : (mediator == "light") ? damic_paper_export_light
-                                : (limits_base + damic_file);
-    g_damic_2025 = LoadTxtToTGraph(damic_path, kBlack, 1, 3);
-    if (!g_damic_2025) {
-      std::cerr << "[limit] WARNING: cannot load paper-export reference from "
-                << damic_path << "\n";
+  if (migdal_mode) {
+    // --- Migdal effect: σ_n (DM-nucleon) literature ---
+    // Only heavy mediator files exist for now; light will use the same set.
+    const std::string migdal_base = "data/previous_limits/Migdal_heavy/";
+    g_damic_2025 = LoadTxtToTGraph(
+        migdal_base + "DAMIC-M_2025_DMn-Migdal_heavymediator.txt", kBlack, 1, 3);
+    g_xenonnT    = LoadMassLimitDAT(
+        migdal_base + "XENON1T-Migdal.dat",    1e-39, c_xenonnt,  1, 2);
+    g_panda4T    = LoadExclusionCSV(
+        migdal_base + "Pandax_Migdal_2023.csv", c_panda4t, 1, 2, 1000.0, 1.0);
+    g_darkside50 = LoadMassLimitDAT(
+        migdal_base + "Darkside-Migdal.dat",    1e-39, c_darkside, 1, 2);
+    g_sensei     = LoadMassLimitDAT(
+        migdal_base + "SENSEI-Migdal.dat",      1e-35, c_sensei,   1, 2);
+
+    int n_loaded = 0;
+    if (g_damic_2025) ++n_loaded;
+    if (g_xenonnT)    ++n_loaded;
+    if (g_panda4T)    ++n_loaded;
+    if (g_darkside50) ++n_loaded;
+    if (g_sensei)     ++n_loaded;
+    std::cout << "[limit][migdal] Loaded " << n_loaded
+              << " literature curve(s) from " << migdal_base << "\n";
+  } else if (!dark_photon) {
+    // --- DM-electron literature curves ---
+    const std::string limits_base = "data/previous_limits/" + mediator + "_mediator/";
+    const std::string damic_paper_export_heavy =
+        "collab_frameworks/pydme/analysis/DailyModulation/LBC-Sep2024/paper_figures/data/"
+        "LBC_results/ScienceRun2024_results-Pattern/DAMIC-M_2025_QEDark_DMe_heavymediator.txt";
+    const std::string damic_paper_export_light =
+        "collab_frameworks/pydme/analysis/DailyModulation/LBC-Sep2024/paper_figures/data/"
+        "LBC_results/ScienceRun2024_results-Pattern/DAMIC-M_2025_QEDark_DMe_ulightmediator.txt";
+    const std::string damic_file = (mediator == "heavy")
+      ? "DAMIC-M_2025_QEDark_DMe_heavymediator.txt"
+      : "DAMIC-M_2025_QEDark_DMe_ulightmediator.txt";
+    const std::string freeze_file = (mediator == "heavy")
+      ? "Freeze-Out_F1_CMS-community.csv"
+      : "Freeze_in_limit.csv";
+    const std::string srdm_file = (mediator == "heavy")
+      ? "SRDM_limit_heavy.dat"
+      : "SRDM_limit_light.dat";
+
+    {
+      const std::string damic_path =
+          (mediator == "heavy") ? damic_paper_export_heavy
+          : (mediator == "light") ? damic_paper_export_light
+                                  : (limits_base + damic_file);
+      g_damic_2025 = LoadTxtToTGraph(damic_path, kBlack, 1, 3);
+      if (!g_damic_2025) {
+        std::cerr << "[limit] WARNING: cannot load paper-export reference from "
+                  << damic_path << "\n";
+      }
     }
-  }
-  TGraph* g_sensei       = LoadExclusionCSV(limits_base + "SENSEI.csv", c_xenonnt, 1, 2);
-  TGraph* g_supercdms    = LoadExclusionCSV(limits_base + "SuperCDMS.csv", c_xenonnt, 1, 2);
-  TGraph* g_darkside50   = LoadExclusionCSV(limits_base + "DarkSide50.csv", c_xenonnt, 1, 2);
-  TGraph* g_panda4T      = LoadExclusionCSV(limits_base + "Panda4T.csv", c_xenonnt, 1, 2);
-  TGraph* g_xenonnT      = LoadExclusionCSV(limits_base + "Xenon.csv", c_xenonnt, 1, 2);
-  TGraph* g_damicm_mike  = LoadExclusionCSV(limits_base + "damic-m_1kgyear_mike.csv",
-                                            kCyan, (mediator == "heavy") ? 2 : 1, 3);
-  TGraph* g_model        = LoadExclusionCSV(limits_base + freeze_file, c_freezein, 1, 3);
-  TGraph* g_solar_reflected = LoadMassLimitDAT(limits_base + srdm_file, 1e-38, kOrange+2, 1, 2);
+    g_sensei       = LoadExclusionCSV(limits_base + "SENSEI.csv", c_xenonnt, 1, 2);
+    g_supercdms    = LoadExclusionCSV(limits_base + "SuperCDMS.csv", c_xenonnt, 1, 2);
+    g_darkside50   = LoadExclusionCSV(limits_base + "DarkSide50.csv", c_xenonnt, 1, 2);
+    g_panda4T      = LoadExclusionCSV(limits_base + "Panda4T.csv", c_xenonnt, 1, 2);
+    g_xenonnT      = LoadExclusionCSV(limits_base + "Xenon.csv", c_xenonnt, 1, 2);
+    g_damicm_mike  = LoadExclusionCSV(limits_base + "damic-m_1kgyear_mike.csv",
+                                      kCyan, (mediator == "heavy") ? 2 : 1, 3);
+    g_model        = LoadExclusionCSV(limits_base + freeze_file, c_freezein, 1, 3);
+    g_solar_reflected = LoadMassLimitDAT(limits_base + srdm_file, 1e-38, kOrange+2, 1, 2);
+    g_srdm         = LoadExclusionCSV(
+        "data/previous_limits/srdm/carlos_srdm_ulm_limit.csv", c_freezein, 1, 3);
+  } else {
+    // --- Dark photon absorption literature (ScienceRun2024 notebook HP figure) ---
+    const std::string dp_base = "data/previous_limits/dark_photon/";
+    constexpr double kKeVtoEv = 1000.0;
+    // Paolo color scheme; direct-detection literature fills share one gray
+    const Color_t kHpXenon      = kViolet - 5;
+    const Color_t kHpSuperCDMS  = kGray + 1;
 
-  TGraph* g_srdm        = LoadExclusionCSV("/Users/diegovenegasvargas/Documents/CCDarkSens/data/previous_limits/srdm/carlos_srdm_ulm_limit.csv", c_freezein, 1, 3);
+    g_damic_2025 = LoadDarkPhotonLimitCSV(
+        dp_base + "DAMIC-M_2025_DAMICmodel_HP.txt", 0, 1, 1.0, kBlack, 1, 3);
+    g_panda4T = LoadDarkPhotonLimitCSV(
+        dp_base + "SCDMS_HP2024.txt", 0, 1, 1.0, kHpSuperCDMS, 7, 2);
+    const DarkPhotonXenonNtBracket xnt = LoadDarkPhotonXenonNtHPBracket(
+        dp_base + "dark_photon_xenonnt_hp_bracket.csv", kKeVtoEv, kHpXenon, 7, 3);
+    g_xenonnT = xnt.lo;
+    g_xenonnT_hi = xnt.hi;
+    g_xenonnT_bracket = xnt.band;
+    g_darkside50 = LoadDarkPhotonLimitCSV(
+        dp_base + "dark_photon_stellar_limits_combined.csv", 1, 2, kKeVtoEv,
+        kGreen + 2, 3, 2);
+
+    int n_loaded = 0;
+    if (g_damic_2025) ++n_loaded;
+    if (g_panda4T) ++n_loaded;
+    if (g_xenonnT) ++n_loaded;
+    if (g_darkside50) ++n_loaded;
+    if (g_model) ++n_loaded;
+    std::cout << "[limit][dark-photon] Loaded " << n_loaded
+              << " literature curve(s) from " << dp_base
+              << " (notebook HP set + stellar limits)\n";
+  }
 
 
 
@@ -1865,20 +2324,35 @@ int main(int argc, char** argv)
   double xmax = *std::max_element(mchi_vals.begin(), mchi_vals.end());
   double ymin = *std::min_element(sigma_lim_vals.begin(), sigma_lim_vals.end());
   double ymax = *std::max_element(sigma_lim_vals.begin(), sigma_lim_vals.end());
-  if (g_damic_2025) UpdateRangesFromGraph(xmin, xmax, ymin, ymax, g_damic_2025);
-  UpdateRangesFromGraph(xmin, xmax, ymin, ymax, g_sensei);
-  UpdateRangesFromGraph(xmin, xmax, ymin, ymax, g_supercdms);
-  UpdateRangesFromGraph(xmin, xmax, ymin, ymax, g_darkside50);
-  UpdateRangesFromGraph(xmin, xmax, ymin, ymax, g_panda4T);
-//   UpdateRangesFromGraph(xmin, xmax, ymin, ymax, g_sensei_2025);
-//   UpdateRangesFromGraph(xmin, xmax, ymin, ymax, g_freeze_in);
-  UpdateRangesFromGraph(xmin, xmax, ymin, ymax, g_model);
-  // UpdateRangesFromGraph(xmin, xmax, ymin, ymax, g_damicm_mike);
-  UpdateRangesFromGraph(xmin, xmax, ymin, ymax, g_solar_reflected);
-  // xmax = 1e3; // limit x-axis to 1 GeV for better visualization
+  if (migdal_mode) {
+    if (g_damic_2025) UpdateRangesFromGraph(xmin, xmax, ymin, ymax, g_damic_2025);
+    UpdateRangesFromGraph(xmin, xmax, ymin, ymax, g_xenonnT);
+    UpdateRangesFromGraph(xmin, xmax, ymin, ymax, g_panda4T);
+    UpdateRangesFromGraph(xmin, xmax, ymin, ymax, g_darkside50);
+    UpdateRangesFromGraph(xmin, xmax, ymin, ymax, g_sensei);
+  } else if (!dark_photon) {
+    if (g_damic_2025) UpdateRangesFromGraph(xmin, xmax, ymin, ymax, g_damic_2025);
+    UpdateRangesFromGraph(xmin, xmax, ymin, ymax, g_sensei);
+    UpdateRangesFromGraph(xmin, xmax, ymin, ymax, g_supercdms);
+    UpdateRangesFromGraph(xmin, xmax, ymin, ymax, g_darkside50);
+    UpdateRangesFromGraph(xmin, xmax, ymin, ymax, g_panda4T);
+    UpdateRangesFromGraph(xmin, xmax, ymin, ymax, g_xenonnT);
+    UpdateRangesFromGraph(xmin, xmax, ymin, ymax, g_model);
+    UpdateRangesFromGraph(xmin, xmax, ymin, ymax, g_solar_reflected);
+  }
+
+  // For dark photon: freeze xmax from scan data before literature curves can shrink it.
+  // Literature curves (LBC, stellar) may not extend as far as our scan grid.
+  const double xmax_data = xmax;
 
   // y-bounds of the plot (must match glimit->SetMinimum/Maximum)
-  UpdateRangesFromGraph(xmin, xmax, ymin, ymax, g_srdm);
+  // For dark photon, only update y from g_srdm, not x (literature curve may end at ~20 eV).
+  if (dark_photon) {
+    UpdateRangesFromGraph(xmin, xmax, ymin, ymax, g_srdm);
+    xmax = xmax_data;  // restore data-driven xmax
+  } else if (!migdal_mode) {
+    UpdateRangesFromGraph(xmin, xmax, ymin, ymax, g_srdm);
+  }
 
   // Expand x/y ranges to include any drawn band envelopes (use the 2σ outer
   // edges so the full Brazilian-band ribbon is visible).
@@ -1893,6 +2367,20 @@ int main(int argc, char** argv)
 
   double y_bottom = ymin * 0.3;
   double y_top    = ymax * 3.0;
+  if (dark_photon) {
+    // Stellar rows reach ~1e-7 eV; ensure literature fills cover the full axis top.
+    constexpr double kDpLiteratureFillTop = 1e-6;
+    y_top = std::max(y_top, kDpLiteratureFillTop);
+  } else if (migdal_mode) {
+    // σ_n limits: SENSEI/XENON1T can be as high as ~1e-25 at low mass — cover top.
+    y_top = std::max(y_top, 1e-24);
+  }
+
+  // CLI axis overrides: apply after auto-range computation
+  if (axis_x_min > 0) xmin     = axis_x_min;
+  if (axis_x_max > 0) xmax     = axis_x_max;
+  if (axis_y_min > 0) y_bottom = axis_y_min;
+  if (axis_y_max > 0) y_top    = axis_y_max;
 
   // ---- Experimental contours: fill ABOVE the curve ----
   // TGraph* g_damic_2025_fill = MakeFilledBandAbove(
@@ -1900,37 +2388,72 @@ int main(int argc, char** argv)
   //     g_damic_2025 ? g_damic_2025->GetLineColor() : c_damic2025, 0.25);
 
   TGraph* g_damic_2025_fill = nullptr;
-  if (g_damic_2025) {
-    g_damic_2025_fill = MakeFilledBandAbove(g_damic_2025, y_top, c_damic2025, 0.25);
+  TGraph* g_sensei_fill = nullptr;
+  TGraph* g_supercdms_fill = nullptr;
+  TGraph* g_darkside50_fill = nullptr;
+  TGraph* g_panda4T_fill = nullptr;
+  TGraph* g_xenonnT_fill = nullptr;
+  TGraph* g_direct_det_env = nullptr;
+  TGraph* g_direct_det_fill = nullptr;
+  TGraph* g_model_fill = nullptr;
+  TGraph* g_migdal_env = nullptr;
+  TGraph* g_migdal_env_fill = nullptr;
+  if (migdal_mode) {
+    // Build lower envelope of all available Migdal limits for the shaded exclusion band.
+    std::vector<const TGraph*> migdal_curves;
+    if (g_damic_2025)  migdal_curves.push_back(g_damic_2025);
+    if (g_xenonnT)     migdal_curves.push_back(g_xenonnT);
+    if (g_panda4T)     migdal_curves.push_back(g_panda4T);
+    if (g_darkside50)  migdal_curves.push_back(g_darkside50);
+    if (g_sensei)      migdal_curves.push_back(g_sensei);
+    if (!migdal_curves.empty()) {
+      g_migdal_env = MakeLowerEnvelope(migdal_curves, xmin, xmax_data);
+      g_migdal_env_fill = MakeFilledBandAbove(g_migdal_env, y_top, kGray + 1, 0.25);
+    }
+  } else if (dark_photon) {
+    std::vector<const TGraph*> direct_det_curves;
+    if (g_damic_2025) direct_det_curves.push_back(g_damic_2025);
+    if (g_panda4T) direct_det_curves.push_back(g_panda4T);
+    if (g_xenonnT) direct_det_curves.push_back(g_xenonnT);
+    if (!direct_det_curves.empty()) {
+      const double kDpEnvMassMin = 0.01;
+      const double kDpEnvMassMax = xmax_data;  // driven by scan data range
+      g_direct_det_env = MakeLowerEnvelope(direct_det_curves, kDpEnvMassMin, kDpEnvMassMax);
+      g_direct_det_fill = MakeFilledBandAbove(g_direct_det_env, y_top, kGray + 1, 0.25);
+    }
+    g_darkside50_fill = MakeFilledBandAbove(
+        g_darkside50, y_top, kGreen + 2, 0.30);
+  } else {
+    if (g_damic_2025) {
+      g_damic_2025_fill = MakeFilledBandAbove(g_damic_2025, y_top, c_damic2025, 0.25);
+    }
+    g_sensei_fill = MakeFilledBandAbove(
+        g_sensei, y_top,
+        g_sensei ? g_sensei->GetLineColor() : c_sensei, 0.25);
+    g_supercdms_fill = MakeFilledBandAbove(
+        g_supercdms, y_top,
+        g_supercdms ? g_supercdms->GetLineColor() : c_supercdms, 0.25);
+    g_darkside50_fill = MakeFilledBandAbove(
+        g_darkside50, y_top,
+        g_darkside50 ? g_darkside50->GetLineColor() : c_darkside, 0.25);
+    g_panda4T_fill = MakeFilledBandAbove(
+        g_panda4T, y_top,
+        g_panda4T ? g_panda4T->GetLineColor() : c_panda4t, 0.25);
+    g_xenonnT_fill = MakeFilledBandAbove(
+        g_xenonnT, y_top,
+        g_xenonnT ? g_xenonnT->GetLineColor() : c_xenonnt, 0.25);
   }
-
-  TGraph* g_sensei_fill = MakeFilledBandAbove(
-      g_sensei, y_top,
-      g_sensei ? g_sensei->GetLineColor() : c_sensei, 0.25);
-
-  TGraph* g_supercdms_fill = MakeFilledBandAbove(
-      g_supercdms, y_top,
-      g_supercdms ? g_supercdms->GetLineColor() : c_supercdms, 0.25);
-
-  TGraph* g_darkside50_fill = MakeFilledBandAbove(
-      g_darkside50, y_top,
-      g_darkside50 ? g_darkside50->GetLineColor() : c_darkside, 0.25);
-
-  TGraph* g_panda4T_fill = MakeFilledBandAbove(
-      g_panda4T, y_top,
-      g_panda4T ? g_panda4T->GetLineColor() : c_panda4t, 0.25);
-
-  TGraph* g_xenonnT_fill = MakeFilledBandAbove(
-      g_xenonnT, y_top,
-      g_xenonnT ? g_xenonnT->GetLineColor() : c_xenonnt, 0.25);
 
   TGraph* g_solar_reflected_fill = MakeFilledBandAbove(
       g_solar_reflected, y_top,
       g_solar_reflected ? g_solar_reflected->GetLineColor() : kOrange+2, 0.25);
 
-  // Filled band for the model prediction (Freeze-in), but NOT for the solid curve
-  TGraph* g_model_fill = MakeFilledBand(
-      g_model, y_bottom, g_model ? g_model->GetLineColor() : c_freezein, 0.20);
+  if (!dark_photon && !migdal_mode) {
+    // Heavy: red fill below freeze-out target, no solid line
+    // Light: solid red line only
+    if (mediator == "heavy")
+      g_model_fill = MakeFilledBand(g_model, y_bottom, kRed - 4, 0.35);
+  }
 
   // (Optional) if you ever draw g_damicm_mike and want it shaded too:
   // TGraph* g_damicm_mike_fill = MakeFilledBand(
@@ -1955,7 +2478,11 @@ int main(int argc, char** argv)
 
 
   const std::string canvas_title =
-      plot_title.empty() ? std::string("DM-e limit") : plot_title;
+      plot_title.empty()
+          ? (dark_photon  ? std::string("Dark photon limit")
+             : migdal_mode ? std::string("Migdal limit")
+                           : std::string("DM-e limit"))
+          : plot_title;
   TCanvas* c = new TCanvas("c_limit", canvas_title.c_str(), 900, 700);
   c->SetLogx();
   c->SetLogy();
@@ -1967,16 +2494,23 @@ int main(int argc, char** argv)
   c->SetTopMargin(plot_title.empty() ? 0.06 : 0.10);
 
   const std::vector<Color_t> curve_colors = {
-      kBlack, kBlue + 1, kGreen + 2, kMagenta + 1, kOrange + 1, kCyan + 1};
+      kRed + 1, kBlue + 1, kGreen + 2, kMagenta + 1, kOrange + 1, kCyan + 1};
   // Si reference (1.2 eV / 3.8 eV): gold — distinct from freeze-in/out (maroon) and dashed sweeps.
   const Color_t kSiReferenceColor = static_cast<Color_t>(TColor::GetColor(218, 165, 32));
   const std::vector<Style_t> curve_styles = {2, 1, 3, 4, 5, 6, 7};
   for (size_t i = 0; i < glimits.size(); ++i) {
     if (!glimits[i]) continue;
+    if (smooth_curves) {
+      TGraphSmooth gs("gs");
+      TGraph* tmp = gs.SmoothLowess(glimits[i], "", 0.15);
+      TGraph* smoothed = new TGraph(*tmp);
+      smoothed->SetName(glimits[i]->GetName());
+      glimits[i] = smoothed;
+    }
     if (i == reference_graph_index) {
-      glimits[i]->SetLineColor(kSiReferenceColor);
-      glimits[i]->SetLineStyle(kSolid);
-      glimits[i]->SetLineWidth(4);
+      glimits[i]->SetLineColor(kBlack);
+      glimits[i]->SetLineStyle(kDashed);
+      glimits[i]->SetLineWidth(3);
     } else {
       glimits[i]->SetLineWidth(3);
       glimits[i]->SetLineColor(curve_colors[i % curve_colors.size()]);
@@ -2015,40 +2549,35 @@ int main(int argc, char** argv)
 // //   if (g_freeze_in)   g_freeze_in->Draw("L SAME");
 //   if (g_model)  g_model->Draw("L SAME");
 
-// collect all curves that should define the excluded region
-std::vector<const TGraph*> curves_for_envelope_electron = {
-    
-    // g_damic_wimp,
-    // g_damic_2025,
-    g_supercdms,
-    g_darkside50,
-    g_panda4T,
-    g_xenonnT,
-    g_sensei
-};
+// Pre-computed lower envelope of all direct-detection limits (incl. DAMIC-M 2025).
+// Generated by utils/build_dme_direct_detection_envelope.py.
+// The DAMIC-M 2025 solid line is drawn separately on top.
+TGraph* g_env_electron      = nullptr;
+TGraph* g_env_fill_electron = nullptr;
+if (!dark_photon && !migdal_mode) {
+  const std::string env_csv = "data/previous_limits/" + mediator + "_mediator/direct_detection_envelope.csv";
+  g_env_electron = LoadExclusionCSV(env_csv, kGray + 1, 1, 0);
+  if (g_env_electron) {
+    g_env_fill_electron = MakeFilledBandAbove(g_env_electron, y_top, kGray + 1, 0.25);
+  }
+}
 
 
-TGraph* g_env_electron = MakeLowerEnvelope(curves_for_envelope_electron, xmin, xmax);
-TGraph* g_env_fill_electron = MakeFilledBandAbove(g_env_electron, y_top, c_damic2025, 0.25);
-// // EnforceMonotonicEnvelope(g_env);
-
-// // single filled band from the envelope
-// TGraph* g_env_fill = nullptr;
-// if (g_env) {
-  g_env_fill_electron = MakeFilledBandAbove(g_env_electron, y_top, c_damic2025, 0.25);
-
-
-  const char* kXtitle = "m_{#chi} [MeV/c^{2}]";
-  const char* kYtitle = "#bar{#sigma}_{e} [cm^{2}]";
-  // Fixed publication window requested for all exported limit PDFs.
-  const double kMassPlotMin = 1e-1;  // MeV
-  const double kMassPlotMax = 1e3;   // MeV
-  const double y_plot_max = ymax * 3.0;
+  const char* kXtitle = dark_photon ? "m_{A'} [eV]"     : "m_{#chi} [MeV/c^{2}]";
+  const char* kYtitle = dark_photon ? "#varepsilon"
+                      : migdal_mode ? "#bar{#sigma}_{n} [cm^{2}]"
+                                    : "#bar{#sigma}_{e} [cm^{2}]";
+  // x-axis: for dark photon use data-driven range; for DM-electron use fixed publication window.
+  // CLI overrides (--x-min/--x-max/--y-min/--y-max) take precedence.
+  const double kMassPlotMin = (axis_x_min > 0) ? axis_x_min : (dark_photon ? xmin  : 1e-1);
+  const double kMassPlotMax = (axis_x_max > 0) ? axis_x_max : (dark_photon ? xmax  : 1e3);
+  const double y_plot_max =
+      (axis_y_max > 0) ? axis_y_max : (dark_photon ? std::max(ymax * 3.0, 1e-6) : ymax * 3.0);
 
   // View range for interactive GUI: scan limits only (not literature to 10^11 MeV).
   const double x_view_lo = kMassPlotMin;
   const double x_view_hi = kMassPlotMax;
-  const double y_view_lo = y_bottom;
+  const double y_view_lo = (axis_y_min > 0) ? axis_y_min : y_bottom;
   const double y_view_hi = y_plot_max;
 
   glimit->GetXaxis()->SetTitle(kXtitle);
@@ -2132,41 +2661,72 @@ TGraph* g_env_fill_electron = MakeFilledBandAbove(g_env_electron, y_top, c_damic
   // Median lines are drawn after limit curves (see below) so they are not
   // hidden by filled regions, SRDM (also black), or scan lines.
 
-  // ---- Filled regions (behind lines) ----
-  // if (g_damic_2025_fill)  g_damic_2025_fill->Draw("F SAME");
-  // if (g_sensei_fill)      g_sensei_fill->Draw("F SAME");
-  // if (g_supercdms_fill)   g_supercdms_fill->Draw("F SAME");
-  // if (g_darkside50_fill)  g_darkside50_fill->Draw("F SAME");
-  // if (g_panda4T_fill)     g_panda4T_fill->Draw("F SAME");
-  // if (g_xenonnT_fill)     g_xenonnT_fill->Draw("F SAME");
-  // if (g_model_fill)       g_model_fill->Draw("F SAME");
-  // if (g_damicm_mike_fill) g_damicm_mike_fill->Draw("F SAME");
-  if (g_solar_reflected_fill) g_solar_reflected_fill->Draw("F SAME");
-  // if (g_damic_2025_fill)  g_damic_2025_fill->Draw("F SAME ");
-  // if (g_env_fill_electron) g_env_fill_electron->Draw("F SAME");
+  // ---- DC-sweep band (dark photon: hatched fill spanning lo..hi DC, central line only) ----
+  TGraph* g_dc_band = nullptr;
+  const bool draw_dc_band = dark_photon && !dc_band_lo_path.empty() && !dc_band_hi_path.empty();
+  if (draw_dc_band) {
+    TGraph* g_dc_lo  = ExtractLimitCurveFromRoot(dc_band_lo_path,  q_thr);
+    TGraph* g_dc_hi  = ExtractLimitCurveFromRoot(dc_band_hi_path,  q_thr);
+    TGraph* g_dc_cen = glimits.empty() ? nullptr : glimits[0];
+    if (g_dc_lo && g_dc_hi && g_dc_cen) {
+        g_dc_band = MakeDcBandPolygon(g_dc_lo, g_dc_hi, g_dc_cen, y_bottom, y_plot_max);
+        g_dc_band->SetFillColor(kRed - 4);
+        g_dc_band->SetFillStyle(3001);
+        g_dc_band->SetLineColor(0);
+    } else {
+        std::cerr << "[dc-band] WARNING: failed to build band polygon (check --dc-band-lo/hi paths)\n";
+    }
+  }
 
+  // ---- Filled regions (behind lines) ----
+  if (migdal_mode) {
+    if (g_migdal_env_fill) g_migdal_env_fill->Draw("F SAME");
+  } else if (dark_photon) {
+    if (g_darkside50_fill)  g_darkside50_fill->Draw("F SAME");
+    if (g_direct_det_fill)  g_direct_det_fill->Draw("F SAME");
+    if (g_dc_band)          g_dc_band->Draw("F SAME");
+  } else {
+    if (g_env_fill_electron)    g_env_fill_electron->Draw("F SAME");
+    if (g_solar_reflected_fill) g_solar_reflected_fill->Draw("F SAME");
+    if (g_model_fill)           g_model_fill->Draw("F SAME");
+  }
 
   // ---- Line contours on top ----
-  if (show_damic && g_damic_2025) g_damic_2025->Draw("L SAME");
-  // if (g_sensei)      g_sensei->Draw("L SAME");
-  // if (g_supercdms)   g_supercdms->Draw("L SAME");
-  // if (g_darkside50)  g_darkside50->Draw("L SAME");
-  // if (g_panda4T)     g_panda4T->Draw("L SAME");
-  // if (g_xenonnT)     g_xenonnT->Draw("L SAME");
-  // if (g_solar_reflected)     g_solar_reflected->Draw("L SAME");
-  if (g_model)       g_model->Draw("L SAME");
-  // if (g_srdm)       {
-  //   g_srdm->SetLineColor(kBlack);
-  //   g_srdm->Draw("L SAME");}
-  // if (g_damicm_mike) g_damicm_mike->Draw("L SAME");
+  if (migdal_mode) {
+    if (g_xenonnT)    g_xenonnT->Draw("L SAME");
+    if (g_panda4T)    g_panda4T->Draw("L SAME");
+    if (g_darkside50) g_darkside50->Draw("L SAME");
+    if (g_sensei)     g_sensei->Draw("L SAME");
+    if (g_damic_2025) g_damic_2025->Draw("L SAME");
+  } else if (dark_photon) {
+    if (g_damic_2025)  g_damic_2025->Draw("L SAME");
+  } else {
+    if (show_damic && g_damic_2025) g_damic_2025->Draw("L SAME");
+    if (g_damic_2025)  g_damic_2025->Draw("L SAME");
+    if (mediator != "heavy" && g_model) g_model->Draw("L SAME");
+  }
 
   // Limit curves: scan sweeps first, Si reference on top (solid red).
-  for (size_t i = 0; i < glimits.size(); ++i) {
-    if (!glimits[i] || i == reference_graph_index) continue;
-    glimits[i]->Draw("L SAME");
-  }
-  if (reference_graph_index < glimits.size() && glimits[reference_graph_index]) {
-    glimits[reference_graph_index]->Draw("L SAME");
+  // In DC-band mode (dark photon): only draw the central curve (glimits[0]) as dashed red.
+  if (draw_dc_band) {
+    if (!glimits.empty() && glimits[0]) {
+      glimits[0]->SetLineColor(kRed + 1);
+      glimits[0]->SetLineStyle(2);
+      glimits[0]->SetLineWidth(3);
+      glimits[0]->Draw("L SAME");
+    }
+    // Still draw the reference scan (e.g. DAMIC-M 1 kg-yr Si projection)
+    if (reference_graph_index < glimits.size() && glimits[reference_graph_index]) {
+      glimits[reference_graph_index]->Draw("L SAME");
+    }
+  } else {
+    for (size_t i = 0; i < glimits.size(); ++i) {
+      if (!glimits[i] || i == reference_graph_index) continue;
+      glimits[i]->Draw("L SAME");
+    }
+    if (reference_graph_index < glimits.size() && glimits[reference_graph_index]) {
+      glimits[reference_graph_index]->Draw("L SAME");
+    }
   }
 
   // Band medians on top: log-safe copy skips y=0 knots. Toy MC median uses a
@@ -2192,25 +2752,19 @@ TGraph* g_env_fill_electron = MakeFilledBandAbove(g_env_electron, y_top, c_damic
     gmed->Draw("L SAME");
   }
 
-  TLegend* leg = new TLegend(0.55, 0.45, 0.82, 0.82); // move it to avoid overlapping curves
+  const bool legend_compact = legend_left || legend_right;
+  TLegend* leg = legend_left
+                     ? new TLegend(0.11, 0.50, 0.40, 0.90)
+                     : legend_right
+                           ? new TLegend(0.52, 0.43, 0.89, 0.88)
+                           : new TLegend(0.55, 0.45, 0.82, 0.82);
   leg->SetBorderSize(0);
   leg->SetFillStyle(0);
-  leg->SetTextSize(0.03);
-
-  // Add our curves (legend labels provided via CLI)
-  for (size_t i = 0; i < glimits.size(); ++i) {
-    if (!glimits[i]) continue;
-    const std::string lbl =
-        (i < legend_entries_per_graph.size() ? legend_entries_per_graph[i] : std::string("scan"));
-    leg->AddEntry(glimits[i], lbl.c_str(), "l");
+  leg->SetTextFont(42);
+  leg->SetTextSize(legend_compact ? 0.024 : 0.03);
+  if (legend_compact) {
+    leg->SetEntrySeparation(0.35);
   }
-
-  // // need more options for legend entries for filled bands
-  // // e.g. "f" for fill, "l" for line
-  // // or "lf" for both
-  // // e.g. leg->AddEntry(g_damic_2025, "DAMIC-M (2025)", "lf");
-  // // how to put the legend on top of the filled band?
-  // // 
 
   // Sensitivity-band legend entries (only when bands are actually drawn).
   if (draw_band_toy) {
@@ -2244,33 +2798,80 @@ TGraph* g_env_fill_electron = MakeFilledBandAbove(g_env_electron, y_top, c_damic
       leg->AddEntry(band_fill_asy_2s, "#pm 2#sigma", "f");
   }
 
-  // if (g_srdm) leg->AddEntry(g_srdm, "SRDM-Carlos (ULM)", "l");
-
-  // if (g_damic_2025_fill)  leg->AddEntry(g_damic_2025_fill,  "DAMIC-M (2025)",          "f");
-  // if (g_sensei_fill)      leg->AddEntry(g_sensei_fill,      "SENSEI",                  "f");
-  // if (g_supercdms_fill)   leg->AddEntry(g_supercdms_fill,   "SuperCDMS",               "f");
-  // if (g_darkside50_fill)  leg->AddEntry(g_darkside50_fill,  "DarkSide-50",             "f");
-  // if (g_panda4T_fill)     leg->AddEntry(g_panda4T_fill,     "PandaX-4T",               "f");
-  // // if (g_damicm_mike) leg->AddEntry(g_damicm_mike, "DAMIC-M (1 kg-year, Mike)", "l");
-
-  if (show_damic && g_damic_2025) {
-    leg->AddEntry(g_damic_2025, "paper export (ScienceRun2024)", "l");
-  }
-
-  if (g_solar_reflected_fill) {
-    leg->AddEntry(g_solar_reflected_fill, "Solar-Reflected DM", "f");
-  }
-
-  if (g_model) {
-    leg->AddEntry(g_model,
-                  mediator == "heavy" ? "Freeze-out target" : "Freeze-in target",
-                  "l");
-  }
-
-  if (mediator == "heavy") {
-    leg->AddEntry((TObject*)0, "#bf{F_{DM} = 1}", "");
+  if (migdal_mode) {
+    // Migdal legend order:
+    //   1. Excluded region envelope (fill)
+    //   2. Individual experiments
+    //   3. Our scan curve(s) — last input first (heaviest DC → most sensitive)
+    if (g_migdal_env_fill) leg->AddEntry(g_migdal_env_fill, "Direct Detection limits", "f");
+    if (g_xenonnT)    leg->AddEntry(g_xenonnT,    "XENON1T (2019, Migdal)", "l");
+    if (g_panda4T)    leg->AddEntry(g_panda4T,    "PandaX-4T (2023, Migdal)", "l");
+    if (g_darkside50) leg->AddEntry(g_darkside50, "DarkSide-50 (Migdal)", "l");
+    if (g_sensei)     leg->AddEntry(g_sensei,     "SENSEI (Migdal)", "l");
+    if (g_damic_2025) leg->AddEntry(g_damic_2025, "DAMIC-M (2025 LBC, Migdal)", "l");
+    for (int i = static_cast<int>(glimits.size()) - 1; i >= 0; --i) {
+      if (!glimits[i]) continue;
+      const std::string lbl =
+          (i < static_cast<int>(legend_entries_per_graph.size())
+               ? legend_entries_per_graph[i] : std::string("scan"));
+      leg->AddEntry(glimits[i], lbl.c_str(), "l");
+    }
+    const char* fdm_label = (mediator == "heavy") ? "#bf{F_{DM} = 1}"
+                                                   : "#bf{F_{DM} = ( #alpha m_{N} / q )^{2}}";
+    leg->AddEntry((TObject*)0, fdm_label, "");
+  } else if (dark_photon) {
+    // Dark photon legend order:
+    //   1. Direct Detection limits (fill)
+    //   2. Stellar limits (fill)
+    //   3. DAMIC-M 2025 LBC (solid line)
+    //   4. DC band (fill) + central line, or CLI curves in reverse order
+    if (g_direct_det_fill) leg->AddEntry(g_direct_det_fill, "Direct Detection limits", "f");
+    if (g_darkside50_fill) leg->AddEntry(g_darkside50_fill, "Stellar limits", "f");
+    else if (g_darkside50) leg->AddEntry(g_darkside50,      "Stellar limits", "l");
+    if (g_damic_2025)      leg->AddEntry(g_damic_2025,      "DAMIC-M (2025 LBC)", "l");
+    if (draw_dc_band && g_dc_band && !glimits.empty() && glimits[0]) {
+      const std::string cen_lbl =
+          legend_entries_per_graph.empty() ? std::string("SrCd_{2}Sb_{2}, 1 kg-yr, DC = 10^{-3} e/pix/d")
+                                           : legend_entries_per_graph[0];
+      leg->AddEntry(glimits[0], cen_lbl.c_str(), "l");
+      leg->AddEntry(g_dc_band,  "Band: DC #in [10^{-6}, 10^{-1}] e/pix/d", "f");
+      if (reference_graph_index < glimits.size() && glimits[reference_graph_index]) {
+        const std::string ref_lbl =
+            (reference_graph_index < legend_entries_per_graph.size())
+                ? legend_entries_per_graph[reference_graph_index] : std::string("DAMIC-M (1 kg-yr)");
+        leg->AddEntry(glimits[reference_graph_index], ref_lbl.c_str(), "l");
+      }
+    } else {
+      for (int i = static_cast<int>(glimits.size()) - 1; i >= 0; --i) {
+        if (!glimits[i]) continue;
+        const std::string lbl =
+            (i < static_cast<int>(legend_entries_per_graph.size())
+                 ? legend_entries_per_graph[i] : std::string("scan"));
+        leg->AddEntry(glimits[i], lbl.c_str(), "l");
+      }
+    }
+    leg->AddEntry((TObject*)0, "#bf{Hidden photon}", "");
   } else {
-    leg->AddEntry((TObject*)0, "#bf{F_{DM} = ( #alpha  m_{e} / q )^{2}}", "");
+    if (g_env_fill_electron)    leg->AddEntry(g_env_fill_electron, "Direct Detection limits", "f");
+    if (g_solar_reflected_fill) leg->AddEntry(g_solar_reflected_fill, "Stellar Limits", "f");
+    if (g_damic_2025)           leg->AddEntry(g_damic_2025, "DAMIC-M (2025)", "l");
+    if (mediator == "heavy") {
+      if (g_model_fill) leg->AddEntry(g_model_fill, "Freeze-out target", "f");
+    } else {
+      if (g_model) leg->AddEntry(g_model, "Freeze-in target", "l");
+    }
+    if (mediator == "heavy") {
+      leg->AddEntry((TObject*)0, "#bf{F_{DM} = 1}", "");
+    } else {
+      leg->AddEntry((TObject*)0, "#bf{F_{DM} = ( #alpha  m_{e} / q )^{2}}", "");
+    }
+    for (size_t i = 0; i < glimits.size(); ++i) {
+      if (!glimits[i]) continue;
+      const std::string lbl =
+          (i < legend_entries_per_graph.size()
+               ? legend_entries_per_graph[i] : std::string("scan"));
+      leg->AddEntry(glimits[i], lbl.c_str(), "l");
+    }
   }
 
   leg->Draw();
@@ -2342,9 +2943,9 @@ TGraph* g_env_fill_electron = MakeFilledBandAbove(g_env_electron, y_top, c_damic
 
 
 
-  // Migdal comparison canvas (batch only — keeps one interactive window for DM-e).
+  // Legacy Migdal comparison canvas (batch DM-e only — skip for dark photon and migdal mode).
   TCanvas* c_migdal_limit = nullptr;
-  if (batch) {
+  if (batch && !dark_photon && !migdal_mode) {
   // Now we make a new plot for the migdal case
   // ------------------------------------------------------------------
 
@@ -2407,13 +3008,16 @@ TGraph* g_env_fill_electron = MakeFilledBandAbove(g_env_electron, y_top, c_damic
   //                                           c_xenonnt, 2, 3);
 
   
-  TGraph* g_damic_2025_migdal_projection = (TGraph*) g_damic_2025_migdal->Clone("g_damic_2025_migdal_projection");
+  TGraph* g_damic_2025_migdal_projection = g_damic_2025_migdal
+      ? (TGraph*) g_damic_2025_migdal->Clone("g_damic_2025_migdal_projection") : nullptr;
   double F_improvement = 3000;
 
-  for (int i = 0; i < g_damic_2025_migdal_projection->GetN(); ++i) {
-      double x, y;
-      g_damic_2025_migdal_projection->GetPoint(i, x, y);
-      g_damic_2025_migdal_projection->SetPoint(i, x, y / F_improvement);  // factor > 1 => better sensitivity
+  if (g_damic_2025_migdal_projection) {
+    for (int i = 0; i < g_damic_2025_migdal_projection->GetN(); ++i) {
+        double x, y;
+        g_damic_2025_migdal_projection->GetPoint(i, x, y);
+        g_damic_2025_migdal_projection->SetPoint(i, x, y / F_improvement);
+    }
   }
 
   // Include projections for WIMP searches with DAMIC-M
@@ -2696,17 +3300,47 @@ TGraph* g_env_fill = MakeFilledBandAbove(g_env, y_top, c_damic2025, 0.25);
             << "[limit]         " << migdal_out_root << "\n";
   }  // batch: migdal canvas
 
+  // Store-only curves: extracted from ROOT files, written to output but not drawn
+  std::vector<std::pair<TGraph*, std::string>> store_only_graphs;
+  for (const auto& [so_path, so_label] : store_only_paths) {
+    TGraph* g = ExtractLimitCurveFromRoot(so_path, q_thr);
+    if (g) {
+      // sanitize label into a ROOT-safe name
+      std::string root_name = so_label;
+      for (char& ch : root_name) if (!std::isalnum(static_cast<unsigned char>(ch))) ch = '_';
+      store_only_graphs.emplace_back(g, root_name);
+    } else {
+      std::cerr << "[limit] WARNING: --store-only could not extract limit curve from " << so_path << "\n";
+    }
+  }
+
+  // Literature curves to persist alongside scan limits
+  std::vector<std::pair<TGraph*, std::string>> literature_curves;
+  if (migdal_mode) {
+    if (g_damic_2025)  literature_curves.push_back({g_damic_2025,  "lit_damic_2025_migdal"});
+    if (g_xenonnT)     literature_curves.push_back({g_xenonnT,     "lit_xenon1t_migdal"});
+    if (g_panda4T)     literature_curves.push_back({g_panda4T,     "lit_pandax_migdal"});
+    if (g_darkside50)  literature_curves.push_back({g_darkside50,  "lit_darkside_migdal"});
+    if (g_sensei)      literature_curves.push_back({g_sensei,      "lit_sensei_migdal"});
+    if (g_migdal_env)  literature_curves.push_back({g_migdal_env,  "lit_migdal_envelope"});
+  } else if (!dark_photon) {
+    if (g_damic_2025)        literature_curves.push_back({g_damic_2025,        "lit_damic_2025"});
+    if (g_env_electron)      literature_curves.push_back({g_env_electron,      "lit_dd_envelope"});
+    if (g_solar_reflected)   literature_curves.push_back({g_solar_reflected,   "lit_stellar"});
+    if (g_model)             literature_curves.push_back({g_model,             mediator == "heavy" ? "lit_freeze_out" : "lit_freeze_in"});
+  }
+
   if (!batch) {
     c->SetBit(kCanDelete, false);
-    SaveMainLimitOutputs(c, glimits, hq, out_pdf, out_root, "initial");
+    SaveMainLimitOutputs(c, glimits, hq, out_pdf, out_root, "initial", literature_curves, store_only_graphs, legend_entries_per_graph);
     std::cout << "[limit] Interactive mode:\n"
               << "  - Double-click an axis to set log-scale min/max (best for zoom).\n"
               << "  - Or use View menu -> Zoom / zoom tool, then drag a box on the pad.\n"
               << "  - Close the window when done to refresh PDF/ROOT with final axes.\n";
     app.Run();
-    SaveMainLimitOutputs(c, glimits, hq, out_pdf, out_root, "final");
+    SaveMainLimitOutputs(c, glimits, hq, out_pdf, out_root, "final", literature_curves, store_only_graphs, legend_entries_per_graph);
   } else {
-    SaveMainLimitOutputs(c, glimits, hq, out_pdf, out_root, "batch");
+    SaveMainLimitOutputs(c, glimits, hq, out_pdf, out_root, "batch", literature_curves, store_only_graphs, legend_entries_per_graph);
   }
 
   return 0;

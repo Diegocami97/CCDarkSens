@@ -213,9 +213,11 @@ struct GridAxisJSON {
 };
 
 struct ModelJSON {
-  std::string type;              // e.g. "dm_electron"
-  std::string material;          // "Si"
-  std::string mediator;          // "heavy" | "massless"
+  std::string type;              // "dm_electron" (default) | "dark_photon" | "migdal"
+  std::string material;          // "Si" — electronic target (dm_electron, dark_photon)
+  std::string mediator;          // "heavy" | "massless" — meaning depends on model.type:
+                                  //   dm_electron/dark_photon: DM-electron mediator
+                                  //   migdal: DM-nucleon mediator (separate namespace, same strings)
   std::string rates_dir;         // e.g. data/qedark_rates/Si/heavy
   std::string filename_template; // e.g. dRdE_{material}_{mediator}_m{mchi_MeV}_s{sigma_e_cm2}.csv
   double      mchi_MeV = 0.0;    // used to resolve filename (single-point apps)
@@ -224,10 +226,18 @@ struct ModelJSON {
   double      Emax_eV = 20.0;
   int         nbins   = 200;
 
+  // ---- DM-nucleon coupling fields (model.type == "migdal"; reused by a future
+  //      elastic nuclear-recoil/WIMP model — see DMNucleonConfig.hh) ----
+  std::string target_nucleus = "Si28"; // nuclear target, distinct from electronic `material`
+  int         nuclear_A = 28;          // mass number
+  int         nuclear_Z = 14;          // atomic number
+  std::string sigma_n_cm2;             // DM-nucleon cross section (kept as string for filename match)
+  std::string epsilon_ref = "";        // dark_photon: if set, load rate at epsilon_ref, scale by (ε/ε_ref)²
+
   // ---- NEW: QE-Dark style grid specification for scans ----
   bool        has_grid = false;
   GridAxisJSON grid_mchi;        // values in MeV
-  GridAxisJSON grid_sigma;       // values in cm^2 (numeric)
+  GridAxisJSON grid_sigma;       // values in cm^2 (numeric) — sigma_e_cm2, epsilon, or sigma_n_cm2 depending on type
 };
 
 

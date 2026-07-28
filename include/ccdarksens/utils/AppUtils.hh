@@ -94,6 +94,8 @@ inline std::vector<double> ExpandAxis(const nlohmann::json& spec,
         }
     }
 
+    std::sort(vals.begin(), vals.end());
+    vals.erase(std::unique(vals.begin(), vals.end()), vals.end());
     return vals;
 }
 

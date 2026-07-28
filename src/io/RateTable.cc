@@ -72,35 +72,24 @@ std::unique_ptr<TH1D> RateTable::MakeTH1D(const std::string& name,
   h->Sumw2();
   if (E_eV_.empty()) return h;
 
-  const double g_to_kg = 1.0 / 1000.0;
+  // NOTE: bin-center sampling (will be replaced with proper trapezoid integration later).
+  const int n = static_cast<int>(E_eV_.size());
 
   for (int i = 1; i <= nbins; ++i) {
     const double Ec = h->GetBinCenter(i);
 
-    if (Ec <= E_eV_.front()) {
-      // Below the first tabulated point (≈ band gap) the physical rate is zero.
-      h->SetBinContent(i, 0.0);
-      continue;
-    }
-    if (Ec >= E_eV_.back()) {
-      // Above the last tabulated point we can also safely set zero
-      // (or keep the last value if you really want a flat tail).
-      h->SetBinContent(i, 0.0);
-      continue;
-    }
+    if (Ec <= E_eV_.front()) { h->SetBinContent(i, R_kg_year_eV_.front()); continue; }
+    if (Ec >= E_eV_.back())  { h->SetBinContent(i, 0.0); continue; }
 
-    size_t lo = 0, hi = E_eV_.size() - 1;
+    // Linear interpolation at bin center
+    size_t lo = 0, hi = static_cast<size_t>(n) - 1;
     while (hi - lo > 1) {
-      const size_t mid = (lo + hi) / 2;
+      size_t mid = (lo + hi) / 2;
       if (E_eV_[mid] <= Ec) lo = mid; else hi = mid;
     }
     const double x0 = E_eV_[lo], x1 = E_eV_[hi];
     const double y0 = R_kg_year_eV_[lo], y1 = R_kg_year_eV_[hi];
-    const double t = (Ec - x0) / (x1 - x0);
-    const double y = y0 + t * (y1 - y0);
-
-    // h->SetBinContent(i, y * g_to_kg);
-    h->SetBinContent(i, y);
+    h->SetBinContent(i, y0 + (Ec - x0) / (x1 - x0) * (y1 - y0));
   }
 
   return h;

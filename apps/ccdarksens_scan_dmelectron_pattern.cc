@@ -68,6 +68,8 @@
 
 #include "ccdarksens/io/ConfigManager.hh"
 #include "ccdarksens/model/DMElectronModel.hh"
+#include "ccdarksens/model/DarkPhotonModel.hh"
+#include "ccdarksens/model/MigdalModel.hh"
 #include "ccdarksens/experiment/ExperimentSetup.hh"
 
 #include "ccdarksens/response/ChargeIonization.hh"
@@ -135,6 +137,62 @@ static std::string format_sigma(double sigma, const std::string& fmt)
   ss.setf(std::ios::scientific);
   ss << std::setprecision(prec) << sigma;
   return ss.str();
+}
+
+// Dispatches on model.type to build the dR/dE(E) signal spectrum for a single
+// grid point. mass_val/coupling_str carry whichever physical quantities the
+// model expects (mchi_MeV/sigma_e_cm2 for dm_electron, mA_eV/epsilon for
+// dark_photon, mchi_MeV/sigma_n_cm2 for migdal) — the scan loop itself is
+// agnostic to which model produced the spectrum.
+static std::unique_ptr<TH1D> MakeSignalSpectrumE(const ccdarksens::ModelJSON& mj,
+                                                  double mass_val,
+                                                  const std::string& coupling_str,
+                                                  bool* ok = nullptr)
+{
+  using namespace ccdarksens;
+  bool good = false;
+  std::unique_ptr<TH1D> h;
+
+  // NOTE: MakeSpectrum_E() is called unconditionally, matching the prior
+  // DMElectronModel call sites this replaces — RateTable::MakeTH1D() returns
+  // a valid (possibly all-zero) histogram even when Configure()/LoadCSV()
+  // failed to find the requested grid point, which callers rely on for the
+  // dummy/flat-background spectrum. `good` only gates whether the *caller*
+  // should treat this grid point as a successful signal load.
+  if (mj.type == "dark_photon") {
+    DarkPhotonConfig c;
+    c.material = mj.material; c.mediator = mj.mediator;
+    c.rates_dir = mj.rates_dir; c.filename_template = mj.filename_template;
+    c.Emin_eV = mj.Emin_eV; c.Emax_eV = mj.Emax_eV; c.nbins = mj.nbins;
+    c.mA_eV = mass_val; c.epsilon = coupling_str; c.epsilon_ref = mj.epsilon_ref;
+    DarkPhotonModel m;
+    good = m.Configure(c);
+    h = m.MakeSpectrum_E();
+  } else if (mj.type == "migdal") {
+    // Migdal is a DM-nucleon process: target_nucleus/A/Z/mediator describe
+    // the DM<->nucleus coupling, not the DM-electron coupling used above.
+    DMNucleonConfig c;
+    c.target_nucleus = mj.target_nucleus; c.A = mj.nuclear_A; c.Z = mj.nuclear_Z;
+    c.mediator = mj.mediator;
+    c.rates_dir = mj.rates_dir; c.filename_template = mj.filename_template;
+    c.Emin_eV = mj.Emin_eV; c.Emax_eV = mj.Emax_eV; c.nbins = mj.nbins;
+    c.mchi_MeV = mass_val; c.sigma_n_cm2 = coupling_str;
+    MigdalModel m;
+    good = m.Configure(c);
+    h = m.MakeSpectrum_E();
+  } else { // "dm_electron" (default)
+    DMElectronConfig c;
+    c.material = mj.material; c.mediator = mj.mediator;
+    c.rates_dir = mj.rates_dir; c.filename_template = mj.filename_template;
+    c.Emin_eV = mj.Emin_eV; c.Emax_eV = mj.Emax_eV; c.nbins = mj.nbins;
+    c.mchi_MeV = mass_val; c.sigma_e_cm2 = coupling_str;
+    DMElectronModel m;
+    good = m.Configure(c);
+    h = m.MakeSpectrum_E();
+  }
+
+  if (ok) *ok = good;
+  return h;
 }
 
 static std::string format_double(double x, const std::string& fmt)
@@ -419,13 +477,28 @@ int main(int argc, char** argv)
     emc_cfg.pix_cfg.rng_seed       = emj.rng_seed;
     emc_cfg.seed                   = emj.rng_seed;
 
-    // Accepted pattern labels derived from experiment.pattern_roi
+    // Accepted labels must follow the analysis space (the ROI is defined per
+    // space): pattern mode uses the multi-pixel SRDM patterns in
+    // experiment.pattern_roi; n_e mode uses the single-pixel patterns implied by
+    // experiment.roi_bins (one pixel holding n_e electrons), so that ε(n_e)
+    // folds against the single-pixel efficiency rather than the (excluded)
+    // multi-pixel patterns.
     emc_cfg.accepted_labels.clear();
-    for (int code : summary.pattern_roi) {
-      PatternLabel lab;
-      lab.isolated = true;
-      lab.q = ccdarksens::DecodePatternCode(code);
-      if (!lab.q.empty()) emc_cfg.accepted_labels.push_back(lab);
+    if (use_pattern_bins) {
+      for (int code : summary.pattern_roi) {
+        PatternLabel lab;
+        lab.isolated = true;
+        lab.q = ccdarksens::DecodePatternCode(code);
+        if (!lab.q.empty()) emc_cfg.accepted_labels.push_back(lab);
+      }
+    } else {
+      for (int ne : summary.roi_bins) {
+        if (ne <= 0) continue;
+        PatternLabel lab;
+        lab.isolated = true;
+        lab.q = {ne};  // single pixel holding n_e electrons (valid for n_e <= 9)
+        emc_cfg.accepted_labels.push_back(lab);
+      }
     }
     if (emc_cfg.accepted_labels.empty()) {
       PatternLabel lab;
@@ -434,7 +507,9 @@ int main(int argc, char** argv)
       emc_cfg.accepted_labels.push_back(lab);
     }
 
-    std::cout << "[scan-pattern] Accepted pattern labels (from pattern_roi):\n";
+    std::cout << "[scan-pattern] Accepted labels (from "
+              << (use_pattern_bins ? "pattern_roi" : "roi_bins (single-pixel)")
+              << "):\n";
     for (std::size_t i = 0; i < emc_cfg.accepted_labels.size(); ++i) {
       std::cout << "  " << i << ": q = { ";
       for (int qv : emc_cfg.accepted_labels[i].q) std::cout << qv << " ";
@@ -631,6 +706,14 @@ int main(int argc, char** argv)
       h_eps_ne = emc_ptr->PrecomputeEpsilon(ne_min_bkg, ne_max, Ee_ref_eV);
       std::cout << "[scan-pattern] Using pure EfficiencyMC efficiencies.\n";
     }
+    // For n_e above the efficiency table maximum, detection is certain:
+    // all threshold conditions (M, MN, MNL) are trivially satisfied at high charge.
+    constexpr int kNeFullEfficiency = 10;
+    for (int ne = kNeFullEfficiency; ne <= ne_max; ++ne) {
+      int bin = h_eps_ne->FindBin(static_cast<double>(ne));
+      if (h_eps_ne->GetBinContent(bin) < 1.0)
+        h_eps_ne->SetBinContent(bin, 1.0);
+    }
     auto t_eff_end = std::chrono::steady_clock::now();
     double t_eff_s = std::chrono::duration<double>(t_eff_end - t_eff_start).count();
     std::cout << "[scan-pattern] Pattern efficiency computation took " << std::fixed << std::setprecision(2) << t_eff_s << " s\n";
@@ -732,22 +815,8 @@ int main(int argc, char** argv)
 
     // Flat background: build via pipeline in pattern space
     const auto& mj = cfg.model();
-    DMElectronConfig mc_base;
-    mc_base.material          = mj.material;
-    mc_base.mediator          = mj.mediator;
-    mc_base.rates_dir         = mj.rates_dir;
-    mc_base.filename_template = mj.filename_template;
-    mc_base.Emin_eV           = mj.Emin_eV;
-    mc_base.Emax_eV           = mj.Emax_eV;
-    mc_base.nbins             = mj.nbins;
 
-    DMElectronConfig mc_dummy = mc_base;
-    mc_dummy.mchi_MeV         = 1.0;
-    mc_dummy.sigma_e_cm2      = "1e-40";
-
-    DMElectronModel dm_dummy;
-    dm_dummy.Configure(mc_dummy);
-    auto dRdE_flat = dm_dummy.MakeSpectrum_E();
+    auto dRdE_flat = MakeSignalSpectrumE(mj, 1.0, "1e-40");
     dRdE_flat->Reset("ICES");
 
     double flat_rate_per_eV = 0.0;
@@ -889,8 +958,11 @@ int main(int argc, char** argv)
         eff_out << "pattern,ne,Efficiency\n";
         for (int pid : summary.pattern_roi) {
           for (int ne : summary.roi_bins) {
-            auto it = pattern_eff_map.find({pid, ne});
-            double eff = (it != pattern_eff_map.end()) ? it->second : 0.0;
+            double eff = 1.0;
+            if (ne < 10) {
+              auto it = pattern_eff_map.find({pid, ne});
+              eff = (it != pattern_eff_map.end()) ? it->second : 0.0;
+            }
             eff_out << pid << "," << ne << "," << std::scientific << eff << "\n";
           }
         }
@@ -1188,11 +1260,32 @@ int main(int argc, char** argv)
     //    target_q = Z_α² = [InvNorm(CL)]² (e.g. 2.706 for 90 % CL).
     // =========================================================================
     const auto& jgrid = jroot["model"]["grid"];
-    auto mchi_list   = expand_axis(jgrid.at("mchi_MeV"), "mchi_MeV");
-    auto sigma_list  = expand_axis(jgrid.at("sigma_e_cm2"), "sigma_e_cm2");
+    // Accept physics-appropriate key names for each model type, falling back
+    // to the legacy dm_electron names so old configs remain valid.
+    //   dark_photon : mA_eV  / epsilon   (preferred) or mchi_MeV / sigma_e_cm2
+    //   migdal      : mchi_MeV / sigma_n_cm2 (preferred) or mchi_MeV / sigma_e_cm2
+    //   dm_electron : mchi_MeV / sigma_e_cm2
+    auto resolve_axis = [&](std::initializer_list<std::string> keys, const std::string& label) {
+      for (const auto& k : keys) {
+        if (jgrid.contains(k)) return expand_axis(jgrid.at(k), k);
+      }
+      throw std::runtime_error("model.grid: none of the expected keys found for " + label);
+    };
+    const std::string model_type = jroot["model"].value("type", std::string("dm_electron"));
+    std::vector<double> mchi_list, sigma_list;
+    if (model_type == "dark_photon") {
+      mchi_list  = resolve_axis({"mA_eV",      "mchi_MeV"},   "mass axis");
+      sigma_list = resolve_axis({"epsilon",     "sigma_e_cm2"}, "coupling axis");
+    } else if (model_type == "migdal") {
+      mchi_list  = resolve_axis({"mchi_MeV"},                  "mass axis");
+      sigma_list = resolve_axis({"sigma_n_cm2", "sigma_e_cm2"}, "coupling axis");
+    } else {
+      mchi_list  = resolve_axis({"mchi_MeV"},    "mass axis");
+      sigma_list = resolve_axis({"sigma_e_cm2"}, "coupling axis");
+    }
 
     if (mchi_list.empty() || sigma_list.empty()) {
-      throw std::runtime_error("Empty mchi_MeV or sigma_e_cm2 grid.");
+      throw std::runtime_error("Empty mass or coupling grid.");
     }
 
     std::string fmt_sigma = ".1e";
@@ -1254,7 +1347,6 @@ int main(int argc, char** argv)
     //  pydme / minuit2d mode performs a single 2-D Minuit fit over (log₁₀σ, θ)
     //  per mχ so that NLL_min is the global minimum (closer to pydme result).
     // =========================================================================
-    DMElectronConfig mc_sig_base = mc_base;
     std::cout << std::scientific << std::setprecision(8);
 
     int idx_mchi = 0;
@@ -1321,16 +1413,13 @@ int main(int argc, char** argv)
         if (do_2d_fit) {
           S_grid.reserve(sigma_list.size());
           for (double sigma_val : sigma_list) {
-            DMElectronConfig mc = mc_sig_base;
-            mc.mchi_MeV = mchi;
-            mc.sigma_e_cm2 = format_sigma(sigma_val, fmt_sigma);
-            DMElectronModel dm_sig;
-            if (!dm_sig.Configure(mc)) {
+            bool sig_ok = false;
+            auto dRdE_sig = MakeSignalSpectrumE(mj, mchi, format_sigma(sigma_val, fmt_sigma), &sig_ok);
+            if (!sig_ok) {
               const size_t nbin = run.single_bin_likelihood ? 1u : B_pat.size();
               S_grid.push_back(std::vector<double>(nbin, 0.0));
               continue;
             }
-            auto dRdE_sig = dm_sig.MakeSpectrum_E();
             pipe.SetAnalysisSpace(AnalysisSpace::Pattern);
             auto S_true = ion->FoldToNe(*dRdE_sig, summary.exposure_kg_year, ne_min, ne_max);
             std::vector<double> S_pat = ccdarksens::FoldNeToPatternRates(
@@ -1396,12 +1485,9 @@ int main(int argc, char** argv)
           continue;
         }
 
-        DMElectronConfig mc = mc_sig_base;
-        mc.mchi_MeV    = mchi;
-        mc.sigma_e_cm2 = format_sigma(sigma_val, fmt_sigma);
-
-        DMElectronModel dm_sig;
-        if (!dm_sig.Configure(mc)) {
+        bool sig_ok = false;
+        auto dRdE_sig = MakeSignalSpectrumE(mj, mchi, format_sigma(sigma_val, fmt_sigma), &sig_ok);
+        if (!sig_ok) {
           std::cerr << "[scan-pattern] WARNING: failed to configure DM model for "
                     << "mchi=" << mchi
                     << ", sigma=" << sigma_val << "\n";
@@ -1411,8 +1497,6 @@ int main(int argc, char** argv)
         }
         std::cout << "[scan-pattern] Scanning mchi=" << mchi
                   << " MeV, sigma=" << sigma_val << " cm^2\n";
-
-        auto dRdE_sig = dm_sig.MakeSpectrum_E();
 
         pipe.SetAnalysisSpace(AnalysisSpace::Pattern);
         // Pattern mode: we only need S_true; ε(pattern|n_true) already encodes full detector.
@@ -1781,36 +1865,40 @@ int main(int argc, char** argv)
         ul_sigma_raw[static_cast<std::size_t>(i)] = h_upper_limit.GetBinContent(i + 1);
 
       if (run.smooth_ul_envelope) {
-        std::vector<double> sigma_lim = ul_sigma_raw;
-        for (int pass = 0; pass < 10; ++pass) {
-          bool changed = false;
-          for (int i = 1; i < n_mchi_lim - 1; ++i) {
-            const double s_prev = sigma_lim[static_cast<std::size_t>(i - 1)];
-            double& s_curr = sigma_lim[static_cast<std::size_t>(i)];
-            const double s_next = sigma_lim[static_cast<std::size_t>(i + 1)];
-            if (s_curr <= 0.0 || s_prev <= 0.0 || s_next <= 0.0) continue;
-            if (s_curr > s_prev && s_curr > s_next) {
-              const double cap = std::max(s_prev, s_next);
-              if (s_curr > cap) {
-                s_curr = cap;
-                changed = true;
-              }
-            }
+        // Window-minimum envelope: for each mass point take the minimum UL
+        // over a ±W window of adjacent mass points.  This correctly handles
+        // consecutive spikes (which the old local-max cap missed) that arise
+        // from the monochromatic boxcar landing between integer n_e thresholds.
+        // W ~ half the n_e staircase period in mass-grid bins.  For logspace
+        // over 1-100 eV with 200 points, one n_e step (~3.77 eV) spans ~8 bins
+        // near 10 eV, so W=5 (half-width) covers one full staircase period.
+        constexpr int kEnvW = 5;
+        std::vector<double> sigma_env(static_cast<std::size_t>(n_mchi_lim), 0.0);
+        for (int i = 0; i < n_mchi_lim; ++i) {
+          const int lo = std::max(0, i - kEnvW);
+          const int hi = std::min(n_mchi_lim - 1, i + kEnvW);
+          double win_min = ul_sigma_raw[static_cast<std::size_t>(i)];
+          for (int j = lo; j <= hi; ++j) {
+            const double v = ul_sigma_raw[static_cast<std::size_t>(j)];
+            if (v > 0.0 && (win_min <= 0.0 || v < win_min)) win_min = v;
           }
-          if (!changed) break;
+          sigma_env[static_cast<std::size_t>(i)] = win_min;
         }
         for (int i = 0; i < n_mchi_lim; ++i)
-          h_upper_limit.SetBinContent(i + 1, sigma_lim[static_cast<std::size_t>(i)]);
+          h_upper_limit.SetBinContent(i + 1, sigma_env[static_cast<std::size_t>(i)]);
         if (run.verbosity >= 1)
-          std::cout << "[scan-pattern] smooth_ul_envelope: applied local-maximum cap to TH1D\n";
+          std::cout << "[scan-pattern] smooth_ul_envelope: applied window-minimum envelope (W="
+                    << kEnvW << ") to TH1D\n";
       }
 
+      // Build TGraph from the (possibly smoothed) TH1D so the graph and
+      // histogram are always consistent.  The plotter reads the graph first.
       g_upper_limit = TGraph(n_mchi_lim);
       g_upper_limit.SetName("upper_limit_sigma_e_mchi_graph");
       g_upper_limit.SetTitle(";m_{#chi} [MeV];#sigma_{e} [cm^{2}] (90% CL)");
       for (int i = 0; i < n_mchi_lim; ++i) {
         g_upper_limit.SetPoint(i, mchi_list[static_cast<std::size_t>(i)],
-                               ul_sigma_raw[static_cast<std::size_t>(i)]);
+                               h_upper_limit.GetBinContent(i + 1));
       }
 
       std::vector<double> pydme_m, pydme_s;

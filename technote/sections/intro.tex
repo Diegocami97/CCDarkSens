@@ -1,0 +1,68 @@
+\section{Scope}
+\label{sec:scope}
+
+CCDarkSens is a general-purpose dark matter sensitivity framework for
+DAMIC-M: it computes profile-likelihood-ratio (PLR) upper limits over a
+shared detector-response pipeline ($n_e$ or pattern bins), and that
+pipeline is agnostic to which physical process supplies the input
+deposited-energy spectrum $dR/dE$. Each physical process plugs into the
+pipeline as its own rate/signal module. This technote covers the following
+channels:
+
+\begin{center}
+\begin{tabular}{@{}llll@{}}
+\toprule
+Channel & DM couples to & Rate engine & Limit $y$-axis \\
+\midrule
+DM--electron scattering & bound electron & QEDark / QCDark / QCDark2 & $\sigmae$ [cm$^2$] \\
+Dark photon absorption & bound electron (EM) & DarkELF \texttt{absorption} & $\kappa$ (kinetic mixing) \\
+Migdal effect & nucleus & DarkELF \texttt{Migdal} & $\sigman$ [cm$^2$] (per nucleon) \\
+Elastic WIMP--nucleus scattering & nucleus & \todo{rate engine} & \todo{$y$-axis} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The first three share the pipeline described in Section~\ref{sec:pipeline}
+and are derived in full below (Sections~\ref{sec:dme}--\ref{sec:migdal}).
+The WIMP channel is reserved as Section~\ref{sec:wimp}, pending content.
+
+This technote derives the rate formulas for the three implemented channels
+from first principles, states the standard \textbf{silicon} case for each,
+and then the \textbf{\SrCdSb{}} (internal codename HypMat / Sr2Cb2Sd)
+narrow-gap projection case for each, with explicit itemized assumptions. It
+also derives the \textbf{charge-ionization model} (Klein's formula, the
+$P(n_e\mid E)$ table, and the ``D-equal''/``Klein'' scenario convention)
+that converts any of the three deposited-energy spectra into the observable
+$n_e$/pattern spectrum, and shows how all three channels feed the identical
+downstream PLR chain.
+
+This document consolidates several channel-specific working documents kept
+in the CCDarkSens repository (\texttt{docs/HypMat\_Signal\_Models\_Unified.md},
+\texttt{docs/DarkPhoton\_Absorption\_HypotheticalMaterial.md},
+\texttt{docs/Migdal\_Integration\_Plan.md},
+\texttt{docs/band\_gap\_pheno\_ionization.md},
+\texttt{docs/LBC\_QEDark\_Reproduction\_Guide.md}) into a single physics
+reference, and supersedes stale parameter values found in the earliest of
+those (e.g.\ $\ehpair = 1.6$~eV, $\rhoT = 8$~g/cm$^3$ placeholders for
+\SrCdSb{}) with the corrected, currently-used values
+($\ehpair = 1.7778$~eV via Klein's formula, $\rhoT = 5.76$~g/cm$^3$).
+
+\subsection{The common detector observable}
+
+Regardless of channel, the DM interaction deposits an energy $\omega$
+(electronic excitation energy, eV) in the target. This document derives
+$dR/d\omega$ (equivalently $dR/dE$) for each channel; from that point the
+identical chain applies (derived in full in Section~\ref{sec:pipeline}):
+
+\begin{center}
+\begin{tabular}{@{}c@{}}
+$dR/d\omega(\omega)$ \ [events / kg / yr / eV] \\
+$\big\downarrow$ \ $\times$ exposure ($M\cdot T$) $\times\, d\omega$ \\
+events per energy bin \\
+$\big\downarrow$ \ $\times\, P(n_e \mid \omega)$ \quad [\texttt{ChargeIonization::FoldToNe}] \\
+$n_e$ spectrum \\
+$\big\downarrow$ \ pattern / diffusion / readout response \quad [\texttt{EfficiencyMC}, \texttt{PatternRates}] \\
+$\big\downarrow$ \ profile likelihood ratio scan \quad [PLR] \\
+upper limit on $\sigmae$, $\kappa$, or $\sigman$
+\end{tabular}
+\end{center}

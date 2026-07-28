@@ -117,3 +117,4 @@ The following values were cross-checked against the collaboration Python referen
 | `docs/Exposure_usage_audit.md` | How `exposure_kg_year` flows through the pipeline (applied exactly once) |
 | `docs/Pydme_CCDarkSens_crosscheck.md` | Crosscheck of likelihood and background against pydme |
 | `docs/App_flow_walkthrough.md` | Step-by-step walkthrough of scan and example apps |
+| `docs/DM_Signal_Models_Physics_Reference.md` | Consolidated physics reference: DM-e (QEDark/QCDark2), dark photon absorption, Migdal effect, charge ionization (Klein's formula), and the shared PLR pipeline — Si and SrCd₂Sb₂ cases |
