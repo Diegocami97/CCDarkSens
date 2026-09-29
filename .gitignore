@@ -10,6 +10,37 @@ data/**
 !data/previous_limits/
 !data/previous_limits/**
 
+# Only the curated/student-facing docs are tracked; everything else under
+# docs/ is local investigation-notes material, kept on disk but not shared.
+docs/*.md
+!docs/App_flow_walkthrough.md
+!docs/Beginners_Guide.md
+!docs/ClusterFitMC_Design.md
+!docs/DM_Signal_Models_Physics_Reference.md
+!docs/DarkPhoton_Reproduction_Guide.md
+!docs/Exposure_usage_audit.md
+!docs/Framework_Architecture.md
+!docs/GenericScanApp_Design.md
+!docs/LBC_QEDark_Reproduction_Guide.md
+!docs/Migdal_Reproduction_Guide.md
+!docs/Pydme_CCDarkSens_crosscheck.md
+!docs/QCDark2_NE_Exposure_Projections_Guide.md
+!docs/QCDark2_Pattern_Counts_Guide.md
+!docs/Refactoring_Changelog.md
+!docs/Student_Examples_Absorption_LBC.md
+!docs/Student_Examples_Absorption_Projection.md
+!docs/Student_Examples_DM_Electron_Heavy_LBC.md
+!docs/Student_Examples_DM_Electron_Heavy_Projection.md
+!docs/Student_Examples_DM_Electron_Intermediate_LBC.md
+!docs/Student_Examples_DM_Electron_Intermediate_Projection.md
+!docs/Student_Examples_DM_Electron_Light_LBC.md
+!docs/Student_Examples_DM_Electron_Light_Projection.md
+!docs/Student_Examples_Migdal_LBC.md
+!docs/Student_Examples_Migdal_Projection.md
+!docs/Student_Examples_WIMP_DAMIC_M_Projection.md
+!docs/Student_Examples_WIMP_DAMIC_SNOLAB.md
+!docs/WIMP_Nucleon_Reproduction_Guide.md
+
 # Build tree
 build/
 
