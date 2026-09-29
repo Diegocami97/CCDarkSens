@@ -55,7 +55,7 @@ cmake --build build -j8 --target ccdarksens_scan_dmelectron_pattern ccdarksens_p
 |------|---------|
 | `data/qcdark2_rates/Si/heavy/Si_comp_long_scan/` | Pre-generated dR/dE CSVs (may already exist in the repo) |
 | `data/Efficiencies_patterns_Nsims1000000_DCTrue_alpha1.csv` | P(pattern \| nₑ) — used to build ε(n_e) for folding |
-| QCDark2 `Si_comp.h5` | Only needed if you regenerate rates (see [`qcdark2_dielectric_workflow.md`](qcdark2_dielectric_workflow.md)) |
+| QCDark2 `Si_comp.h5` | Only needed if you regenerate rates, from the QCDark2 package's `dielectric_functions/composite/Si_comp.h5` |
 
 ---
 
@@ -85,7 +85,7 @@ If that directory is already populated (800×300 grid), **skip this step**.
 
 To generate or refresh tables:
 
-1. Obtain the production composite dielectric `Si_comp.h5` from the QCDark2 package (`dielectric_functions/composite/Si_comp.h5`). See [`qcdark2_dielectric_workflow.md`](qcdark2_dielectric_workflow.md) §5.
+1. Obtain the production composite dielectric `Si_comp.h5` from the QCDark2 package (`dielectric_functions/composite/Si_comp.h5`).
 2. Edit `epsilon_h5` in the generate config if your copy lives elsewhere.
 3. Run:
 

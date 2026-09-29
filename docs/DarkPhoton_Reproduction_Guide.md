@@ -2,7 +2,7 @@
 
 A step-by-step walkthrough for collaboration members who want to project a **dark photon absorption** sensitivity curve for the hypothetical material **SrCd₂Sb₂ (HypMat)**, using a Drude-model energy-loss function.
 
-This guide assumes you have read the overview in [`Beginners_Guide.md`](Beginners_Guide.md). For the full physics derivation (absorption rate formula, ELF construction, the Drude-model assumptions and their brackets), see [`DarkPhoton_Absorption_HypotheticalMaterial.md`](DarkPhoton_Absorption_HypotheticalMaterial.md).
+This guide assumes you have read the overview in [`Beginners_Guide.md`](Beginners_Guide.md). For the underlying physics (absorption rate formula, ELF construction, Drude-model assumptions), see [`DM_Signal_Models_Physics_Reference.md`](DM_Signal_Models_Physics_Reference.md).
 
 ---
 

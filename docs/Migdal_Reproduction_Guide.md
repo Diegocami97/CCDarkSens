@@ -2,7 +2,7 @@
 
 A step-by-step walkthrough for collaboration members who want to project a **DAMIC-M Migdal-effect** sensitivity curve — DM-nucleus scattering off Si with the recoiling nucleus's Migdal-effect ionization providing the observable, extending sensitivity below the nuclear-recoil threshold where elastic scattering alone is invisible.
 
-This guide assumes you have read the overview in [`Beginners_Guide.md`](Beginners_Guide.md). For the full physics scope, darkelf integration details, and validation checklist, see [`Migdal_Integration_Plan.md`](Migdal_Integration_Plan.md).
+This guide assumes you have read the overview in [`Beginners_Guide.md`](Beginners_Guide.md). For the underlying physics scope and darkelf integration, see [`DM_Signal_Models_Physics_Reference.md`](DM_Signal_Models_Physics_Reference.md).
 
 ---
 

@@ -34,7 +34,7 @@ This complements the QEDark LBC reproduction guide ([`LBC_QEDark_Reproduction_Gu
 
 - C++17, CMake ≥ 3.18, ROOT (with Minuit2), nlohmann/json
 - Python 3.8+ with NumPy and the `ccdarkphys` package (for QCDark2 rate generation)
-- QCDark2 dielectric HDF5: `data/qcdark2_epsilon/Si/Si_fast_gap1p2.h5` (generate via [`qcdark2_dielectric_workflow.md`](qcdark2_dielectric_workflow.md) if missing)
+- QCDark2 dielectric HDF5: `data/qcdark2_epsilon/Si/Si_fast_gap1p2.h5` (generate from the QCDark2 package if missing)
 
 ### Build
 

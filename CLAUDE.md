@@ -135,11 +135,8 @@ The following values were cross-checked against the collaboration Python referen
 
 | File | Contents |
 |------|----------|
+| `docs/Framework_Architecture.md` | Standalone architecture reference: how a config file turns into an exclusion curve, layer by layer (ConfigManager → Detector/ExperimentSetup → ModelFactory → ResponseFactory/ResponseFold → BackgroundFactory → ProfileLikelihood/ScanUtils → `ccdarksens_scan_generic` orchestration). Grounded directly in current source; covers the `q_threshold` convention subtlety (scan's own asymptotic value vs. the plotting app's hardcoded default) in detail. |
 | `docs/Beginners_Guide.md` | Full introduction: concepts, all config fields, worked examples, glossary |
-| `docs/Refactoring_Changelog.md` | Complete record of all structural changes made during refactoring |
-| `docs/Exposure_usage_audit.md` | How `exposure_kg_year` flows through the pipeline (applied exactly once) |
-| `docs/Pydme_CCDarkSens_crosscheck.md` | Crosscheck of likelihood and background against pydme |
-| `docs/App_flow_walkthrough.md` | Step-by-step walkthrough of scan and example apps |
 | `docs/DM_Signal_Models_Physics_Reference.md` | Consolidated physics reference: DM-e (QEDark/QCDark2), dark photon absorption, Migdal effect, charge ionization (Klein's formula), and the shared PLR pipeline — Si and SrCd₂Sb₂ cases |
 | `docs/ClusterFitMC_Design.md` | WIMP-nucleus SI channel Phase 3/4 (noise-tail ΔLL calibration, per-event cluster reconstruction): pixel-shape derivation, closed-form ΔLL, minimizer strategy, validation results — built up slice by slice |
 | `docs/GenericScanApp_Design.md` | `ccdarksens_scan_generic`: the `ResponseFold`/`ResponseFactory`/`BackgroundFactory` abstractions, and how every DM-electron reference-app statistical mode (2D `pydme` minimizer, `Bp_theta_Br`, `single_bin_likelihood`, `smooth_ul_envelope`, `threshold_toys`) was ported and verified bit-exact — built up slice by slice |

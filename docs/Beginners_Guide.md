@@ -272,7 +272,7 @@ Controls the nuisance parameter structure in the likelihood:
 | `"scale"` | `B(scale) = scale × B_template`. One nuisance scales the whole background. |
 | `"Bp_theta_Br"` | `B(θ) = Bp + θ·Br`. Separates fixed random-coincidence from scaled radiogenic. Matches pydme. |
 
-With `"Bp_theta_Br"` and **`constrain_use_tau_weighted: true`** (recommended for pydme parity), the prior is a tau-weighted Gamma form summed over pattern bins — see [`Profile_likelihood_minimization_flow_pydme.md`](Profile_likelihood_minimization_flow_pydme.md). Set **`constrain_n_bins: 1`** when using a single pooled constraint. θ is bounded to [`theta_lo`, `theta_hi`] (typically 0.5–10) during minimisation.
+With `"Bp_theta_Br"` and **`constrain_use_tau_weighted: true`** (recommended for pydme parity), the prior is a tau-weighted Gamma form summed over pattern bins — see [`Framework_Architecture.md`](Framework_Architecture.md) §6.1 for the exact NLL construction. Set **`constrain_n_bins: 1`** when using a single pooled constraint. θ is bounded to [`theta_lo`, `theta_hi`] (typically 0.5–10) during minimisation.
 
 With **`background_model: "scale"`** (common in n_e projections), one nuisance θ scales the entire B(n_e) template: B(θ) = θ × B_template.
 
@@ -447,7 +447,7 @@ python3 utils/audit_qedark_ul_vs_pydme.py
 python3 utils/plot_qedark_all_references.py
 ```
 
-See [`qedark_ul_audit_pydme_srdm.md`](qedark_ul_audit_pydme_srdm.md) and [`qedark_repro_paper_export_checks.md`](qedark_repro_paper_export_checks.md).
+See [`Framework_Architecture.md`](Framework_Architecture.md) §6 for the UL-crossing methodology these scripts check against.
 
 ### 7.5 Rate table generation (step 0)
 
@@ -685,7 +685,7 @@ Separate from §9.1 — uses **QEDark rate tables**, pydme-style likelihood, and
 | Configs | `configs/examples/lbc_qedark_heavy_mediator.json`, `lbc_qedark_light_mediator.json` |
 | Paper reference | `collab_frameworks/pydme/figures/ScienceRun2024-figures/data/ScienceRun2024_results-Pattern/` |
 
-Full walkthrough: [`LBC_QEDark_Reproduction_Guide.md`](LBC_QEDark_Reproduction_Guide.md). Validation notes: [`qedark_repro_paper_export_checks.md`](qedark_repro_paper_export_checks.md).
+Full walkthrough: [`LBC_QEDark_Reproduction_Guide.md`](LBC_QEDark_Reproduction_Guide.md).
 
 ---
 
@@ -740,14 +740,12 @@ If your limit looks wrong, check in this order:
 
 | Topic | Document |
 |-------|----------|
+| Full pipeline architecture (config → response → stats, module by module) | [`Framework_Architecture.md`](Framework_Architecture.md) |
 | QEDark LBC reproduction (step-by-step) | [`LBC_QEDark_Reproduction_Guide.md`](LBC_QEDark_Reproduction_Guide.md) |
 | QCDark2 pattern-count sensitivity | [`QCDark2_Pattern_Counts_Guide.md`](QCDark2_Pattern_Counts_Guide.md) |
 | QCDark2 n_e exposure projections | [`QCDark2_NE_Exposure_Projections_Guide.md`](QCDark2_NE_Exposure_Projections_Guide.md) |
-| UL methodology and pydme parity | [`qedark_ul_audit_pydme_srdm.md`](qedark_ul_audit_pydme_srdm.md), [`Upper_limit_pydme_vs_CCDarkSens.md`](Upper_limit_pydme_vs_CCDarkSens.md) |
-| Likelihood / θ minimisation | [`Log_likelihood_pydme_comparison.md`](Log_likelihood_pydme_comparison.md), [`Profile_likelihood_minimization_flow_pydme.md`](Profile_likelihood_minimization_flow_pydme.md) |
-| QCDark2 dielectric workflow | [`qcdark2_dielectric_workflow.md`](qcdark2_dielectric_workflow.md) |
-| Band-gap pheno study | [`band_gap_study_roadmap.md`](band_gap_study_roadmap.md), `apps/README_band.md` |
-| Recent refactoring (EfficiencyMC rename, etc.) | [`Refactoring_Changelog.md`](Refactoring_Changelog.md) |
+| UL methodology, likelihood/θ minimization | [`Framework_Architecture.md`](Framework_Architecture.md) §6 |
+| WIMP-nucleon cluster-fit design | [`ClusterFitMC_Design.md`](ClusterFitMC_Design.md) |
 | Example config index | [`configs/examples/README.md`](../configs/examples/README.md) |
 
 ---

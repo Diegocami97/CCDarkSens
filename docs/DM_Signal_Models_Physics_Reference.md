@@ -58,10 +58,6 @@ already in this repository rather than replacing them:
 
 | Existing document | Relationship to this one |
 |---|---|
-| [`HypMat_Signal_Models_Unified.md`](HypMat_Signal_Models_Unified.md) | Full step-by-step derivation of dark photon + DM-e for HypMat with **old** parameters (ε_h=1.6 eV, ρ=8 g/cm³, ε₁ step-function). This document supersedes those parameter values with the corrected ones (ε_h=1.7778 eV via Klein, ρ=5.76 g/cm³, Drude ε(ω)). |
-| [`DarkPhoton_Absorption_HypotheticalMaterial.md`](DarkPhoton_Absorption_HypotheticalMaterial.md) | Assumption-by-assumption catalog for the dark photon channel; the Drude upgrade (§A1-updated) is the model used here. |
-| [`Migdal_Integration_Plan.md`](Migdal_Integration_Plan.md) | Full Migdal derivation and CCDarkSens integration status (Si only; SrCd₂Sb₂ explicitly out of scope — see §3.5 below for why). |
-| [`band_gap_pheno_ionization.md`](band_gap_pheno_ionization.md) | Defines the ionization-table rescaling scenarios (B-thresh, D-equal, A-ratio) used in §4. |
 | [`LBC_QEDark_Reproduction_Guide.md`](LBC_QEDark_Reproduction_Guide.md) | Operational guide for reproducing the DAMIC-M PRL 2025 QEDark limit; §1 below gives the underlying physics. |
 
 ---
