@@ -43,6 +43,14 @@ build/
 # Technote source lives in its own repo (technote-origin remote), not here
 technote/
 
+# Local-only config trees: not needed to reproduce any example/case documented
+# under docs/ or configs/examples/README.md.
+configs/Sr2Cb2Sd/
+configs/band_gap_one_point/
+configs/exdm_inputs/
+configs/qedark_repro_matrix/
+configs/qcdark2/
+
 # Run outputs (large ROOT files, PDFs, scan results)
 outputs/
 outplots/

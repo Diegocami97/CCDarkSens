@@ -747,7 +747,7 @@ specifiable** knobs and labels each combination with a scenario ID:
 | **C-grid** | user | user | Free 2D grid, no rule |
 
 The SrCd₂Sb₂ production configs use the **Klein** scenario specifically
-(`ion_scenario: "Klein"` in `configs/Sr2Cb2Sd/write_configs.py`), i.e. ε_h
+(`ion_scenario: "Klein"`), i.e. ε_h
 is *not* pinned equal to E_gap (that would be D-equal) nor fixed at Si's
 3.8 eV (B-thresh) — it follows the Klein formula above.
 
