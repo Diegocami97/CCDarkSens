@@ -1,9 +1,12 @@
-// ============================================================================
-//  CCDarkSens — ccdarksens_sensitivity_fast
-//  Fast sensitivity demo that skips ClusterMC and uses flat pattern efficiency with diffusion and dark-current background only.
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  ccdarksens_sensitivity_fast.cc -- Fast sensitivity demo that skips
+//  ClusterMC and uses flat pattern efficiency with diffusion and dark-
+//  current background only.
+// ===========================================================================
 
 #include "ccdarksens/io/ConfigManager.hh"
 #include "ccdarksens/experiment/ExperimentSetup.hh"
@@ -27,6 +30,14 @@
 using ccdarksens::utils::MakeFlatEfficiency;
 using ccdarksens::utils::SumROI;
 
+// ----------------------------------------------------------------------------
+// main
+//   Fast sensitivity check for one config: build a synthetic flat dR/dE, fold it to
+//   n_e with the ionization table (with histogram-level diffusion and a flat pattern
+//   efficiency), build the Asimov dark-current background with the same efficiency, print
+//   the integrals and the ROI yields, and write everything to <outdir>/fast_check.root.
+//   Usage: <program> <config.json>. Returns 0 on success, 1 for bad usage, 2 on an error.
+// ----------------------------------------------------------------------------
 int main(int argc, char** argv){
   if (argc<2){ std::cerr<<"usage: ccdarksens_sensitivity_fast <config.json>\n"; return 1; }
 
@@ -56,7 +67,7 @@ int main(int argc, char** argv){
       803.25, 6.5e-4, 1.0, 0.0, 670.0, 0.08, 0.16
     );
 
-    std::unique_ptr<TH1D> eps_hist;
+    std::unique_ptr<TH1D> eps_hist;  // flat epsilon(n_e) shared by signal and background
     if (cfg.backgrounds().has_flat_eps) eps_hist = MakeFlatEfficiency(ne_min, ne_max, cfg.backgrounds().flat_eps);
     else                                eps_hist = MakeFlatEfficiency(ne_min, ne_max, 1.0);
 
@@ -89,10 +100,10 @@ int main(int argc, char** argv){
 
     auto B_asimov = bld.BuildBkgAsimov();
     // --- Background rollups (consistent across paths) ---
-    const double B_total_pixexp = static_cast<double>(bld.NActivePixels()) * static_cast<double>(bld.NExposuresUsed());
+    const double B_total_pixexp = static_cast<double>(bld.NActivePixels()) * static_cast<double>(bld.NExposuresUsed());  // active pixels x exposures (background before efficiency)
 
     // n_e = 0 bin (after epsilon)
-    int b0 = (0 - ne_min + 1);
+    int b0 = (0 - ne_min + 1);  // ROOT bin index of n_e = 0
     double B_zero_after_eps = 0.0;
     if (b0 >= 1 && b0 <= B_asimov->GetNbinsX()) {
     B_zero_after_eps = B_asimov->GetBinContent(b0);

@@ -1,4 +1,18 @@
 #!/usr/bin/env python3
+# ============================================================================
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  File: dark_photon_build_stellar_combined_masked.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  dark_photon_build_stellar_combined_masked.py -- Build stellar-only
+#  exclusion band CSV for dark-photon limit plots.
+# ============================================================================
+
 """Build stellar-only exclusion band CSV for dark-photon limit plots.
 
 Combines Sun + red-giant stellar limits and removes parameter-space already
@@ -25,6 +39,10 @@ REPO = Path(__file__).resolve().parents[1]
 DP = REPO / "data" / "previous_limits" / "dark_photon"
 
 
+# ----------------------------------------------------------------------------
+# load_txt
+#   Read (mass, limit) pairs from a text file (comma or space separated), skipping comments and a header line.
+# ----------------------------------------------------------------------------
 def load_txt(path: Path) -> list[tuple[float, float]]:
     pts: list[tuple[float, float]] = []
     with path.open() as f:
@@ -41,6 +59,10 @@ def load_txt(path: Path) -> list[tuple[float, float]]:
     return pts
 
 
+# ----------------------------------------------------------------------------
+# load_csv_cols
+#   Read two chosen columns of a numeric CSV as (x*x_scale, y) pairs, skipping comments and rows that do not parse.
+# ----------------------------------------------------------------------------
 def load_csv_cols(path: Path, x_col: int, y_col: int, x_scale: float = 1.0) -> list[tuple[float, float]]:
     pts: list[tuple[float, float]] = []
     with path.open() as f:
@@ -59,6 +81,10 @@ def load_csv_cols(path: Path, x_col: int, y_col: int, x_scale: float = 1.0) -> l
     return pts
 
 
+# ----------------------------------------------------------------------------
+# load_xenon_lo
+#   Read the lower edge of the XENONnT bracket as (mass in eV, lower limit) pairs; the mass column is given in keV.
+# ----------------------------------------------------------------------------
 def load_xenon_lo(path: Path) -> list[tuple[float, float]]:
     pts: list[tuple[float, float]] = []
     with path.open() as f:
@@ -81,6 +107,10 @@ def load_xenon_lo(path: Path) -> list[tuple[float, float]]:
     return pts
 
 
+# ----------------------------------------------------------------------------
+# log_interp
+#   Interpolate a curve linearly in log-log space at mass m; returns None if the curve is empty or m is outside its range.
+# ----------------------------------------------------------------------------
 def log_interp(pts: list[tuple[float, float]], m: float) -> float | None:
     if not pts:
         return None
@@ -91,12 +121,20 @@ def log_interp(pts: list[tuple[float, float]], m: float) -> float | None:
     return float(10 ** np.interp(np.log10(m), np.log10(xs), np.log10(ys)))
 
 
+# ----------------------------------------------------------------------------
+# lower_envelope
+#   Smallest positive value among the curves at mass m (None if no curve covers it).
+# ----------------------------------------------------------------------------
 def lower_envelope(curves: list[list[tuple[float, float]]], m: float) -> float | None:
     vals = [log_interp(c, m) for c in curves if c]
     vals = [v for v in vals if v is not None and v > 0]
     return min(vals) if vals else None
 
 
+# ----------------------------------------------------------------------------
+# build_masked_rows
+#   On n log-spaced masses, take the stellar lower envelope (Sun and red giants) and the direct-detection lower envelope; a row is (mass, stellar limit, direct-detection limit), with 0 as the third value where direct detection does not cut into the stellar band.
+# ----------------------------------------------------------------------------
 def build_masked_rows(m_min: float, m_max: float, n: int) -> list[tuple[float, float, float]]:
     sun = load_csv_cols(DP / "dark_photon_stellar_limits_SUN.csv", 1, 2, KEV_TO_EV)
     rg = load_csv_cols(DP / "dark_photon_stellar_limits_Red_Giant.csv", 1, 2, KEV_TO_EV)
@@ -121,6 +159,10 @@ def build_masked_rows(m_min: float, m_max: float, n: int) -> list[tuple[float, f
     return rows
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Command line: build the masked stellar-limit rows on --n masses between --m-min and --m-max eV and write them as CSV to --out.
+# ----------------------------------------------------------------------------
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(

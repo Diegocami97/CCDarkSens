@@ -19,21 +19,17 @@ std::vector<double> FoldNeToPatternRates(
   std::vector<double> out;
   out.reserve(pattern_roi.size());
 
-  // Above this n_e, all threshold conditions (M, MN, MNL) are trivially satisfied
-  // and the efficiency table from the publication MC does not extend further.
-  // Physically: at ne >= 10 the cluster is bright enough that detection is certain.
-  constexpr int kNeFullEfficiency = 10;
-
+  // A missing (pattern, n_e) entry counts as 0: a cluster with more electrons
+  // than the efficiency table covers has an unknown pattern shape (almost
+  // certainly not one of the small declared patterns), so it contributes no
+  // accepted rate to any of them.
   for (int pattern_id : pattern_roi) {
     double rate = 0.0;
     for (int ne = ne_min; ne <= ne_max; ++ne) {
       int bin = const_cast<TH1D&>(h_ne).FindBin(static_cast<double>(ne));
       double s_ne = h_ne.GetBinContent(bin);
-      double eff = 1.0;
-      if (ne < kNeFullEfficiency) {
-        auto it = pattern_eff_map.find({pattern_id, ne});
-        eff = (it != pattern_eff_map.end()) ? it->second : 0.0;
-      }
+      auto it = pattern_eff_map.find({pattern_id, ne});
+      double eff = (it != pattern_eff_map.end()) ? it->second : 0.0;
       rate += s_ne * eff;
     }
     out.push_back(rate);

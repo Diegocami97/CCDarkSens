@@ -1,9 +1,11 @@
-// ============================================================================
-//  CCDarkSens — PCDCalculator
-//  Folds n_e/B spectra through P(q|n_e) and builds n_e reconstruction kernels from PCD tables.
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  PCDCalculator.hh -- Folds n_e/B spectra through P(q|n_e) and builds n_e
+//  reconstruction kernels from PCD tables.
+// ===========================================================================
 
 #pragma once
 

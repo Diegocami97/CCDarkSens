@@ -1,9 +1,11 @@
-// ============================================================================
-//  CCDarkSens — PoissonAsimovPLR
-//  Computes Poisson -ln L and the q = -2ΔlnL ratio used for Asimov and grid-scan hypothesis tests.
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  PoissonAsimovPLR.cc -- Computes Poisson -ln L and the q = -2ΔlnL ratio
+//  used for Asimov and grid-scan hypothesis tests.
+// ===========================================================================
 
 #include "ccdarksens/stats/PoissonAsimovPLR.hh"
 #include "ccdarksens/stats/StatsUtils.hh"
@@ -13,6 +15,12 @@
 
 namespace ccdarksens::stats {
 
+// ----------------------------------------------------------------------------
+// PoissonAsimovPLR::EvaluateNLL
+//   -ln L = sum_i [ mu_i - n_i ln(mu_i) ], dropping the constant ln(n_i!).
+//   Bins with model <= 0 add nothing when data is also 0 and a 1e9 penalty
+//   otherwise. Throws std::invalid_argument if the sizes differ.
+// ----------------------------------------------------------------------------
 double PoissonAsimovPLR::EvaluateNLL(const std::vector<double>& data,
                                      const std::vector<double>& model) const {
   if (data.size() != model.size()) {
@@ -43,6 +51,10 @@ double PoissonAsimovPLR::EvaluateNLL(const std::vector<double>& data,
   return nll;
 }
 
+// ----------------------------------------------------------------------------
+// PoissonAsimovPLR::EvaluateRatio
+//   q = 2*(NLL_test - NLL_null), floored at 0 for numerical safety.
+// ----------------------------------------------------------------------------
 double PoissonAsimovPLR::EvaluateRatio(const std::vector<double>& data,
                                        const std::vector<double>& model_test,
                                        const std::vector<double>& model_null) const {

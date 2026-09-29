@@ -1,0 +1,43 @@
+{
+  "_comment": "WIMP-nucleon SI, DAMIC 0.6 kg-day (PhysRevD.94.082006 / arXiv:1607.07410), the 1x100 READOUT MODE's own noise-tail calibration + kernel. Companion to wimp_nucleon_cluster_damic2016_repro.json (the 1x1 mode). Paper facts (Literature/arXiv-1607.07410v2/Limit2016_clean.tex, verified directly): the CCD sums 100 pixel rows in hardware before the single readout ('collapsing the pixel contents along the y axis', line 218), and the clustering fit is 'performed in one dimension along rows' (line 396) -- hence one_dimensional=true, window_ny=1, not a literal 2D fit on a 1-row window (see ClusterFitEngine.hh/PixelSimulator.hh docs for why that distinction matters). Paper-quoted 1x100 numbers: ΔLL cut = -25 (line 402, vs -28 for 1x1); background rate 21±4 events/(kg day keV) (line 539, vs 15±3); baseline resolution σ0=30 eVee (line 435, vs 37); efficiency turn-on 25% at 60 eVee -> ~100% by 150 eVee (line 438, vs 9%@75eVee->100%@400eVee for 1x1 -- 1x100 is BETTER at low energy because summing rows recovers signal-to-noise for deep/highly-diffused events, line 440). Fiducial cut 0.35<sigma_xy<1.22 px is explicitly the SAME for both modes (line 451). ASSUMPTION, not paper-stated: sigma_pix_e=1.8 e- is carried over from the 1x1 section's general detector characterization (line 353) -- the paper does not separately restate a 1x100-specific pixel noise figure; flagged here rather than silently assumed. window_nx=11 (same physical extent as the 1x1 window, since the underlying lateral diffusion sigma_xy physics is identical between modes per the paper -- only the readout differs) and diffusion A/b/alpha/beta/thickness are the SAME paper-fit values as the 1x1 config for the same reason.",
+  "run": {
+    "label": "damic2016_paper_repro_1x100",
+    "cl": 0.9,
+    "exposure_kg_year": 0.0016427104722792608
+  },
+  "response": {
+    "analysis_space": "cluster_energy",
+    "cluster_fit_mc": {
+      "window_nx": 11,
+      "window_ny": 1,
+      "one_dimensional": true,
+      "pixel_size_um": 15.0,
+      "sigma_readout_e": 1.8,
+      "diffusion": {
+        "A_um2": 215.0,
+        "b_umInv": 0.0013,
+        "alpha": 1.0,
+        "beta_per_keV": 0.0,
+        "thickness_um": 675.0
+      },
+      "fit_method": "nelder_mead",
+      "sigma_xy_lo_px": 0.1,
+      "sigma_xy_hi_px": 2.0,
+      "n_toys": 5000,
+      "target_tail_prob": 0.001,
+      "calib_rng_seed": 20260901,
+      "ne_trials_per_point": 1500,
+      "sigma_xy_fid_min_px": 0.35,
+      "sigma_xy_fid_max_px": 1.22,
+      "eh_pair_eV": 3.77,
+      "fano_factor": 0.133,
+      "rng_seed": 13579,
+      "Etrue_min_eV": 60.0,
+      "Etrue_max_eV": 2000.0,
+      "Etrue_npoints": 14,
+      "Ereco_min_eV": 0.0,
+      "Ereco_max_eV": 4000.0,
+      "Ereco_nbins": 80
+    }
+  }
+}

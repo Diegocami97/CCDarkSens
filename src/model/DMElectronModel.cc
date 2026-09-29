@@ -1,9 +1,12 @@
-// ============================================================================
-//  CCDarkSens — DMElectronModel
-//  Resolves and loads QEDark/QCDark rate CSV paths for a given (material, mediator, mχ, σe) and builds a binned dR/dE TH1D spectrum.
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  DMElectronModel.cc -- I resolve and load the DM-electron scattering rate-
+//  table CSV for one (mass, coupling) grid point and turn it into a dR/dE
+//  histogram.
+// ===========================================================================
 
 #include "ccdarksens/model/DMElectronModel.hh"
 // #include "ccdarksens/io/RateTable.hh"
@@ -19,8 +22,10 @@ namespace fs = std::filesystem;
 
 namespace ccdarksens {
 
+// Out-of-line destructor so RateTable only has to be a complete type in this file.
 DMElectronModel::~DMElectronModel() = default;
 
+// Format a mass with exactly six decimals so it matches the rate-file names written by the grid generators.
 static std::string format_mchi_6f(double x) {
   std::ostringstream os;
   os.setf(std::ios::fmtflags(0), std::ios::floatfield);
@@ -28,6 +33,11 @@ static std::string format_mchi_6f(double x) {
   return os.str();
 }
 
+// ----------------------------------------------------------------------------
+// DMElectronModel::ResolvePath_
+//   I substitute {material}, {mediator}, {mchi_MeV} and {sigma_e_cm2} into the filename template and prepend rates_dir.
+//   Returns the full path of the CSV for this grid point.
+// ----------------------------------------------------------------------------
 std::string DMElectronModel::ResolvePath_() const {
   // Simple token replacement for {material},{mediator},{mchi_MeV},{sigma_e_cm2}
   std::string fname = cfg_.filename_template;
@@ -49,6 +59,11 @@ std::string DMElectronModel::ResolvePath_() const {
   return p.string();
 }
 
+// ----------------------------------------------------------------------------
+// DMElectronModel::Configure
+//   I store the config, resolve the CSV path and load the table.
+//   Returns false if the file could not be read.
+// ----------------------------------------------------------------------------
 bool DMElectronModel::Configure(const DMElectronConfig& c) {
   cfg_ = c;
   table_ = std::make_unique<RateTable>();
@@ -59,6 +74,12 @@ bool DMElectronModel::Configure(const DMElectronConfig& c) {
   return true;
 }
 
+// ----------------------------------------------------------------------------
+// DMElectronModel::MakeSpectrum_E
+//   I return dR/dE_e [events/(kg*year*eV)] as a histogram of nbins between
+//   Emin_eV and Emax_eV, named dRdE__mchi_<m>__sigma_<s> (sanitized so it is a legal ROOT
+//   name). Returns nullptr if Configure() has not succeeded.
+// ----------------------------------------------------------------------------
 std::unique_ptr<TH1D> DMElectronModel::MakeSpectrum_E() const {
   if (!table_) return nullptr;
   auto sanitize = [](std::string s) {

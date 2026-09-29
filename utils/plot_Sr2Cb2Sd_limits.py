@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
 # ============================================================================
-#  CCDarkSens — plot_Sr2Cb2Sd_limits
-#  Overlay DM-e limit curves for the Sr2Cb2Sd phase-1 study (Si_fast epsilon).
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
 #
-#  Author: Diego Venegas-Vargas
+#  File: plot_Sr2Cb2Sd_limits.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  plot_Sr2Cb2Sd_limits.py -- Overlay DM-e limit curves for the Sr2Cb2Sd
+#  phase-1 study (Si_fast epsilon).
 # ============================================================================
 """
 Six Sr2Cb2Sd limit figures (heavy + light):
@@ -46,19 +53,35 @@ SRCD_DIRECT_GAP_EV = 0.603
 SRCD_DIRECT_EH_EV = 2.19
 
 
+# ----------------------------------------------------------------------------
+# _phys
+#   ROOT label of the physical parameters (gap, eps_h) of a curve.
+# ----------------------------------------------------------------------------
 def _phys(gap_eV: float, eh_eV: float) -> str:
     return pheno_param_label_root(gap_eV, eh_eV)
 
 
+# ----------------------------------------------------------------------------
+# _label
+#   Two-line ROOT legend entry: experiment name and exposure on the first line, the (gap, eps_h) label on the second.
+# ----------------------------------------------------------------------------
 def _label(name: str, exposure: str, gap_eV: float, eh_eV: float) -> str:
     # Two-line ROOT legend: avoids wide boxes and nested-brace TLatex glitches.
     return f"#splitline{{{name} ({exposure})}}{{{_phys(gap_eV, eh_eV)}}}"
 
 
+# ----------------------------------------------------------------------------
+# scan_root
+#   Path of the scan ROOT file of a run tag under outputs/Sr2Cb2Sd/.
+# ----------------------------------------------------------------------------
 def scan_root(run_tag: str) -> Path:
     return ROOT / "outputs" / "Sr2Cb2Sd" / run_tag / "scan_dmelectron_pattern.root"
 
 
+# ----------------------------------------------------------------------------
+# run_plot
+#   Plot several limit curves of one mediator with ccdarksens_plot_dmelectron_limit (missing scans are skipped; with dry_run only the command is printed). Returns the plotter's exit code.
+# ----------------------------------------------------------------------------
 def run_plot(
     *,
     mediator: str,
@@ -109,6 +132,10 @@ def run_plot(
     return subprocess.call(cmd, cwd=str(ROOT))
 
 
+# ----------------------------------------------------------------------------
+# damic_curve
+#   Run tag and legend label of the DAMIC-M silicon reference curve (1 kg-yr).
+# ----------------------------------------------------------------------------
 def damic_curve(med: str) -> tuple[str, str]:
     return (
         f"Sr2Cb2Sd_si_ref_gap1p2_{med}_1kgy",
@@ -116,6 +143,10 @@ def damic_curve(med: str) -> tuple[str, str]:
     )
 
 
+# ----------------------------------------------------------------------------
+# oscura_curve
+#   Run tag and legend label of the OSCURA silicon curve (30 kg-yr).
+# ----------------------------------------------------------------------------
 def oscura_curve(med: str) -> tuple[str, str]:
     return (
         f"Sr2Cb2Sd_oscura_gap1p2_{med}_30kgy",
@@ -123,6 +154,10 @@ def oscura_curve(med: str) -> tuple[str, str]:
     )
 
 
+# ----------------------------------------------------------------------------
+# baseline_curves
+#   Curves of the baseline figure: DAMIC-M silicon, the SrCd2Sb2 indirect-gap and direct-gap cases, and OSCURA.
+# ----------------------------------------------------------------------------
 def baseline_curves(med: str) -> list[tuple[str, str]]:
     return [
         damic_curve(med),
@@ -148,10 +183,18 @@ def baseline_curves(med: str) -> list[tuple[str, str]]:
     ]
 
 
+# ----------------------------------------------------------------------------
+# _dc_tier_label
+#   Legend entry of a dark-current tier (dc times the baseline) with the (gap, eps_h) label.
+# ----------------------------------------------------------------------------
 def _dc_tier_label(dc: str, gap_eV: float, eh_eV: float) -> str:
     return f"#splitline{{DC {dc}#times}}{{{_phys(gap_eV, eh_eV)}}}"
 
 
+# ----------------------------------------------------------------------------
+# dc_indirect_curves
+#   Curves of the dark-current study for the indirect gap: DAMIC-M reference plus the 1x and 100x dark-current tiers.
+# ----------------------------------------------------------------------------
 def dc_indirect_curves(med: str) -> list[tuple[str, str]]:
     g, eh = SRCD_INDIRECT_GAP_EV, SRCD_INDIRECT_EH_EV
     return [
@@ -172,6 +215,10 @@ def dc_indirect_curves(med: str) -> list[tuple[str, str]]:
     ]
 
 
+# ----------------------------------------------------------------------------
+# dc_direct_curves
+#   Curves of the dark-current study for the direct gap: DAMIC-M reference plus the 1x and 100x dark-current tiers.
+# ----------------------------------------------------------------------------
 def dc_direct_curves(med: str) -> list[tuple[str, str]]:
     g, eh = SRCD_DIRECT_GAP_EV, SRCD_DIRECT_EH_EV
     return [
@@ -192,6 +239,10 @@ def dc_direct_curves(med: str) -> list[tuple[str, str]]:
     ]
 
 
+# ----------------------------------------------------------------------------
+# plot_baseline
+#   Baseline figure for one mediator (1 kg-yr, DC = 1e-5 e-/pix/day).
+# ----------------------------------------------------------------------------
 def plot_baseline(mediator: str, dry_run: bool) -> int:
     title = (
         "Sr2Cb2Sd projection (1 kg-yr, DC = 10^{-5} e^{-}/pix/day)"
@@ -207,11 +258,19 @@ def plot_baseline(mediator: str, dry_run: bool) -> int:
     )
 
 
+# ----------------------------------------------------------------------------
+# _dc_study_title
+#   Title of a dark-current study figure.
+# ----------------------------------------------------------------------------
 def _dc_study_title(gap_branch: str, mediator: str) -> str:
     med_label = "heavy" if mediator == "heavy" else "light"
     return f"Sr2Cb2Sd DC study, {gap_branch} gap, {med_label} mediator (1 kg-yr)"
 
 
+# ----------------------------------------------------------------------------
+# plot_dc_indirect
+#   Dark-current study figure for the indirect gap.
+# ----------------------------------------------------------------------------
 def plot_dc_indirect(mediator: str, dry_run: bool) -> int:
     return run_plot(
         mediator=mediator,
@@ -222,6 +281,10 @@ def plot_dc_indirect(mediator: str, dry_run: bool) -> int:
     )
 
 
+# ----------------------------------------------------------------------------
+# plot_dc_direct
+#   Dark-current study figure for the direct gap.
+# ----------------------------------------------------------------------------
 def plot_dc_direct(mediator: str, dry_run: bool) -> int:
     return run_plot(
         mediator=mediator,
@@ -232,6 +295,10 @@ def plot_dc_direct(mediator: str, dry_run: bool) -> int:
     )
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Command line: choose the mediator (heavy, light or both) and which figures to make (all six, baseline, or the DC studies); --dry-run only prints the plot commands.
+# ----------------------------------------------------------------------------
 def main() -> int:
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter

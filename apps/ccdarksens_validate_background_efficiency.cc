@@ -1,6 +1,9 @@
-// ============================================================================
-//  CCDarkSens — ccdarksens_validate_background_efficiency
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
+//  File: ccdarksens_validate_background_efficiency.cc
 //  Validates the background confusion matrix against the collaboration
 //  reference:  data/Background_efficiencies.csv
 //
@@ -19,9 +22,7 @@
 //    ccdarksens_validate_background_efficiency [n_trials] [ref_csv_path]
 //
 //  Defaults: n_trials = 100000, ref = data/Background_efficiencies.csv
-//
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+// ===========================================================================
 
 #include <algorithm>
 #include <cmath>

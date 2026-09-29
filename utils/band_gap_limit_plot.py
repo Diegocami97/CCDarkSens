@@ -1,8 +1,15 @@
 # ============================================================================
-#  CCDarkSens — band_gap_limit_plot
-#  Helper functions for band-gap limit overlay figures
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
 #
-#  Author: Diego Venegas-Vargas
+#  File: band_gap_limit_plot.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  band_gap_limit_plot.py -- Helper functions for band-gap limit overlay
+#  figures
 # ============================================================================
 """Helpers for band-gap limit overlay plots (ccdarksens_plot_dmelectron_limit)."""
 
@@ -16,6 +23,10 @@ from band_gap_scan_paths import SI_REF_GAP_EV, SI_REF_EH_EV, si_reference_root
 ROOT = Path(__file__).resolve().parents[1]
 
 
+# ----------------------------------------------------------------------------
+# is_si_reference_cell
+#   True if (gap, eh) is the silicon reference point.
+# ----------------------------------------------------------------------------
 def is_si_reference_cell(gap_eV: float, eh_eV: float) -> bool:
     return abs(gap_eV - SI_REF_GAP_EV) < 1e-9 and abs(eh_eV - SI_REF_EH_EV) < 1e-9
 

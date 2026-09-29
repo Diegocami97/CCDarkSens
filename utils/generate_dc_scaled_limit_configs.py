@@ -1,4 +1,18 @@
 #!/usr/bin/env python3
+# ============================================================================
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  File: generate_dc_scaled_limit_configs.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  generate_dc_scaled_limit_configs.py -- Generate limit-scan and ne_imaging
+#  configs with scaled dark current (10x, 100x).
+# ============================================================================
+
 """Generate limit-scan and ne_imaging configs with scaled dark current (10x, 100x)."""
 from __future__ import annotations
 
@@ -36,6 +50,10 @@ DC_TIERS = {
 }
 
 
+# ----------------------------------------------------------------------------
+# scale_config
+#   Copy of a config with the dark current set to the base value times factor and the label, output directory and comment tagged with the tier.
+# ----------------------------------------------------------------------------
 def scale_config(cfg: dict, tier: str, factor: float) -> dict:
     out = json.loads(json.dumps(cfg))
     lam = BASE_LAMBDA * factor
@@ -55,6 +73,10 @@ def scale_config(cfg: dict, tier: str, factor: float) -> dict:
     return out
 
 
+# ----------------------------------------------------------------------------
+# write_scaled_family
+#   Write the scaled configs (every DC tier) of each existing base config and return the written paths; missing base files are skipped.
+# ----------------------------------------------------------------------------
 def write_scaled_family(base_paths: list[Path], kind: str) -> list[Path]:
     written: list[Path] = []
     for base_path in base_paths:
@@ -76,6 +98,10 @@ def write_scaled_family(base_paths: list[Path], kind: str) -> list[Path]:
     return written
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Command line: --kind limit | ne_imaging | all selects which config families get 10x and 100x dark-current versions.
+# ----------------------------------------------------------------------------
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument(

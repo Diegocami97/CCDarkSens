@@ -1,8 +1,15 @@
 # ============================================================================
-#  CCDarkSens — band_gap_scan_paths
-#  Resolve band-gap pheno / 2D-grid scan ROOT file paths
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
 #
-#  Author: Diego Venegas-Vargas
+#  File: band_gap_scan_paths.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  band_gap_scan_paths.py -- Resolve band-gap pheno / 2D-grid scan ROOT file
+#  paths
 # ============================================================================
 """Resolve band-gap pheno / 2D-grid scan ROOT paths."""
 
@@ -21,10 +28,18 @@ SI_REF_GAP_EV = 1.2
 SI_REF_EH_EV = 3.8
 
 
+# ----------------------------------------------------------------------------
+# si_reference_root
+#   Path of the silicon-reference scan ROOT file for a mediator.
+# ----------------------------------------------------------------------------
 def si_reference_root(mediator: str) -> Path:
     return scan_root_path(mediator, SI_REF_GAP_EV, SI_REF_EH_EV)
 
 
+# ----------------------------------------------------------------------------
+# ev_tag
+#   Energy formatted for file names: one decimal with '.' replaced by 'p' (1.2 -> "1p2").
+# ----------------------------------------------------------------------------
 def ev_tag(x: float) -> str:
     return f"{x:.1f}".replace(".", "p")
 

@@ -1,9 +1,12 @@
-// ============================================================================
-//  CCDarkSens — DetectorResponsePipeline
-//  Master response orchestrator that maps dR/dE to pattern-space S_obs(n_e) or PCD-space S_obs(q), including optional PCD reconstruction kernels.
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  DetectorResponsePipeline.cc -- Master response orchestrator that maps
+//  dR/dE to pattern-space S_obs(n_e) or PCD-space S_obs(q), including
+//  optional PCD reconstruction kernels.
+// ===========================================================================
 
 #include "ccdarksens/response/DetectorResponsePipeline.hh"
 
@@ -207,7 +210,7 @@ DetectorResponsePipeline::ApplyEDependent(TH1D& dRdE,
     if (!emc_)
         throw std::runtime_error("ApplyEDependent: missing EfficiencyMC (epsilon).");
 
-    const int Nn = ne_max - ne_min + 1;
+    const int Nn = ne_max - ne_min + 1;  // number of n_e bins
 
     auto h = std::make_unique<TH1D>("S_obs_ne",
                                     "Observed S(n_e);n_e;counts",
@@ -260,7 +263,7 @@ DetectorResponsePipeline::ApplyEDependent(TH1D& dRdE,
 
     // MAIN LOOP OVER dR/dE BINS
     const int nbins = dRdE.GetNbinsX();
-    std::vector<double> eps_row(Nn, 0.0);
+    std::vector<double> eps_row(Nn, 0.0);  // epsilon(n_obs) interpolated at the current energy
 
     for (int ib = 1; ib <= nbins; ++ib) {
         const double E         = dRdE.GetBinCenter(ib);

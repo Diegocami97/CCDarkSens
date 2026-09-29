@@ -1,9 +1,12 @@
-// ============================================================================
-//  CCDarkSens — PCDCalculator
-//  Folds signal/background n_e spectra through P(q|n_e) into q-space rates and builds P(n_obs|n_true) reconstruction kernels from PCD tables.
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  PCDCalculator.cc -- Folds signal/background n_e spectra through P(q|n_e)
+//  into q-space rates and builds P(n_obs|n_true) reconstruction kernels from
+//  PCD tables.
+// ===========================================================================
 
 // #include "ccdarksens/response/PCDCalculator.hh"
 
@@ -175,6 +178,14 @@
 
 namespace ccdarksens {
 
+// ----------------------------------------------------------------------------
+// PCDCalculator::FoldSpectra
+//   Fold S(n_e) and B(n_e) with P(q | n_e): for every n_e in the PCD table I add
+//   S(n_e) * P(q | n_e) and B(n_e) * P(q | n_e) to the q histograms, which take the
+//   binning of the first table entry. Missing n_e entries count as zero.
+//   Returns {signal_q, background_q}. Throws std::runtime_error if the table is
+//   empty or has a null histogram.
+// ----------------------------------------------------------------------------
 std::pair<std::unique_ptr<TH1D>, std::unique_ptr<TH1D>>
 PCDCalculator::FoldSpectra(
     const std::map<int, std::unique_ptr<TH1D>>& pcd_table,
@@ -237,6 +248,13 @@ PCDCalculator::FoldSpectra(
 // NEW: Build P(n_obs | n_true) from P(q | n_true)
 // =====================================================================
 
+// ----------------------------------------------------------------------------
+// PCDCalculator::BuildNeKernelFromPCD
+//   Build K[n_true][n_obs] = P(n_obs | n_true). For each observed n_obs I integrate
+//   P(q | n_true) over the window [n_obs - Dqmin*sigma_res, n_obs + Dqmax*sigma_res]
+//   (sum of bins whose centre falls inside), then renormalize every row to sum to 1.
+//   Throws std::runtime_error for an empty table, ne_max < ne_min or sigma_res <= 0.
+// ----------------------------------------------------------------------------
 PCDCalculator::NeKernel
 PCDCalculator::BuildNeKernelFromPCD(const std::map<int, std::unique_ptr<TH1D>>& pcd_table,
                                     int ne_min, int ne_max,
@@ -321,6 +339,12 @@ PCDCalculator::BuildNeKernelFromPCD(const std::map<int, std::unique_ptr<TH1D>>& 
 // NEW: Fold S_true(n_e) through P(n_obs | n_true)
 // =====================================================================
 
+// ----------------------------------------------------------------------------
+// PCDCalculator::FoldNeSpectrum
+//   S_rec(n_obs) = sum_{n_true} S_true(n_true) * K[n_true][n_obs], returned as a
+//   clone of h_true with the same binning. Throws std::runtime_error if the kernel
+//   shape does not match [ne_min, ne_max].
+// ----------------------------------------------------------------------------
 std::unique_ptr<TH1D>
 PCDCalculator::FoldNeSpectrum(TH1D& h_true,
                               const NeKernel& kernel,

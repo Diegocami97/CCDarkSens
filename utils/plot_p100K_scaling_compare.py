@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
 # ============================================================================
-#  CCDarkSens — plot_p100K_scaling_compare
-#  Comparison plots for scaled p100K tables vs Si reference across band-gap scenarios
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
 #
-#  Author: Diego Venegas-Vargas
+#  File: plot_p100K_scaling_compare.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  plot_p100K_scaling_compare.py -- Comparison plots for scaled p100K tables
+#  vs Si reference across band-gap scenarios
 # ============================================================================
 """Comparison plots for scaled p100K tables vs Si reference (extended grid)."""
 
@@ -32,11 +39,19 @@ from build_p100K_scaled import (  # noqa: E402
 REF_CSV = Path("data/p100K_table.csv")
 
 
+# ----------------------------------------------------------------------------
+# mean_ne
+#   Mean number of electrons <n_e>(E) = sum_n n*P(n | E), with P[0] being n = 1.
+# ----------------------------------------------------------------------------
 def mean_ne(P: np.ndarray) -> np.ndarray:
     ne = np.arange(1, P.shape[0] + 1, dtype=float)
     return (P * ne[:, None]).sum(axis=0)
 
 
+# ----------------------------------------------------------------------------
+# load_manifest
+#   Entries of the scenario manifest: the reference followed by all scenarios.
+# ----------------------------------------------------------------------------
 def load_manifest(path: Path) -> List[dict]:
     with open(path, encoding="utf-8") as f:
         man = json.load(f)
@@ -53,6 +68,10 @@ def extended_ref() -> Tuple[np.ndarray, np.ndarray, str]:
     return E, P, "Si ref (1.2 / 3.8 eV)"
 
 
+# ----------------------------------------------------------------------------
+# style_axes
+#   Common axis labels, x range [0, Emax] and grid.
+# ----------------------------------------------------------------------------
 def style_axes(ax, Emax: float, ylab: str) -> None:
     ax.set_xlabel(r"Recoil energy $E$ [eV]")
     ax.set_ylabel(ylab)
@@ -60,6 +79,10 @@ def style_axes(ax, Emax: float, ylab: str) -> None:
     ax.grid(True, alpha=0.3)
 
 
+# ----------------------------------------------------------------------------
+# plot_overlay
+#   Overlay of a quantity (P(n=1) or <n_e>) of the reference and of all scaled tables up to Emax, saved as a PDF.
+# ----------------------------------------------------------------------------
 def plot_overlay(
     E_ref: np.ndarray,
     P_ref: np.ndarray,
@@ -146,6 +169,10 @@ def plot_pne_compare_scenarios(
     print(f"[ok] {out}")
 
 
+# ----------------------------------------------------------------------------
+# plot_grid
+#   Grid of small panels, one per scaled table, each compared with the reference.
+# ----------------------------------------------------------------------------
 def plot_grid(
     E_ref: np.ndarray,
     P_ref: np.ndarray,
@@ -275,6 +302,10 @@ def plot_p100K_Pne_fan(
     print(f"[ok] {out}")
 
 
+# ----------------------------------------------------------------------------
+# scenario_fan_basename
+#   File-name stem of the P(n_e) fan plot of a scenario entry.
+# ----------------------------------------------------------------------------
 def scenario_fan_basename(ent: dict) -> str:
     sc = ent.get("scenario", "case")
     gap = ent["band_gap_eV"]
@@ -284,6 +315,10 @@ def scenario_fan_basename(ent: dict) -> str:
     return f"Pne_fan_{sc}_gap{g}_eh{h}"
 
 
+# ----------------------------------------------------------------------------
+# plot_ratio_mean_ne
+#   Ratio of <n_e>(E) of every scaled table to the reference, saved as a PDF.
+# ----------------------------------------------------------------------------
 def plot_ratio_mean_ne(
     E_ref: np.ndarray,
     P_ref: np.ndarray,
@@ -314,6 +349,10 @@ def plot_ratio_mean_ne(
     print(f"[ok] {out}")
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Make all p100K scaling comparison figures of the manifest (overlays, grids, fans and ratios) at the pheno and low-energy zoom ranges into --outdir.
+# ----------------------------------------------------------------------------
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--manifest", default="configs/band_gap_pheno_scenarios.json")

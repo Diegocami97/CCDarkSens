@@ -1,9 +1,11 @@
-// ============================================================================
-//  CCDarkSens — TestStatisticFactory
-//  Factory that instantiates the configured binned test statistic (currently PoissonAsimovPLR) from StatisticsConfig.
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  TestStatisticFactory.cc -- Factory that instantiates the configured
+//  binned test statistic (currently PoissonAsimovPLR) from StatisticsConfig.
+// ===========================================================================
 
 #include "ccdarksens/stats/TestStatisticFactory.hh"
 
@@ -16,6 +18,7 @@ namespace ccdarksens::stats {
 
 namespace {
 
+// Lower-case copy of s (for case-insensitive test-statistic names).
 std::string to_lower(std::string s) {
   std::transform(s.begin(), s.end(), s.begin(),
                  [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
@@ -24,6 +27,12 @@ std::string to_lower(std::string s) {
 
 } // namespace
 
+// ----------------------------------------------------------------------------
+// MakeTestStatistic
+//   Build the test statistic named in cfg.test_stat ("PLR" / "poisson_plr" /
+//   empty, case-insensitive). An unknown name prints a warning and falls back to
+//   PoissonAsimovPLR.
+// ----------------------------------------------------------------------------
 std::unique_ptr<ITestStatistic>
 MakeTestStatistic(const StatisticsConfig& cfg) {
   const std::string name = to_lower(cfg.test_stat);

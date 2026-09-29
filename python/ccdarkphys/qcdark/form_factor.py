@@ -1,3 +1,18 @@
+# ============================================================================
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  File: form_factor.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  form_factor.py -- Load crystal |F|^2 tables produced by the standalone
+#  QCDark workflow (HDF5 layout compatible with
+#  ``dark_matter_rates.form_factor`` in the reference QCDark code).
+# ============================================================================
+
 """
 Load crystal |F|^2 tables produced by the standalone QCDark workflow (HDF5 layout
 compatible with ``dark_matter_rates.form_factor`` in the reference QCDark code).
@@ -21,6 +36,12 @@ class CrystalFormFactor:
     ``ff`` (|F|^2), ``band_gap``.
     """
 
+    # ----------------------------------------------------------------------------
+    # CrystalFormFactor.__init__
+    #   Open the HDF5 file (h5py is required) and read the run settings, the grid steps (dq is converted to eV with
+    #   alpha*m_e), the |F|^2 table, the cell mass and the band gap. Optional entries that are missing fall back to
+    #   None or False. Raises FileNotFoundError if the file does not exist.
+    # ----------------------------------------------------------------------------
     def __init__(self, filename: str) -> None:
         try:
             import h5py

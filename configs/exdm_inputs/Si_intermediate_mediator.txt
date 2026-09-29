@@ -1,0 +1,40 @@
+# EXCEED-DM input: Si binned scatter rate for intermediate-mass mediators
+# Full propagator form factor F^2 = [(mA^2 + (alpha*me)^2) / (mA^2 + q^2)]^2
+# Run from the EXCEED-DM root directory:
+#   mpirun -np <N> ./build/exdm <path_to_this_file>
+
+[control]
+    calculation     = 'binned_scatter_rate'
+    run_description = 'Si_intermediate_mediator'
+    out_folder      = './outputs/exdm_Si_intermediate/'
+
+[elec_config_input]
+    # Example 5: full Si — valence+core -> conduction+free, 2x2x2 k-mesh.
+    # Replace with a production-grade elec_config.hdf5 for publication results.
+    filename = './examples/5/elec_config.hdf5'
+
+[material]
+    name            = 'Si'
+    rho_T_g_per_cm3 = 2.281
+    band_gap        = 1.11
+
+    a_vecs_Ang      = 0.00000, 2.73437, 2.73437
+    a_vecs_Ang     += 2.73437, 0.00000, 2.73437
+    a_vecs_Ang     += 2.73437, 2.73437, 0.00000
+
+[dm_model]
+    # 50 log-spaced DM masses from 1 MeV to 1 GeV (in eV)
+    mX_logspace = 50, 1e6, 1e9
+
+    # 7 mediator masses covering the intermediate regime for DAMIC-M (in eV)
+    # Intermediate regime: omega_th/v_max ~ 1 keV to 2*mchi*v_max ~ 100 keV
+    mA = 1e3, 3e3, 5e3, 1e4, 3e4, 5e4, 1e5
+
+    # No med_FF: only the full propagator (mA) models are computed.
+    # n_models = size(mA) = 7, with clean 1-to-1 model->mA' indexing in the HDF5.
+
+[numerics_binned_scatter_rate]
+    n_q_bins    = 1
+    n_E_bins    = 4000
+    E_bin_width = 1
+    q_bin_width = 1

@@ -1,0 +1,57 @@
+{
+  "_comment": "WIMP-nucleon SI rate generation config: Si target, 1-10 GeV mass range. Generates dR/dE_ee CSVs (quenched to electron-equivalent energy) via ccdarkphys.wimp_nucleon. Run: python3 utils/wimp_nucleon_generate_grid.py configs/wimp_nucleon_generate_si_heavy.json. Remove the 'quenching' block to get Phase 1's raw dR/dE_R output instead.",
+  "target_nucleus": "Si28",
+  "A": 28,
+  "mediator": "heavy",
+
+  "recoil": {
+    "Emin_keV": 0.001,
+    "Emax_keV": 30.0,
+    "nbins": 3000
+  },
+
+  "halo": {
+    "_comment": "Baxter et al. 2021 (EPJC 81, 907) Table 1 -- matches ccdarkphys.migdal's darkelf calls. Omit any key to fall back to these same defaults.",
+    "rho_chi_gev_cm3": 0.3,
+    "v0_kms": 238.0,
+    "vE_kms": 253.7,
+    "vesc_kms": 544.0
+  },
+
+  "quenching": {
+    "_comment": "chavarria_table = measured Si nuclear recoil ionization efficiency, Chavarria et al. 2016 (Phys. Rev. D 94, 082007), Table I, with linear-to-zero below 0.68 keV_nr (crossing at 0.3 keV_nr per PhysRevD.94.082006) and Lindhard fallback above 2.28 keV_nr (no measurement there). See python/ccdarkphys/wimp_nucleon/quenching.py. Alternative: 'lindhard'.",
+    "model": "chavarria_table",
+    "ee_Emin_eV": 0.0,
+    "ee_Emax_eV": 8000.0,
+    "ee_nbins": 800
+  },
+
+  "rates_dir": "data/wimp_nucleon_rates_ee/Si/heavy",
+  "filename_template": "dRdE_ee_{target_nucleus}_{mediator}_m{mchi_MeV}_s{sigma_n_cm2}.csv",
+
+  "grid": {
+    "mchi_MeV": {
+      "logspace": {
+        "start": 1000.0,
+        "stop": 10000.0,
+        "num": 50,
+        "endpoint": true
+      }
+    },
+    "sigma_n_cm2": {
+      "logspace": {
+        "start_exp": -44,
+        "stop_exp": -36,
+        "num": 100,
+        "endpoint": true
+      }
+    }
+  },
+
+  "options": {
+    "skip_existing": true,
+    "overwrite": false,
+    "parallel": 0,
+    "format": { "mchi": ".6f", "sigma": ".1e" }
+  }
+}

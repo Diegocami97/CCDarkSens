@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
 # ============================================================================
-#  CCDarkSens — plot_band_gap_fixed_eh_gap_sweep
-#  Plot σ_UL vs band gap at fixed ε_h for heavy and light mediators
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
 #
-#  Author: Diego Venegas-Vargas
+#  File: plot_band_gap_fixed_eh_gap_sweep.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  plot_band_gap_fixed_eh_gap_sweep.py -- Plot σ_UL vs band gap at fixed ε_h
+#  for heavy and light mediators
 # ============================================================================
 """
 Overlay DM-e limits at fixed epsilon_h, scanning E_gap (2D-grid column).
@@ -49,11 +56,19 @@ def gaps_for_eh(eh: float, gap_list: list[float] | None) -> list[float]:
     return [g for g in base if eh >= g - 1e-9]
 
 
+# ----------------------------------------------------------------------------
+# sweep_title
+#   Title of a fixed-eps_h sweep figure.
+# ----------------------------------------------------------------------------
 def sweep_title(mediator: str, eh: float) -> str:
     med = "light" if mediator == "light" else "heavy"
     return f"Band-gap pheno: #varepsilon_{{h}} = {eh:g} eV ({med} mediator)"
 
 
+# ----------------------------------------------------------------------------
+# plot_one
+#   Plot the limit curves of all gaps at a fixed eps_h for one mediator with ccdarksens_plot_dmelectron_limit (missing scans skipped), optionally with the silicon reference; with dry_run only the command is printed.
+# ----------------------------------------------------------------------------
 def plot_one(
     mediator: str,
     eh: float,
@@ -107,6 +122,10 @@ def plot_one(
     return subprocess.call(cmd, cwd=ROOT)
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Command line: choose the fixed eps_h, the gaps and the mediator(s), and whether to add the silicon reference.
+# ----------------------------------------------------------------------------
 def main() -> int:
     eh_choices = ", ".join(f"{e:g}" for e in EH_GRID)
     gap_choices = ", ".join(f"{g:g}" for g in GAP_GRID)

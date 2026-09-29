@@ -1,9 +1,12 @@
-// ============================================================================
-//  CCDarkSens — PoissonDarkCurrent
-//  Builds a per-pixel Poisson P(n_e) dark-current histogram for one exposure, used inside BackgroundBuilder scaling.
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  PoissonDarkCurrent.cc -- I build a per-pixel Poisson P(n_e) dark-current
+//  histogram for a single exposure. BackgroundBuilder then scales it by the
+//  number of pixels and exposures.
+// ===========================================================================
 
 #include "ccdarksens/backgrounds/PoissonDarkCurrent.hh"
 #include <TH1D.h>
@@ -12,6 +15,11 @@
 
 namespace ccdarksens {
 
+// ----------------------------------------------------------------------------
+// pois_pmf
+//   Poisson probability P(n | lambda) computed in log space to avoid overflow
+//   of lambda^n and n!. For lambda <= 0 the distribution collapses onto n = 0.
+// ----------------------------------------------------------------------------
 static double pois_pmf(int n, double lambda) {
   if (lambda <= 0.0) return (n==0) ? 1.0 : 0.0;
   double logp = -lambda + n*std::log(lambda);
@@ -20,6 +28,12 @@ static double pois_pmf(int n, double lambda) {
   return std::exp(logp - lf);
 }
 
+// ----------------------------------------------------------------------------
+// PoissonDarkCurrentBackground::MakeHist
+//   I fill a histogram with one bin per integer n_e in [ne_min, ne_max]
+//   (bin edges at n - 0.5), each set to norm * P(n | lambda). Negative n_e
+//   bins get zero. Returns a new histogram owned by the caller.
+// ----------------------------------------------------------------------------
 std::unique_ptr<TH1D> PoissonDarkCurrentBackground::MakeHist(int ne_min, int ne_max) const {
   const int nbin = ne_max - ne_min + 1;
   std::vector<double> edges(nbin+1);

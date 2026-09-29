@@ -1,4 +1,18 @@
 #!/usr/bin/env python3
+# ============================================================================
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  File: generate_exposure_configs.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  generate_exposure_configs.py -- Generate scan configs for 1, 10, and 100
+#  g-yr exposures. Copies existing 1 kg-yr configs and changes mass_kg only.
+# ============================================================================
+
 """
 Generate scan configs for 1, 10, and 100 g-yr exposures.
 Copies existing 1 kg-yr configs and changes mass_kg only.
@@ -43,6 +57,10 @@ DP_SOURCES = {
 }
 
 
+# ----------------------------------------------------------------------------
+# write_config
+#   Write a config as pretty-printed JSON, creating the directory.
+# ----------------------------------------------------------------------------
 def write_config(cfg: dict, out_path: Path) -> None:
     out_path.parent.mkdir(parents=True, exist_ok=True)
     with open(out_path, "w") as f:
@@ -50,6 +68,10 @@ def write_config(cfg: dict, out_path: Path) -> None:
     print(f"  wrote {out_path.relative_to(REPO)}")
 
 
+# ----------------------------------------------------------------------------
+# make_dme
+#   Copy a DM-electron scan config and change only the mass (exposure), label, output directory and comment.
+# ----------------------------------------------------------------------------
 def make_dme(mediator: str, dc_tag: str, exp_tag: str, mass_kg: float, src_path: str) -> None:
     with open(REPO / src_path) as f:
         cfg = json.load(f)
@@ -69,6 +91,10 @@ def make_dme(mediator: str, dc_tag: str, exp_tag: str, mass_kg: float, src_path:
     write_config(cfg, out)
 
 
+# ----------------------------------------------------------------------------
+# make_dp
+#   Copy the dark-photon scan config and change only the mass (exposure), label and output directory.
+# ----------------------------------------------------------------------------
 def make_dp(dc_tag: str, exp_tag: str, mass_kg: float, src_path: str) -> None:
     with open(REPO / src_path) as f:
         cfg = json.load(f)

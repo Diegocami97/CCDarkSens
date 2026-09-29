@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
 # ============================================================================
-#  CCDarkSens — compare_halo_impact
-#  Quick script comparing integrated QEDark rates for default vs updated SHM halo velocity parameters at several masses.
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
 #
-#  Author: Diego Venegas-Vargas
+#  File: compare_halo_impact.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  compare_halo_impact.py -- Quick script comparing integrated QEDark rates
+#  for default vs updated SHM halo velocity parameters at several masses.
 # ============================================================================
 
 """Compare rate impact of halo (220,232) vs (238,263) km/s. Quick estimate."""
@@ -14,6 +21,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "python"))
 import numpy as np
 from ccdarkphys.qedark.entry import compute_dRdE
 
+# ----------------------------------------------------------------------------
+# integrated_rate_first_bin
+#   Rate summed over 1.2 <= E < 5 eV for a heavy-mediator silicon point at sigma_e = 1e-36 cm^2 with the given halo, in events per kg per year.
+# ----------------------------------------------------------------------------
 def integrated_rate_first_bin(mchi_MeV, halo, dE=0.1):
     res = compute_dRdE(
         material="Si", mediator="heavy",
@@ -24,6 +35,10 @@ def integrated_rate_first_bin(mchi_MeV, halo, dE=0.1):
     mask = (res["E_eV"] >= E_lo) & (res["E_eV"] < E_hi)
     return np.sum(res["dRdE_kg_year_eV"][mask] * dE)
 
+# ----------------------------------------------------------------------------
+# main
+#   Print the rate ratio between the halo (238, 263 km/s) and the old halo (220, 232 km/s) for several masses, and the total rate for 1 MeV.
+# ----------------------------------------------------------------------------
 def main():
     halo_old = {"v0_kms": 220.0, "vE_kms": 232.0, "vesc_kms": 544.0}
     halo_new = {"v0_kms": 238.0, "vE_kms": 263.0, "vesc_kms": 544.0}

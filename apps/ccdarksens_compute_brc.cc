@@ -1,6 +1,9 @@
-// ============================================================================
-//  CCDarkSens — ccdarksens_compute_brc
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
+//  File: ccdarksens_compute_brc.cc
 //  Computes the random-coincidence background B^rc_p for each identified
 //  pattern p using the formula from Table I of the DAMIC-M SRDM paper:
 //
@@ -27,9 +30,7 @@
 //    N_total computed from image_csv (sum of Nusedpix), or 1853807441 if not found
 //    beff_csv = data/Background_efficiencies.csv
 //    image_csv = data/Final_Combined_Image_Data.csv
-//
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+// ===========================================================================
 
 #include <cmath>
 #include <fstream>

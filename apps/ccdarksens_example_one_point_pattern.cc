@@ -1,9 +1,12 @@
-// ============================================================================
-//  CCDarkSens — ccdarksens_example_one_point_pattern
-//  Single (mχ, σe) diagnostic run of the full pattern pipeline (S_obs→S_pat, backgrounds, PLR) without a full grid scan.
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  ccdarksens_example_one_point_pattern.cc -- Single (mχ, σe) diagnostic run
+//  of the full pattern pipeline (S_obs→S_pat, backgrounds, PLR) without a
+//  full grid scan.
+// ===========================================================================
 
 #include <algorithm>
 #include <chrono>
@@ -58,6 +61,10 @@ static auto expand_axis = [](const json& spec, const std::string& kind) {
   return ccdarksens::utils::ExpandAxis(spec, kind);
 };
 
+// ----------------------------------------------------------------------------
+// EfficiencyMcJsonBlock
+//   Pointer to response.efficiency_mc, or to the old key response.pattern_mc, or nullptr if neither exists.
+// ----------------------------------------------------------------------------
 static const json* EfficiencyMcJsonBlock(const json& jroot) {
   if (!jroot.contains("response")) return nullptr;
   const auto& jresp = jroot["response"];
@@ -66,6 +73,10 @@ static const json* EfficiencyMcJsonBlock(const json& jroot) {
   return nullptr;
 }
 
+// ----------------------------------------------------------------------------
+// format_sigma
+//   Coupling value -> the string used in the rate-file names; a format like ".3e" gives 3 digits in scientific notation, anything else falls back to 6.
+// ----------------------------------------------------------------------------
 static std::string format_sigma(double sigma, const std::string& fmt)
 {
   int prec = 6;
@@ -114,6 +125,10 @@ static std::vector<double> load_data_root(const std::string& path, std::size_t e
   return out;
 }
 
+// ----------------------------------------------------------------------------
+// get_exposure_from_data_file
+//   Read the exposure_kg_year parameter stored in a ROOT data file. Returns false (and leaves *out alone) if the file is not ROOT or has no such parameter.
+// ----------------------------------------------------------------------------
 static bool get_exposure_from_data_file(const std::string& path, double* out)
 {
   if (!out || path.size() < 6 || path.compare(path.size() - 5, 5, ".root") != 0) return false;
@@ -126,6 +141,7 @@ static bool get_exposure_from_data_file(const std::string& path, double* out)
   return true;
 }
 
+// Load observed counts: a .root path goes to load_data_root, anything else is read as CSV.
 static std::vector<double> load_data(const std::string& path, std::size_t expected_size)
 {
   if (path.size() >= 5 && path.compare(path.size() - 5, 5, ".root") == 0)
@@ -136,6 +152,18 @@ static std::vector<double> load_data(const std::string& path, std::size_t expect
 // -----------------------------------------------------------------------------
 // Main
 // -----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// main
+//   Single-point diagnostic of the full pattern pipeline, without a grid scan.
+//   Usage: <program> config.json [mchi_MeV] [sigma_e_cm2] (the first grid point is used if
+//   the mass and coupling are omitted). Steps:
+//     1) build the detector response (ionization, charge transport, EfficiencyMC, classifier)
+//        and the pattern efficiency table;
+//     2) build the background model (dark current, flat spectrum, Bp/Br or migration);
+//     3) compute the signal spectrum at the requested point and fold it into pattern space,
+//        then evaluate the profile likelihood;
+//     4) write the spectra and results to a ROOT file.
+// ----------------------------------------------------------------------------
 int main(int argc, char** argv)
 {
   if (argc < 2) {

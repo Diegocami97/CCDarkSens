@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
 # ============================================================================
-#  CCDarkSens — plot_cluster_visualization
-#  Figure 3: 2D pixel cluster images — Si ref vs Klein ladder, vs depth
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
 #
-#  Author: Diego Venegas-Vargas
+#  File: plot_cluster_visualization.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  plot_cluster_visualization.py -- Figure 3: 2D pixel cluster images — Si
+#  ref vs Klein ladder, vs depth
 # ============================================================================
 """
 Visualize pixel clusters using the CCDarkSens diffusion model (analytic).
@@ -60,6 +67,10 @@ DEPTH_LABELS = ["shallow", "mid", "deep"]
 RNG_SEED = 20260609
 
 
+# ----------------------------------------------------------------------------
+# build_materials
+#   Materials to draw: the silicon reference (gap 1.2 eV, eps_h 3.8 eV) followed by one Klein-formula material per gap.
+# ----------------------------------------------------------------------------
 def build_materials(klein_gaps: list[float]) -> list[dict]:
     si = dict(
         Egap=SI_EGAP_EV,
@@ -83,10 +94,18 @@ def build_materials(klein_gaps: list[float]) -> list[dict]:
     return [si] + klein
 
 
+# ----------------------------------------------------------------------------
+# _scenario_ne
+#   Mean number of electrons for recoil energy Er: max(Er - E_gap, 0)/eps_h.
+# ----------------------------------------------------------------------------
 def _scenario_ne(Er: float, Egap: float, eh: float) -> float:
     return max(Er - Egap, 0.0) / eh
 
 
+# ----------------------------------------------------------------------------
+# compute_sigma_xy_um
+#   Lateral diffusion width [um] at depth z and energy E (same formula as ComputeSigmaXYUm in the C++ code; 0 beyond the valid depth).
+# ----------------------------------------------------------------------------
 def compute_sigma_xy_um(z_um: float, E_eV: float) -> float:
     E_keV = max(0.0, E_eV) * 1e-3
     inside = 1.0 - B_UMINV * z_um
@@ -95,6 +114,10 @@ def compute_sigma_xy_um(z_um: float, E_eV: float) -> float:
     return sqrt(-A_UM2 * np.log(inside)) * (ALPHA + BETA_PER_KEV * E_keV)
 
 
+# ----------------------------------------------------------------------------
+# _gauss_pixel_fractions
+#   Fraction of a 2D Gaussian cloud of width sigma landing in each pixel of the display grid (the outer product of the 1D fractions).
+# ----------------------------------------------------------------------------
 def _gauss_pixel_fractions(sigma_um: float) -> np.ndarray:
     half = GRID_PIX // 2
     edges_um = (np.arange(GRID_PIX + 1) - (half + 0.5)) * PIXEL_SIZE_UM
@@ -107,6 +130,10 @@ def _gauss_pixel_fractions(sigma_um: float) -> np.ndarray:
     return np.outer(frac_1d, frac_1d)
 
 
+# ----------------------------------------------------------------------------
+# make_cluster_image
+#   Simulated cluster image: expected electrons per pixel plus Gaussian readout noise, rounded to integers.
+# ----------------------------------------------------------------------------
 def make_cluster_image(n_e: float, sigma_um: float, rng: np.random.Generator) -> np.ndarray:
     frac = _gauss_pixel_fractions(sigma_um)
     expected = n_e * frac
@@ -114,6 +141,10 @@ def make_cluster_image(n_e: float, sigma_um: float, rng: np.random.Generator) ->
     return np.rint(noisy).astype(int)
 
 
+# ----------------------------------------------------------------------------
+# _render_figure
+#   One figure for recoil energy Er: a row of cluster images per material and a column per depth, on a common colour scale; returns 0 on success.
+# ----------------------------------------------------------------------------
 def _render_figure(
     Er: float, out_path: Path, rng: np.random.Generator, materials: list[dict]
 ) -> int:
@@ -200,6 +231,10 @@ def _render_figure(
     return 0
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Command line: make the cluster-visualization figures for the chosen recoil energies and Klein gaps into --out-dir.
+# ----------------------------------------------------------------------------
 def main() -> int:
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter

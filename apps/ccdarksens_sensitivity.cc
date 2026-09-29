@@ -1,9 +1,12 @@
-// ============================================================================
-//  CCDarkSens — ccdarksens_sensitivity
-//  Baseline background-only sensitivity demo wiring ChargeIonization, Diffusion, flat ε(n_e), and Poisson dark-current backgrounds from JSON config.
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  ccdarksens_sensitivity.cc -- Baseline background-only sensitivity demo
+//  wiring ChargeIonization, Diffusion, flat ε(n_e), and Poisson dark-current
+//  backgrounds from JSON config.
+// ===========================================================================
 
 #include "ccdarksens/io/ConfigManager.hh"
 #include "ccdarksens/experiment/ExperimentSetup.hh"
@@ -29,6 +32,10 @@
 using ccdarksens::utils::MakeFlatEfficiency;
 
 // helper: print first N bins of a TH1D with integer centers
+// ----------------------------------------------------------------------------
+// PrintFirstBins
+//   Print the first n_to_print bins of an n_e histogram as (n_e : counts).
+// ----------------------------------------------------------------------------
 static void PrintFirstBins(const TH1D& h, int n_to_print = 10) {
     const int nb = h.GetNbinsX();
     const int n = std::min(nb, n_to_print);
@@ -40,6 +47,15 @@ static void PrintFirstBins(const TH1D& h, int n_to_print = 10) {
     if (nb > n) std::cout << "    ... (" << (nb - n) << " more bins)\n";
 }
 
+// ----------------------------------------------------------------------------
+// main
+//   Background-only sensitivity baseline for one config: load the experiment and
+//   detector, build a synthetic flat dR/dE only to exercise the response chain, build
+//   the Asimov dark-current background (with the flat efficiency if the config has
+//   one), print sanity checks and write dRdE, S_ne_raw, S_ne_obs and B_asimov_ne to
+//   <outdir>/mvp_check.root. Usage: <program> <config.json>. Returns 0 on success,
+//   1 for bad usage, 2 on an error.
+// ----------------------------------------------------------------------------
 int main(int argc, char** argv) {
     if (argc < 2) {
         std::cerr << "usage: ccdarksens_sensitivity <config.json>\n";

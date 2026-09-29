@@ -1,0 +1,42 @@
+{
+  "_comment": "Slice 5 example: WIMP-nucleus SI channel, cluster-fit (continuous E_reco) reconstruction. Run: ccdarksens_example_one_point_cluster configs/wimp_nucleon_cluster_example.json",
+  "run": {
+    "label": "wimp_nucleon_cluster_example",
+    "cl": 0.90,
+    "exposure_kg_year": 0.1
+  },
+  "response": {
+    "analysis_space": "cluster_energy",
+    "cluster_fit_mc": {
+      "window_nx": 15,
+      "window_ny": 15,
+      "pixel_size_um": 15.0,
+      "sigma_readout_e": 0.16,
+      "diffusion": {
+        "A_um2": 803.25,
+        "b_umInv": 0.00065,
+        "alpha": 1.0,
+        "beta_per_keV": 0.0,
+        "thickness_um": 670.0
+      },
+      "fit_method": "nelder_mead",
+      "sigma_xy_lo_px": 0.1,
+      "sigma_xy_hi_px": 2.0,
+      "n_toys": 5000,
+      "target_tail_prob": 1e-3,
+      "calib_rng_seed": 20260825,
+      "ne_trials_per_point": 1500,
+      "sigma_xy_fid_min_px": 0.35,
+      "sigma_xy_fid_max_px": 1.22,
+      "eh_pair_eV": 3.77,
+      "fano_factor": 0.133,
+      "rng_seed": 24680,
+      "Etrue_min_eV": 10.0,
+      "Etrue_max_eV": 300.0,
+      "Etrue_npoints": 12,
+      "Ereco_min_eV": 0.0,
+      "Ereco_max_eV": 400.0,
+      "Ereco_nbins": 40
+    }
+  }
+}

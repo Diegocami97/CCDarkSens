@@ -1,9 +1,11 @@
-// ============================================================================
-//  CCDarkSens — ChargeIonization
-//  Loads P(n_e|E) from a CSV table and folds differential dR/dE spectra into expected n_e count histograms.
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  ChargeIonization.cc -- Loads P(n_e|E) from a CSV table and folds
+//  differential dR/dE spectra into expected n_e count histograms.
+// ===========================================================================
 
 #include "ccdarksens/response/ChargeIonization.hh"
 #include <TH1D.h>
@@ -22,13 +24,22 @@
 
 namespace ccdarksens {
 
+// True if the line is blank or its first non-blank character is '#'.
 static bool is_comment_or_empty(const std::string& s) {
   for (char c : s) { if (!std::isspace((unsigned char)c)) return c=='#'; }
   return true;
 }
 
+// Constructor: load the table.
 ChargeIonization::ChargeIonization(std::string table_csv) { LoadCSV_(table_csv); }
 
+// ----------------------------------------------------------------------------
+// ChargeIonization::LoadCSV_
+//   I read the table (E, P1..Pk per row), skipping blank and '#' lines, and store
+//   one (E, P) pair per n_e column. I also print the row sum sum_n P(n|E) at
+//   about ten energies as a sanity check. Throws std::runtime_error if the
+//   file cannot be opened or has fewer than two rows / no probability columns.
+// ----------------------------------------------------------------------------
 void ChargeIonization::LoadCSV_(const std::string& path) {
   std::ifstream in(path);
   if (!in) throw std::runtime_error("ChargeIonization: cannot open " + path);
@@ -72,6 +83,11 @@ void ChargeIonization::LoadCSV_(const std::string& path) {
   for (auto& c : cols) pn_given_E_.push_back({E, c});
 }
 
+// ----------------------------------------------------------------------------
+// ChargeIonization::InterpLinearClamped
+//   Linear interpolation of y at xq. Outside [x.front(), x.back()] I return the
+//   end value; every result is clamped to [0,1] because it is a probability.
+// ----------------------------------------------------------------------------
 double ChargeIonization::InterpLinearClamped(const std::vector<double>& x,
                                              const std::vector<double>& y,
                                              double xq) {
@@ -85,6 +101,13 @@ double ChargeIonization::InterpLinearClamped(const std::vector<double>& x,
   return std::clamp(v, 0.0, 1.0);
 }
 
+// ----------------------------------------------------------------------------
+// ChargeIonization::FoldToNe
+//   For each dR/dE bin I compute counts = rate * exposure_kg_year * bin_width and
+//   distribute them over n_e = 1..k with the probabilities P(n | E_bin_centre).
+//   n_e = 0 gets nothing. The output has one bin per n_e in [ne_min, ne_max].
+//   Throws std::invalid_argument if ne_max < ne_min or dRdE has no bins.
+// ----------------------------------------------------------------------------
 std::unique_ptr<TH1D> ChargeIonization::FoldToNe(const TH1D& dRdE,
                                                   double exposure_kg_year,
                                                   int ne_min, int ne_max) const {
@@ -121,6 +144,12 @@ std::unique_ptr<TH1D> ChargeIonization::FoldToNe(const TH1D& dRdE,
 }
 
 std::vector<double>
+// ----------------------------------------------------------------------------
+// ChargeIonization::ProbNeGivenE
+//   P(n | E_eV) for every n in [ne_min, ne_max], in that order. n <= 0 and
+//   n above the table's largest column get probability 0.
+//   Throws std::runtime_error if ne_max < ne_min.
+// ----------------------------------------------------------------------------
 ChargeIonization::ProbNeGivenE(double E_eV,
                                int ne_min,
                                int ne_max) const

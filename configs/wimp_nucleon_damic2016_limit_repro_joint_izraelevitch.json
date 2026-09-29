@@ -1,0 +1,177 @@
+{
+  "run": {
+    "label": "damic2016_limit_repro_joint_izraelevitch",
+    "outdir": "outputs/wimp_nucleon_damic2016_limit_repro_joint_izraelevitch",
+    "cl": 0.9,
+    "rng_seed": 12345,
+    "verbosity": 1,
+    "use_profile_likelihood": true,
+    "background_source": "dc_flat_migration",
+    "background_model": "scale",
+    "profile_minimizer": "brent"
+  },
+  "detector": {
+    "rows": 4000,
+    "cols": 2000,
+    "pixel_size_um": 15.0,
+    "thickness_mm": 0.675,
+    "active_fraction": 1.0,
+    "target_element": "Si",
+    "density_g_cm3": 2.329,
+    "mass_kg": 0.01
+  },
+  "experiment": {
+    "mode": "asimov",
+    "livetime_days": 60.0,
+    "duty_cycle": 1.0,
+    "binning": {
+      "ne_min": 1,
+      "ne_max": 5
+    },
+    "roi_bins": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "observable_bins": "ne"
+  },
+  "response": {
+    "analysis_space": "cluster_energy",
+    "channels": [
+      {
+        "label": "1x1",
+        "flat_background_norm_per_kg_year_keV": 5478.75,
+        "cluster_fit_mc": {
+          "window_nx": 11,
+          "window_ny": 11,
+          "pixel_size_um": 15.0,
+          "sigma_readout_e": 1.8,
+          "diffusion": {
+            "A_um2": 215.0,
+            "b_umInv": 0.0013,
+            "alpha": 1.0,
+            "beta_per_keV": 0.0,
+            "thickness_um": 675.0
+          },
+          "fit_method": "nelder_mead",
+          "sigma_xy_lo_px": 0.1,
+          "sigma_xy_hi_px": 2.0,
+          "n_toys": 5000,
+          "target_tail_prob": 0.001,
+          "calib_rng_seed": 20260825,
+          "ne_trials_per_point": 1500,
+          "sigma_xy_fid_min_px": 0.35,
+          "sigma_xy_fid_max_px": 1.22,
+          "eh_pair_eV": 3.77,
+          "fano_factor": 0.133,
+          "rng_seed": 24680,
+          "Etrue_min_eV": 60.0,
+          "Etrue_max_eV": 4000.0,
+          "Etrue_npoints": 16,
+          "Ereco_min_eV": 0.0,
+          "Ereco_max_eV": 4000.0,
+          "Ereco_nbins": 80
+        },
+        "background_efficiency_csv": "data/wimp_nucleon_damic2016_fig9_background_1x1.csv"
+      },
+      {
+        "label": "1x100",
+        "flat_background_norm_per_kg_year_keV": 7670.25,
+        "cluster_fit_mc": {
+          "window_nx": 11,
+          "window_ny": 1,
+          "one_dimensional": true,
+          "pixel_size_um": 15.0,
+          "sigma_readout_e": 1.8,
+          "diffusion": {
+            "A_um2": 215.0,
+            "b_umInv": 0.0013,
+            "alpha": 1.0,
+            "beta_per_keV": 0.0,
+            "thickness_um": 675.0
+          },
+          "fit_method": "nelder_mead",
+          "sigma_xy_lo_px": 0.1,
+          "sigma_xy_hi_px": 2.0,
+          "n_toys": 5000,
+          "target_tail_prob": 0.001,
+          "calib_rng_seed": 20260901,
+          "ne_trials_per_point": 1500,
+          "sigma_xy_fid_min_px": 0.35,
+          "sigma_xy_fid_max_px": 1.22,
+          "eh_pair_eV": 3.77,
+          "fano_factor": 0.133,
+          "rng_seed": 13579,
+          "Etrue_min_eV": 60.0,
+          "Etrue_max_eV": 4000.0,
+          "Etrue_npoints": 16,
+          "Ereco_min_eV": 0.0,
+          "Ereco_max_eV": 4000.0,
+          "Ereco_nbins": 80
+        },
+        "background_efficiency_csv": "data/wimp_nucleon_damic2016_fig9_background_1x100.csv"
+      }
+    ]
+  },
+  "model": {
+    "type": "wimp_nucleon",
+    "target_nucleus": "Si28",
+    "nuclear_A": 28,
+    "nuclear_Z": 14,
+    "mediator": "heavy",
+    "rates_dir": "data/wimp_nucleon_rates_ee/Si/heavy_damic2016halo_izraelevitch",
+    "filename_template": "dRdE_ee_{target_nucleus}_{mediator}_m{mchi_MeV}_s{sigma_n_cm2}.csv",
+    "Emin_eV": 0,
+    "Emax_eV": 4000,
+    "nbins": 400,
+    "grid": {
+      "mchi_MeV": {
+        "values": [
+          500.0,
+          558.671222,
+          624.227068,
+          697.475397,
+          779.318864,
+          870.766044,
+          972.943859,
+          1087.111468,
+          1214.675784,
+          1357.208808,
+          1516.467006,
+          1694.412949,
+          1893.239505,
+          2115.396854,
+          2363.622689,
+          2640.97595,
+          2950.874521,
+          3297.137347,
+          3684.031499,
+          4116.324756,
+          4599.34436,
+          5139.042664,
+          5742.070486,
+          6415.859066,
+          7168.711644,
+          8009.905784,
+          8949.807698,
+          10000.0
+        ]
+      },
+      "sigma_n_cm2": {
+        "logspace": {
+          "start_exp": -42,
+          "stop_exp": -33,
+          "num": 20,
+          "endpoint": true
+        }
+      },
+      "format": {
+        "mchi": ".6f",
+        "sigma": ".1e"
+      }
+    }
+  },
+  "_comment": "WIMP-nucleon SI exclusion-limit reproduction, DAMIC 0.6 kg-day (PhysRevD.94.082006 / arXiv:1607.07410), Fig. 11 -- JOINT 1x1+1x100 likelihood version, companion to wimp_nucleon_damic2016_limit_repro.json (1x1-only). Same halo/grid/rates_dir as the 1x1-only config; only response.cluster_fit_mc is replaced by response.channels[]. 1x1 channel: same paper-fit params as the single-channel config (11x11 window, sigma_pix=1.8e-, background 15x365.25=5478.75 events/(kg yr keV)). 1x100 channel: one_dimensional=true (window_ny=1 -- the paper's row-summed 1D readout, PhysRevD.94.082006 Sec. VI, NOT a literal 2D fit on a 1-row window), background 21x365.25=7670.25 events/(kg yr keV) (paper Sec. VIII, line 539). sigma_pix_e=1.8 for 1x100 is carried over from the paper's general detector characterization -- not separately restated for 1x100 in the paper text, flagged as an assumption (see configs/wimp_nucleon_cluster_damic2016_1x100_repro.json's own _comment for the full paper-citation trail). Each channel's own NLL is minimized independently at fixed sigma (the background nuisance parameters don't couple between channels) and summed before the UL crossing search -- see docs/ClusterFitMC_Design.md for the derivation of why this is exact, not an approximation, for background_model=scale. Pipeline: 1) python3 utils/wimp_nucleon_generate_grid.py configs/wimp_nucleon_generate_si_damic2016halo_izraelevitch.json (rate CSVs using the Izraelevitch-extended quenching table -- this is the rates_dir this config actually points at) 2) ./build/ccdarksens_scan_generic configs/wimp_nucleon_damic2016_limit_repro_joint_izraelevitch.json 3) ./build/ccdarksens_plot_limit outputs/wimp_nucleon_damic2016_limit_repro_joint_izraelevitch/scan_generic.root \"CCDarkSens joint repro\" --wimp --batch --x-min 400 --x-max 12000 --y-min 1e-41 --y-max 1e-35 --out-pdf <path>.pdf FURTHER UPDATED: rates_dir now uses quenching.model=chavarria_izraelevitch_table (adds Izraelevitch et al. 2017, arXiv:1702.00873, real measured quenching data 2.28-20.67 keV_nr) instead of chavarria_table (which fell back to unconstrained Lindhard theory above 2.28 keV_nr) -- see python/ccdarkphys/wimp_nucleon/quenching.py. FURTHER UPDATED: background_efficiency_csv per channel (Fig. 9 digitized curve) + folding-bug-fixed (Sec. 6.8)."
+}

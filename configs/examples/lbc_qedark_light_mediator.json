@@ -1,4 +1,5 @@
 {
+  "_header": "Diego Venegas-Vargas | DAMIC-M collaboration | CCDarkSens Framework -- Example scan config: pattern-space reproduction of the LBC pydme result with the QEDark ultra-light (massless) mediator rates on the dense grid (800 x 300). Guide: docs/LBC_QEDark_Reproduction_Guide.md.",
   "_comment": "LBC pydme reproduction — QEDark ultra-light (massless) mediator, dense grid. See docs/LBC_QEDark_Reproduction_Guide.md",
   "run": {
     "label": "lbc_qedark_light",

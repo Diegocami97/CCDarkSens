@@ -1,9 +1,12 @@
-// ============================================================================
-//  CCDarkSens — Detector
-//  Computes detector active mass from geometry and material density, with optional mass override from config.
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  Detector.cc -- I validate the detector geometry/material and compute the
+//  active target mass from the geometry (or return the mass override from
+//  the config).
+// ===========================================================================
 
 #include "ccdarksens/detector/Detector.hh"
 #include <cmath>
@@ -11,6 +14,13 @@
 
 namespace ccdarksens {
 
+// ----------------------------------------------------------------------------
+// Detector::Detector
+//   I store the geometry, material and optional mass override, and reject
+//   anything unphysical (non-positive rows/cols/pitch/thickness/density,
+//   active_fraction outside (0,1], empty element name) with
+//   std::invalid_argument.
+// ----------------------------------------------------------------------------
 Detector::Detector(DetectorGeometry geom, TargetMaterial mat, std::optional<double> mass_override)
   : geom_(std::move(geom)), mat_(std::move(mat)), mass_override_kg_(mass_override)
 {
@@ -28,6 +38,12 @@ Detector::Detector(DetectorGeometry geom, TargetMaterial mat, std::optional<doub
     throw std::invalid_argument("density_g_cm3 > 0");
 }
 
+// ----------------------------------------------------------------------------
+// Detector::compute_mass_from_geometry_kg
+//   mass = density * (cols*pitch) * (rows*pitch) * thickness * active_fraction,
+//   with the pitch converted from um to cm and the thickness from mm to cm.
+//   Returns kg.
+// ----------------------------------------------------------------------------
 double Detector::compute_mass_from_geometry_kg() const {
   const double pix_cm      = geom_.pixel_size_um * 1e-4; // microns to cm
   const double thickness_cm= geom_.thickness_mm  * 0.1; // mm to cm
@@ -39,6 +55,11 @@ double Detector::compute_mass_from_geometry_kg() const {
   return mass_g * 1e-3;
 }
 
+// ----------------------------------------------------------------------------
+// Detector::mass_kg
+//   Active target mass [kg]: the config override if I was given one,
+//   otherwise the geometric mass.
+// ----------------------------------------------------------------------------
 double Detector::mass_kg() const {
   if (mass_override_kg_) return *mass_override_kg_;
   return compute_mass_from_geometry_kg();

@@ -1,9 +1,11 @@
-// ============================================================================
-//  CCDarkSens — ccdarksens_check_dmelectron
-//  Minimal check that loads one QEDark dR/dE table from config, scales by exposure, and saves a PDF sanity plot.
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  ccdarksens_check_dmelectron.cc -- Minimal check that loads one QEDark
+//  dR/dE table from config, scales by exposure, and saves a PDF sanity plot.
+// ===========================================================================
 
 #include "ccdarksens/io/ConfigManager.hh"
 #include "ccdarksens/model/DMElectronModel.hh"
@@ -16,6 +18,12 @@
 using namespace ccdarksens;
 namespace fs = std::filesystem;
 
+// ----------------------------------------------------------------------------
+// main
+//   Load the DM-electron rate for the single grid point named in the config,
+//   scale it by the run exposure, print the integrated counts and save a plot of
+//   dR/dE to <outdir>/dRdE_check.pdf. Usage: <program> <config.json>.
+// ----------------------------------------------------------------------------
 int main(int argc, char** argv) {
   if (argc < 2) {
     std::cerr << "Usage: " << argv[0] << " <config.json>\n";
@@ -25,7 +33,7 @@ int main(int argc, char** argv) {
   ConfigManager cfg(argv[1]);
   cfg.parse();
 
-  std::string outdir = cfg.run().outdir;
+  std::string outdir = cfg.run().outdir;  // output directory (defaults to outputs/<label>)
   if (outdir.empty())
     outdir = "outputs/" + (cfg.run().label.empty() ? std::string("unnamed")
                                                    : cfg.run().label);

@@ -1,10 +1,17 @@
 #!/usr/bin/env python3
 # ============================================================================
-#  CCDarkSens — plot_ne_signal_spectrum_compare
-#  Figure 2: S(n_e) signal spectra (ionization + detector) vs n_e for
-#            band-gap pheno scenarios, with dark-current background overlay
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
 #
-#  Author: Diego Venegas-Vargas
+#  File: plot_ne_signal_spectrum_compare.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  plot_ne_signal_spectrum_compare.py -- Figure 2: S(n_e) signal spectra
+#  (ionization + detector) vs n_e for band-gap pheno scenarios, with dark-
+#  current background overlay
 # ============================================================================
 """
 Compare the electron-number (n_e) signal spectrum across band-gap pheno
@@ -82,6 +89,10 @@ DC_LAMBDA = {
 }
 
 
+# ----------------------------------------------------------------------------
+# fig2_gap_color
+#   Colour of a band gap in figure 2 (a fallback colour for gaps that are not in the table).
+# ----------------------------------------------------------------------------
 def fig2_gap_color(gap_ev: float) -> str:
     for key, color in FIG2_GAP_COLORS.items():
         if abs(gap_ev - key) < 1e-6:
@@ -94,12 +105,20 @@ def dc_rate_text(lam_e_per_pix_per_year: float) -> str:
     return rf"DC $= {lam_e_per_pix_per_year:g}\ \mathrm{{e}}^-\!/\mathrm{{pix}}/\mathrm{{yr}}$"
 
 
+# ----------------------------------------------------------------------------
+# scen_dir_id
+#   Directory name of a scenario for a dark-current tier (the tier is appended except for the baseline).
+# ----------------------------------------------------------------------------
 def scen_dir_id(scen_id: str, dc_tier: str) -> str:
     if dc_tier == "baseline":
         return scen_id
     return f"{scen_id}_{dc_tier}"
 
 
+# ----------------------------------------------------------------------------
+# default_out_path
+#   Default output PDF of the figure for a dark-current tier.
+# ----------------------------------------------------------------------------
 def default_out_path(dc_tier: str) -> Path:
     stem = "ne_signal_spectrum_compare"
     if dc_tier != "baseline":
@@ -107,6 +126,10 @@ def default_out_path(dc_tier: str) -> Path:
     return ROOT / "outplots" / "band_gap_pheno" / "ne_imaging" / f"{stem}.pdf"
 
 
+# ----------------------------------------------------------------------------
+# build_scenarios
+#   Scenarios to compare: optionally the silicon reference, then one Klein case per gap, as (directory, output base, label, colour).
+# ----------------------------------------------------------------------------
 def build_scenarios(klein_gaps, include_si_ref: bool, dc_tier: str):
     scenarios = []
     if include_si_ref:
@@ -132,6 +155,10 @@ def build_scenarios(klein_gaps, include_si_ref: bool, dc_tier: str):
     return scenarios
 
 
+# ----------------------------------------------------------------------------
+# _values_by_ne
+#   Histogram content at the bin nearest to each n_e of the list.
+# ----------------------------------------------------------------------------
 def _values_by_ne(hist, ne_list=NE_BINS) -> np.ndarray:
     centers = hist.axis().centers()
     vals = hist.values()
@@ -142,6 +169,10 @@ def _values_by_ne(hist, ne_list=NE_BINS) -> np.ndarray:
     return np.array(out)
 
 
+# ----------------------------------------------------------------------------
+# _first_key
+#   Name (without the cycle number) of the first object in a ROOT file whose name starts with prefix, or None.
+# ----------------------------------------------------------------------------
 def _first_key(f, prefix: str) -> str | None:
     for k in f.keys():
         kk = k.split(";")[0]
@@ -150,6 +181,10 @@ def _first_key(f, prefix: str) -> str | None:
     return None
 
 
+# ----------------------------------------------------------------------------
+# load_scenario
+#   Read S_true(n_e), S_obs(n_e) and the total background from a scenario's scan file (None entries if it is missing).
+# ----------------------------------------------------------------------------
 def load_scenario(scen_id: str, outbase: Path) -> dict:
     scan_path = outbase / scen_id / "scan_dmelectron_pattern.root"
     out = {"S_true": None, "S_obs": None, "B_tot": None}
@@ -168,6 +203,10 @@ def load_scenario(scen_id: str, outbase: Path) -> dict:
     return out
 
 
+# ----------------------------------------------------------------------------
+# _draw_grouped_bars
+#   Draw one group of bars per n_e, one bar per scenario, dropping values below the log floor.
+# ----------------------------------------------------------------------------
 def _draw_grouped_bars(ax, data_by_scen: list, key: str, scenarios) -> None:
     x = np.arange(len(NE_BINS))
     n = len(scenarios)
@@ -190,6 +229,10 @@ def _draw_grouped_bars(ax, data_by_scen: list, key: str, scenarios) -> None:
         )
 
 
+# ----------------------------------------------------------------------------
+# _draw_background
+#   Draw the total background as dashed horizontal lines at every n_e bin.
+# ----------------------------------------------------------------------------
 def _draw_background(ax, b_tot: np.ndarray, dc_label: str) -> None:
     x = np.arange(len(NE_BINS))
     for i in range(len(NE_BINS)):
@@ -208,6 +251,10 @@ def _draw_background(ax, b_tot: np.ndarray, dc_label: str) -> None:
         )
 
 
+# ----------------------------------------------------------------------------
+# _draw_mediator_panel
+#   One row of the figure for a mediator: S_true and S_obs spectra of all scenarios with the background overlaid.
+# ----------------------------------------------------------------------------
 def _draw_mediator_panel(
     axes_row, data_by_scen: list, mediator_label: str, scenarios, dc_label: str
 ) -> None:
@@ -232,6 +279,10 @@ def _draw_mediator_panel(
     axL.set_ylabel(mediator_label + "\nExpected counts")
 
 
+# ----------------------------------------------------------------------------
+# outbase_for
+#   Output base directory of a mediator: the light-mediator runs live in their own directories.
+# ----------------------------------------------------------------------------
 def outbase_for(base: Path, med_key: str) -> Path:
     if base == OUTBASE_KLEIN and med_key == "light":
         return ROOT / "outputs" / "band_gap_ne_imaging_klein_light"
@@ -240,6 +291,10 @@ def outbase_for(base: Path, med_key: str) -> Path:
     return base
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Command line: compare the n_e signal spectra of the scenarios for both mediators and save the PDF to --out (dark-current tier with --dc-tier).
+# ----------------------------------------------------------------------------
 def main() -> int:
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter

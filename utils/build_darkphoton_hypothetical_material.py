@@ -1,4 +1,20 @@
 #!/usr/bin/env python3
+# ============================================================================
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  File: build_darkphoton_hypothetical_material.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  build_darkphoton_hypothetical_material.py -- I generate synthetic DarkELF
+#  data files for the hypothetical material SrCd2Sb2 (codename HypMat) from
+#  its band gap, density, DC conductivity and valence-electron count (the
+#  exact inputs are listed in the module docstring below).
+# ============================================================================
+
 """
 Generate synthetic DarkELF data files for SrCd₂Sb₂ (codename HypMat) with:
   E_gap    = 0.34 eV   (R2SCAN no-SOC indirect gap; direct gap ~0.695 eV)
@@ -134,6 +150,10 @@ def drude_eps(omega: np.ndarray, eps_inf: float) -> tuple[np.ndarray, np.ndarray
     return eps1, eps2
 
 
+# ----------------------------------------------------------------------------
+# _resolve_darkelf_dir
+#   Directory of the DarkELF source: --darkelf_dir if given, else the environment variable; raises FileNotFoundError if neither is set.
+# ----------------------------------------------------------------------------
 def _resolve_darkelf_dir(explicit: str | None) -> str:
     if explicit:
         return os.path.abspath(os.path.expanduser(explicit))
@@ -145,6 +165,10 @@ def _resolve_darkelf_dir(explicit: str | None) -> str:
     )
 
 
+# ----------------------------------------------------------------------------
+# _write_optical_dat
+#   Write a DarkELF optical-limit table (omega, eps1, eps2) from the Drude model with the given eps_inf, with the citation line first.
+# ----------------------------------------------------------------------------
 def _write_optical_dat(path: str, omega: np.ndarray, eps_inf: float, citation: str):
     eps1_vals, eps2_vals = drude_eps(omega, eps_inf)
     os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -155,6 +179,10 @@ def _write_optical_dat(path: str, omega: np.ndarray, eps_inf: float, citation: s
     print(f"  wrote {path}  ({len(omega)} rows)")
 
 
+# ----------------------------------------------------------------------------
+# _write_yaml
+#   Write the DarkELF YAML of HypMat: density, band gap, pair-creation energy, plasma frequency and placeholder lattice/phonon values.
+# ----------------------------------------------------------------------------
 def _write_yaml(path: str):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     lines = [
@@ -180,6 +208,10 @@ def _write_yaml(path: str):
     print(f"  wrote {path}")
 
 
+# ----------------------------------------------------------------------------
+# build
+#   Build the HypMat_0p34 data directory of DarkELF: the YAML and the optical-limit tables of the unscreened (eps_inf = 1) and screened cases.
+# ----------------------------------------------------------------------------
 def build(darkelf_dir: str):
     data_dir = os.path.join(darkelf_dir, "data", "HypMat_0p34")
     print(f"Building HypMat_0p34 in {data_dir}")
@@ -206,6 +238,10 @@ def build(darkelf_dir: str):
     print("Done.")
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Command line: --darkelf_dir (default: the environment variable); then build().
+# ----------------------------------------------------------------------------
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--darkelf_dir", default=None,

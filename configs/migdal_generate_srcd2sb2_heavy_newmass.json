@@ -1,0 +1,55 @@
+{
+  "_comment": "Extension: 19 new mass pts (0.01-0.1 MeV) x existing 30 sigma pts. Same rates_dir as 80x30.",
+  "material": "srcd2sb2",
+  "mediator": "heavy",
+  "darkelf_dir": "/Users/diegovenegasvargas/Documents/Software/DarkELF",
+  "detector": {
+    "Emin_eV": 0.0,
+    "Emax_eV": 20.0,
+    "binsize_eV": 0.1
+  },
+  "rates_dir": "data/migdal_rates/SrCd2Sb2/heavy_80x30",
+  "filename_template": "dRdE_{target_nucleus}_{mediator}_m{mchi_MeV}_s{sigma_n_cm2}.csv",
+  "grid": {
+    "mchi_MeV": {
+      "values": [
+        0.010913767,
+        0.012263307,
+        0.013779724,
+        0.015483653,
+        0.017398281,
+        0.019549661,
+        0.021967071,
+        0.024683405,
+        0.027735626,
+        0.031165269,
+        0.035019005,
+        0.039349273,
+        0.044214999,
+        0.049682396,
+        0.055825863,
+        0.062728999,
+        0.07048574,
+        0.079201641,
+        0.088995304
+      ]
+    },
+    "sigma_n_cm2": {
+      "logspace": {
+        "start_exp": -45,
+        "stop_exp": -25,
+        "num": 30,
+        "endpoint": true
+      }
+    }
+  },
+  "options": {
+    "skip_existing": true,
+    "overwrite": false,
+    "parallel": 0,
+    "format": {
+      "mchi": ".6f",
+      "sigma": ".1e"
+    }
+  }
+}

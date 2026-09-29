@@ -1,9 +1,16 @@
-// ============================================================================
-//  CCDarkSens — plot_p100K_table
-//  ROOT macro that reads the p100K ionization table CSV and plots P(n_e|E) curves and mean n_e versus energy.
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  File: plot_p100K_table.cc
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
+//
+//  plot_p100K_table.cc -- ROOT macro that reads the p100K ionization table
+//  CSV and plots P(n_e|E) curves and mean n_e versus energy.
+// ===========================================================================
 
 // Run with:
 //   root -l -q 'plot_p100K_table.C("data/p100K_table.csv")'
@@ -23,6 +30,10 @@
 #include <algorithm>
 #include <cctype>
 
+// ----------------------------------------------------------------------------
+// is_comment_or_empty_line
+//   True if the line is blank or its first non-blank character is '#'.
+// ----------------------------------------------------------------------------
 static bool is_comment_or_empty_line(const std::string& s) {
   for (char c : s) { if (!std::isspace((unsigned char)c)) return c=='#'; }
   return true;
@@ -52,6 +63,10 @@ static std::vector<int> make_custom_colors() {
   return cols;
 }
 
+// ----------------------------------------------------------------------------
+// plot_p100K_table
+//   ROOT macro: read the P(n_e | E) table (energy in the first column, one probability column per n_e) and plot the P(n_e | E) curves and the mean n_e versus energy.
+// ----------------------------------------------------------------------------
 void plot_p100K_table(const char* path = "data/p100K_table.csv") {
   std::ifstream in(path);
   if (!in) { Error("plot_p100K_table","Cannot open %s", path); return; }

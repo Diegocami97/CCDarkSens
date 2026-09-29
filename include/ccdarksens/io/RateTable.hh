@@ -1,9 +1,12 @@
-// ============================================================================
-//  CCDarkSens — RateTable
-//  Header for QEDark rate-table CSV I/O and TH1D spectrum construction in events/(kg·year·eV).
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  RateTable.hh -- I declare RateTable: a two-column rate table (E [eV],
+//  dR/dE [events/(kg*year*eV)]) loaded from CSV, and its conversion into a
+//  ROOT spectrum on a uniform energy grid.
+// ===========================================================================
 
 #pragma once
 #include <memory>
@@ -14,12 +17,13 @@ class TH1D;
 
 namespace ccdarksens {
 
+// Descriptive metadata of a rate table (which model/point it belongs to).
 struct RateMeta {
-  std::string material;
-  std::string mediator;
-  double      mchi_MeV     = 0.0;
-  double      sigma_e_cm2  = 0.0;
-  double      binsize_eV   = 0.1;
+  std::string material;  // target material, e.g. "Si"
+  std::string mediator;  // mediator type: heavy | light | ultralight
+  double      mchi_MeV     = 0.0;  // dark-matter mass [MeV]
+  double      sigma_e_cm2  = 0.0;  // reference DM-electron cross section [cm^2]
+  double      binsize_eV   = 0.1;  // native energy step of the table [eV]
 };
 
 /// Holds a QEDark rate table (E [eV], dR/dE [events/(kg·year·eV)]). CSV must use events/(kg·year·eV).
@@ -43,9 +47,9 @@ public:
                                  int nbins) const;
 
 private:
-  std::vector<double> E_eV_;
-  std::vector<double> R_kg_year_eV_;
-  RateMeta            meta_;
+  std::vector<double> E_eV_;  // energy column [eV]
+  std::vector<double> R_kg_year_eV_;  // dR/dE column [events/(kg*year*eV)]
+  RateMeta            meta_;  // metadata of the loaded table
 };
 
 } // namespace ccdarksens

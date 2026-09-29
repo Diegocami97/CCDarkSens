@@ -1,4 +1,5 @@
 {
+  "_header": "Diego Venegas-Vargas | DAMIC-M collaboration | CCDarkSens Framework -- Example scan config: QCDark2 pattern-space scan, heavy mediator, dense grid, to study how the observed counts per pattern bin change the limit (edit run.observed_counts).",
   "_comment": "QCDark2 pattern scan — heavy mediator, dense grid. Study impact of observed counts per pattern bin.",
   "_comment_change_counts": ">>> EDIT HERE: run.observed_counts — one entry per pattern in experiment.pattern_roi order. pattern_roi = [11, 21, 111, 31, 22, 211] so index 0 is {11}, index 1 is {21}, index 2 is {111}, index 3 is {31}, index 4 is {22}, index 5 is {211}. Example: raise {11} from 144 to 150 → [150, 0, 0, 1, 0, 0]. When observed_counts is set, it overrides data_path.",
   "_comment_baseline": "LBC nominal counts: [144, 0, 0, 1, 0, 0]. Copy this file per scenario (e.g. qcdark2_counts_heavy_pat11_150.json) and change only observed_counts + run.outdir.",

@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
 # ============================================================================
-#  CCDarkSens — plot_band_gap_2d_heatmap
-#  Plot σ_UL gain heatmap on the 2D (E_gap, ε_h) grid
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
 #
-#  Author: Diego Venegas-Vargas
+#  File: plot_band_gap_2d_heatmap.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  plot_band_gap_2d_heatmap.py -- Plot σ_UL gain heatmap on the 2D (E_gap,
+#  ε_h) grid
 # ============================================================================
 """
 Plot 2D sensitivity-gain heatmaps for heavy and light mediators at chosen m_chi.
@@ -32,16 +39,28 @@ GAPS = np.array([0.1, 0.3, 0.5, 0.7, 0.9, 1.2], dtype=float)
 EHS = np.array([0.5, 1.0, 1.5, 2.0, 2.5, 3.8], dtype=float)
 
 
+# ----------------------------------------------------------------------------
+# is_valid
+#   A (gap, eh) cell is physical only if eps_h >= E_gap.
+# ----------------------------------------------------------------------------
 def is_valid(gap: float, eh: float) -> bool:
     return eh >= gap
 
 
+# ----------------------------------------------------------------------------
+# mchi_tag
+#   Mass formatted for file names: '<int>MeV' for integers, otherwise with '.' replaced by 'p'.
+# ----------------------------------------------------------------------------
 def mchi_tag(mev: float) -> str:
     if abs(mev - round(mev)) < 1e-9:
         return f"{int(round(mev))}MeV"
     return f"{mev:g}MeV".replace(".", "p")
 
 
+# ----------------------------------------------------------------------------
+# sensitivity_npy_path
+#   Path of the 2D sensitivity array of a mediator and mass; falls back to the old 1 MeV file name.
+# ----------------------------------------------------------------------------
 def sensitivity_npy_path(mediator: str, mchi_mev: float) -> Path:
     tagged = OUTDIR / f"sensitivity_2d_{mediator}_mchi{mchi_tag(mchi_mev)}.npy"
     if tagged.is_file():
@@ -54,6 +73,10 @@ def sensitivity_npy_path(mediator: str, mchi_mev: float) -> Path:
     return tagged
 
 
+# ----------------------------------------------------------------------------
+# edges
+#   Bin edges for cell centres vals: midpoints between neighbors, outer edges extended by half a step.
+# ----------------------------------------------------------------------------
 def edges(vals: np.ndarray) -> np.ndarray:
     e = np.zeros(vals.size + 1, dtype=float)
     e[1:-1] = 0.5 * (vals[:-1] + vals[1:])
@@ -62,6 +85,10 @@ def edges(vals: np.ndarray) -> np.ndarray:
     return e
 
 
+# ----------------------------------------------------------------------------
+# draw_heatmap
+#   Heatmap of the sensitivity gain over the silicon reference cell (gap 1.2 eV, eps_h 3.8 eV) on the (E_gap, eps_h) grid; raises FileNotFoundError if the extracted array is missing.
+# ----------------------------------------------------------------------------
 def draw_heatmap(mediator: str, mchi_mev: float) -> None:
     npy_path = sensitivity_npy_path(mediator, mchi_mev)
     if not npy_path.is_file():
@@ -155,6 +182,10 @@ def draw_heatmap(mediator: str, mchi_mev: float) -> None:
     print(f"[ok] wrote {out}")
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Command line: draw the heatmaps for the chosen masses (default 1, 10 and 100 MeV) and mediator(s).
+# ----------------------------------------------------------------------------
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument(

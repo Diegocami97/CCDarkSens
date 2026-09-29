@@ -1,0 +1,53 @@
+{
+  "_comment": "WIMP-nucleon SI rate generation, DAMIC 0.6 kg-day (PhysRevD.94.082006 / arXiv:1607.07410) halo-parameter reproduction. Standard halo parameters as quoted in the paper Sec. VIII (v0=220, vE=232, vesc=544 km/s, rho=0.3 GeV/cm^3), NOT the Baxter et al. 2021 defaults used elsewhere in this repo. Used by docs/ClusterFitMC_Design.md Phase 7 (Fig. 11 reproduction). Run: python3 utils/wimp_nucleon_generate_grid.py configs/wimp_nucleon_generate_si_damic2016halo.json",
+  "target_nucleus": "Si28",
+  "A": 28,
+  "mediator": "heavy",
+  "recoil": {
+    "Emin_keV": 0.001,
+    "Emax_keV": 30.0,
+    "nbins": 3000
+  },
+  "halo": {
+    "rho_chi_gev_cm3": 0.3,
+    "v0_kms": 220.0,
+    "vE_kms": 232.0,
+    "vesc_kms": 544.0
+  },
+  "quenching": {
+    "_comment": "chavarria_table = measured Si nuclear recoil ionization efficiency, Chavarria et al. 2016 (Phys. Rev. D 94, 082007), Table I, with linear-to-zero below 0.68 keV_nr (crossing at 0.3 keV_nr per PhysRevD.94.082006) and Lindhard fallback above 2.28 keV_nr (no measurement there). See python/ccdarkphys/wimp_nucleon/quenching.py. Alternative: 'lindhard'.",
+    "model": "chavarria_table",
+    "ee_Emin_eV": 0.0,
+    "ee_Emax_eV": 4000.0,
+    "ee_nbins": 400
+  },
+  "rates_dir": "data/wimp_nucleon_rates_ee/Si/heavy_damic2016halo",
+  "filename_template": "dRdE_ee_{target_nucleus}_{mediator}_m{mchi_MeV}_s{sigma_n_cm2}.csv",
+  "grid": {
+    "mchi_MeV": {
+      "logspace": {
+        "start": 500.0,
+        "stop": 10000.0,
+        "num": 28,
+        "endpoint": true
+      }
+    },
+    "sigma_n_cm2": {
+      "logspace": {
+        "start_exp": -42,
+        "stop_exp": -33,
+        "num": 20,
+        "endpoint": true
+      }
+    }
+  },
+  "options": {
+    "skip_existing": true,
+    "overwrite": false,
+    "parallel": 0,
+    "format": {
+      "mchi": ".6f",
+      "sigma": ".1e"
+    }
+  }
+}

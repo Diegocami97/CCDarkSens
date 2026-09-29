@@ -1,0 +1,42 @@
+{
+  "_header": "Diego Venegas-Vargas | DAMIC-M collaboration | CCDarkSens Framework -- Example config: kernel sanity check of the WIMP-nucleon cluster-energy channel with the DAMIC 2016 detector parameters (1x1 mode only), used with ccdarksens_validate_wimp_nucleon_paper_repro.",
+  "run": {
+    "label": "damic2016_paper_repro",
+    "cl": 0.9,
+    "exposure_kg_year": 0.0016427104722792608
+  },
+  "response": {
+    "analysis_space": "cluster_energy",
+    "cluster_fit_mc": {
+      "window_nx": 11,
+      "window_ny": 11,
+      "pixel_size_um": 15.0,
+      "sigma_readout_e": 1.8,
+      "diffusion": {
+        "A_um2": 215.0,
+        "b_umInv": 0.0013,
+        "alpha": 1.0,
+        "beta_per_keV": 0.0,
+        "thickness_um": 675.0
+      },
+      "fit_method": "nelder_mead",
+      "sigma_xy_lo_px": 0.1,
+      "sigma_xy_hi_px": 2.0,
+      "n_toys": 5000,
+      "target_tail_prob": 0.001,
+      "calib_rng_seed": 20260825,
+      "ne_trials_per_point": 1500,
+      "sigma_xy_fid_min_px": 0.35,
+      "sigma_xy_fid_max_px": 1.22,
+      "eh_pair_eV": 3.77,
+      "fano_factor": 0.133,
+      "rng_seed": 24680,
+      "Etrue_min_eV": 60.0,
+      "Etrue_max_eV": 2000.0,
+      "Etrue_npoints": 14,
+      "Ereco_min_eV": 0.0,
+      "Ereco_max_eV": 4000.0,
+      "Ereco_nbins": 80
+    }
+  }
+}

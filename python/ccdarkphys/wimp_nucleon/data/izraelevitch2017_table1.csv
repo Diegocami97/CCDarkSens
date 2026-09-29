@@ -1,0 +1,26 @@
+# Measured nuclear recoil ionization efficiency in Si, Izraelevitch et al.
+# 2017 (JINST 12, P06014, arXiv:1702.00873), Table 1. Silicon-drift-diode
+# neutron elastic-scattering measurement at the Notre Dame Tandem Van de
+# Graaff facility, covering 1.79-20.67 keV_nr -- the range PhysRevD.94.082006
+# (the DAMIC 2016 SNOLAB WIMP paper) cites as "antonella1" and combines with
+# Chavarria et al. 2016 (chavarria2016_table1.csv, 0.68-2.28 keV_nr) to cover
+# the full recoil-energy range relevant for the WIMP search, rather than
+# falling back to unconstrained Lindhard theory above 2.28 keV_nr. Ee = E_i
+# (ionization energy) column of Table 1; central values only, uncertainties
+# (statistical + systematic, on both axes) are in the paper's Table 1 but not
+# reproduced here, same convention as chavarria2016_table1.csv.
+# Columns: Er_keV_nr, Ee_keV_ee
+1.79,0.30
+2.26,0.44
+2.97,0.64
+3.75,0.91
+4.87,1.25
+6.07,1.67
+7.67,2.15
+8.93,2.70
+10.77,3.32
+12.52,4.00
+14.48,4.76
+16.23,5.59
+18.19,6.49
+20.67,7.45

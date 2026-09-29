@@ -1,6 +1,9 @@
-// ============================================================================
-//  CCDarkSens — ccdarksens_validate_pattern_efficiency
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
+//  File: ccdarksens_validate_pattern_efficiency.cc
 //  Validates EfficiencyMC against the collaboration reference:
 //    data/Efficiencies_patterns_Nsims1000000_DCTrue_alpha1.csv
 //
@@ -12,9 +15,7 @@
 //    ccdarksens_validate_pattern_efficiency [n_trials_per_ne] [ref_csv_path]
 //
 //  Defaults: n_trials = 200000, ref = data/Efficiencies_patterns_Nsims1000000_DCTrue_alpha1.csv
-//
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+// ===========================================================================
 
 #include <algorithm>
 #include <cmath>

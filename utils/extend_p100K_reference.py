@@ -1,4 +1,20 @@
 #!/usr/bin/env python3
+# ============================================================================
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  File: extend_p100K_reference.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  extend_p100K_reference.py -- Extend the reference p100K table (Si,
+#  E_gap=1.2 eV, eh=3.8 eV) from 50 eV to a user-specified maximum energy
+#  using a Gaussian approximation calibrated on the existing high-energy
+#  rows.
+# ============================================================================
+
 """
 Extend the reference p100K table (Si, E_gap=1.2 eV, eh=3.8 eV) from 50 eV to
 a user-specified maximum energy using a Gaussian approximation calibrated on the
@@ -37,6 +53,10 @@ import numpy as np
 from pathlib import Path
 
 
+# ----------------------------------------------------------------------------
+# read_table
+#   Read the p100K CSV (comments skipped); returns the energies and the probability columns P.
+# ----------------------------------------------------------------------------
 def read_table(path: str) -> tuple[np.ndarray, np.ndarray]:
     data = []
     with open(path) as f:
@@ -91,6 +111,10 @@ def gaussian_row(E_val: float, eh_eV: float, fano: float,
     return row
 
 
+# ----------------------------------------------------------------------------
+# extend_table
+#   Extend the table up to E_max: fit the Gaussian parameters (Fano factor and offset) on the existing high-energy rows and generate new rows every dE with enough n_e columns to cover E_max/eh + n_sigma_extra sigma. Nothing is done if E_max is already covered.
+# ----------------------------------------------------------------------------
 def extend_table(input_path: str, output_path: str,
                  E_max: float, eh_eV: float, dE: float = 0.05,
                  n_sigma_extra: int = 5):
@@ -141,6 +165,10 @@ def extend_table(input_path: str, output_path: str,
     print(f"[extend] Wrote {out}  ({len(E_out)} rows x {ne_max+1} columns)")
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Command line: --input, --output, --E_max, --eh_eV and --dE; then extend_table().
+# ----------------------------------------------------------------------------
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--input",  default="data/p100K_table.csv")

@@ -1,9 +1,12 @@
-// ============================================================================
-//  CCDarkSens — ccdarksens_scan_srdm_pattern_csv
-//  Grid scan over SRDM pattern-space signal CSVs that evaluates profile-likelihood q(mχ,σ) and extracts upper limits, including a threshold-toys mode for band workflows.
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  ccdarksens_scan_srdm_pattern_csv.cc -- Grid scan over SRDM pattern-space
+//  signal CSVs that evaluates profile-likelihood q(mχ,σ) and extracts upper
+//  limits, including a threshold-toys mode for band workflows.
+// ===========================================================================
 
 #include <algorithm>
 #include <cmath>
@@ -36,11 +39,16 @@
 #include <nlohmann/json.hpp>
 
 #include "ccdarksens/stats/ProfileLikelihood.hh"
+#include "ccdarksens/scan/ScanUtils.hh"
 
 using nlohmann::json;
 
 namespace {
 
+// ----------------------------------------------------------------------------
+// make_edges_from_centers
+//   Histogram bin edges for bin centres c: midpoints between neighbors, outer edges extended by half a step (a single centre gets +/-50%).
+// ----------------------------------------------------------------------------
 static std::vector<double> make_edges_from_centers(const std::vector<double>& c) {
   const std::size_t N = c.size();
   std::vector<double> edges(N + 1);
@@ -61,6 +69,7 @@ static std::vector<double> make_edges_from_centers(const std::vector<double>& c)
   return edges;
 }
 
+// Split a line at commas (no quoting support).
 static std::vector<std::string> split_csv_line(const std::string& line) {
   std::vector<std::string> out;
   std::string token;
@@ -69,18 +78,24 @@ static std::vector<std::string> split_csv_line(const std::string& line) {
   return out;
 }
 
+// True if a and b agree within a relative tolerance of a.
 static bool approx_equal(double a, double b, double rel_tol = 1e-12) {
   // Works well for scientific-notation sigmas around 1e-38.
   const double denom = std::max(1e-300, std::abs(a));
   return std::abs(a - b) <= rel_tol * denom;
 }
 
+// ----------------------------------------------------------------------------
+// SrdmMassData
+//   Signal templates for one DM mass: the cross-sections (ascending) and the pattern-bin signal vector at each.
+// ----------------------------------------------------------------------------
 struct SrdmMassData {
   double mchi = 0.0;
   std::vector<double> sigmas;                // xsec values (ascending)
   std::vector<std::vector<double>> Spat;   // Spat[i] corresponds to sigmas[i]
 };
 
+// Index of col_name in the CSV header, or -1.
 static int find_column(const std::vector<std::string>& header, const std::string& col_name) {
   for (std::size_t i = 0; i < header.size(); ++i) {
     if (header[i] == col_name) return static_cast<int>(i);
@@ -88,6 +103,10 @@ static int find_column(const std::vector<std::string>& header, const std::string
   return -1;
 }
 
+// ----------------------------------------------------------------------------
+// parse_mchi_and_tag
+//   Extract the DM mass from a file name with the given regex (first capture group). Returns {mass, filename}, or nothing if the name does not match or the number cannot be read.
+// ----------------------------------------------------------------------------
 static std::optional<std::pair<double, std::string>> parse_mchi_and_tag(
     const std::string& filename,
     const std::regex& mchi_regex,
@@ -108,6 +127,12 @@ static std::optional<std::pair<double, std::string>> parse_mchi_and_tag(
   }
 }
 
+// ----------------------------------------------------------------------------
+// load_srdm_csv
+//   Read one per-mass SRDM CSV: the "xsec" column and one column "S<pattern>" per entry of
+//   pattern_roi (a missing column throws). Every signal is multiplied by signal_rate_scale, and the
+//   rows are sorted by ascending cross-section.
+// ----------------------------------------------------------------------------
 static SrdmMassData load_srdm_csv(
     const std::string& csv_path,
     double mchi,
@@ -192,6 +217,7 @@ static SrdmMassData load_srdm_csv(
   return d;
 }
 
+// Index of the cross-section equal to target (within rel_tol), or -1.
 static int find_sigma_index(const std::vector<double>& sigmas, double target, double rel_tol = 1e-12) {
   for (std::size_t i = 0; i < sigmas.size(); ++i) {
     if (approx_equal(sigmas[i], target, rel_tol)) return static_cast<int>(i);
@@ -258,6 +284,17 @@ static std::vector<double> interpolate_spat_on_sigma(
 
 }  // namespace
 
+// ----------------------------------------------------------------------------
+// main
+//   Grid scan over pre-folded SRDM pattern-space signal CSVs. Steps:
+//     1) parse the JSON config;
+//     2) discover and load the per-mass signal CSVs;
+//     3) build the background template and choose the data vector;
+//     4) initialize the output histograms and grids;
+//     5) run.mode = "threshold_toys": toy-MC q threshold for the band tool, then exit;
+//     6) main scan: q(m_chi, sigma) and the upper limit at every mass;
+//     7) post-processing and ROOT output.
+// ----------------------------------------------------------------------------
 int main(int argc, char** argv) {
   if (argc < 2) {
     std::cerr << "Usage: " << argv[0] << " config.json\n";
@@ -997,15 +1034,7 @@ int main(int argc, char** argv) {
       const double nll_min_final = use_2d_nll_min ? nll_min_2d : nll_min_grid;
       if (!std::isfinite(nll_min_final)) throw std::runtime_error("Non-finite nll_min encountered.");
 
-      // Monotonicize q(σ): running max so UL crossing is well-defined and reduces sawtooth
-      std::vector<double> q_mu(nll_values.size()), q_mono(nll_values.size());
-      for (std::size_t k = 0; k < nll_values.size(); ++k) {
-        const double q = 2.0 * (nll_values[k] - nll_min_final);
-        q_mu[k] = (q > 0.0) ? q : 0.0;
-      }
-      q_mono[0] = q_mu[0];
-      for (std::size_t k = 1; k < nll_values.size(); ++k)
-        q_mono[k] = std::max(q_mono[k - 1], q_mu[k]);
+      const auto q_mono = ccdarksens::scan::MonotonizeQ(nll_values, nll_min_final);
 
       // Compute upper limit σ_UL (smallest sigma with q_mu >= target_q).
       // target_q is per-mass when q_target_lookup_path was provided (toy-MC threshold);
@@ -1015,82 +1044,29 @@ int main(int argc, char** argv) {
       const double log10_lo = std::log10(sig_scan.front());
       const double log10_hi = std::log10(sig_scan.back());
       if (pydme_mode && S_grid.size() >= 2u) {
-        auto S_from_log10 = [&S_grid, &sig_scan, log10_lo, log10_hi](double log10_s) -> std::vector<double> {
-          const std::size_t n = S_grid.empty() ? 0u : S_grid[0].size();
-          std::vector<double> out(n, 0.0);
-          if (S_grid.size() < 2u) return S_grid.empty() ? out : S_grid[0];
-          const double log10_s_clamp = std::max(log10_lo, std::min(log10_hi, log10_s));
-          for (std::size_t j = 0; j + 1 < sig_scan.size(); ++j) {
-            const double l0 = std::log10(sig_scan[j]);
-            const double l1 = std::log10(sig_scan[j + 1]);
-            if (log10_s_clamp >= l0 && log10_s_clamp <= l1) {
-              const double t = (l1 - l0) > 1e-300 ? (log10_s_clamp - l0) / (l1 - l0) : 0.0;
-              for (std::size_t b = 0; b < n; ++b)
-                out[b] = S_grid[j][b] + t * (S_grid[j + 1][b] - S_grid[j][b]);
-              return out;
-            }
-          }
-          if (log10_s_clamp <= std::log10(sig_scan.front())) return S_grid.front();
-          return S_grid.back();
-        };
-
         auto q_mu_at = [&](double log10_sig) {
-          std::vector<double> S = S_from_log10(log10_sig);
+          std::vector<double> S = ccdarksens::scan::InterpolateSignal(S_grid, sig_scan, log10_sig);
           const double nll = profile_pl->MinimizeOverScaleMinuit(S, theta_lo, theta_hi).second;
           const double q = 2.0 * (nll - nll_min_final);
           return q > 0.0 ? q : 0.0;
         };
-
         const int k_best_pydme =
             static_cast<int>(std::min_element(nll_values.begin(), nll_values.end()) - nll_values.begin());
         const double log10_sigma_best = std::log10(sig_scan[static_cast<std::size_t>(k_best_pydme)]);
-        const double lo = use_2d_nll_min ? std::max({log10_sigma_hat_pydme, log10_lo, log10_sigma_best})
-                                         : std::max(log10_lo, log10_sigma_best);
-        double hi = lo;
-
-        const double ul_brack_step = 0.3;
-        const int ul_max_expand = 12;
-        const int ul_max_iter = 24;
-        const double ul_q_tol = 0.01;
-        const double tol_x = std::max(1e-3, 0.01 * (log10_hi - log10_lo));
-        double step = ul_brack_step;
-        int brack_count = 0;
-        for (int _ = 0; _ < ul_max_expand && hi < log10_hi - 1e-12; ++_) {
-          brack_count++;
-          hi = std::min(hi + step, log10_hi);
-          if (q_mu_at(hi) >= target_q) break;
-          step *= 2.0;
-        }
-
-        if (q_mu_at(hi) >= target_q) {
-          double left = lo, right = hi;
-          for (int it = 0; it < ul_max_iter; ++it) {
-            const double mid = 0.5 * (left + right);
-            const double q_mid = q_mu_at(mid);
-            if (q_mid >= target_q) right = mid;
-            else left = mid;
-            if (std::abs(right - left) < tol_x || std::abs(q_mid - target_q) < ul_q_tol) break;
-          }
-          ul_sigma = std::pow(10.0, right);
-          if (verbosity >= 1) {
+        const double log10_seed = use_2d_nll_min
+            ? std::max({log10_sigma_hat_pydme, log10_lo, log10_sigma_best})
+            : std::max(log10_lo, log10_sigma_best);
+        const double log10_ul = ccdarksens::scan::BisectUpperLimit(q_mu_at, log10_lo, log10_hi, log10_seed, target_q);
+        if (log10_ul < log10_hi) {
+          ul_sigma = std::pow(10.0, log10_ul);
+          if (verbosity >= 1)
             std::cout << "[scan-srdm-csv] mchi=" << std::scientific << mchi << " MeV pydme UL: log10(sigma)="
-                      << std::log10(ul_sigma) << " (bracketing steps=" << brack_count << ", bisection)\n";
-          }
+                      << log10_ul << " (bisection)\n";
         } else {
-          if (verbosity >= 1) {
-            const double q_at_hi = q_mu_at(log10_hi);
+          if (verbosity >= 1)
             std::cout << "[scan-srdm-csv] mchi=" << std::scientific << mchi
-                      << " MeV pydme UL: bracketing did not reach target_q (q at log10_sigma_hi="
-                      << log10_hi << " is " << q_at_hi << " < " << target_q << "); using grid.\n";
-          }
-          const int k_best =
-              static_cast<int>(std::min_element(nll_values.begin(), nll_values.end()) - nll_values.begin());
-          for (int k = k_best; k < static_cast<int>(nll_values.size()); ++k) {
-            if (q_mono[k] >= target_q) {
-              ul_sigma = sig_scan[static_cast<std::size_t>(k)];
-              break;
-            }
-          }
+                      << " MeV pydme UL: bracketing did not reach target_q; using grid.\n";
+          ul_sigma = ccdarksens::scan::UlFromQMonoCrossing(sig_scan, q_mono, target_q);
         }
       } else {
         const int k_best =

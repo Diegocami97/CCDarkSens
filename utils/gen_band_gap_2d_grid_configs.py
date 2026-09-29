@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
 # ============================================================================
-#  CCDarkSens — gen_band_gap_2d_grid_configs
-#  Generate JSON configs for the 2D (E_gap, ε_h) sensitivity grid scan
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
 #
-#  Author: Diego Venegas-Vargas
+#  File: gen_band_gap_2d_grid_configs.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  gen_band_gap_2d_grid_configs.py -- Generate JSON configs for the 2D
+#  (E_gap, ε_h) sensitivity grid scan
 # ============================================================================
 """
 Generate 2D (gap, eh) Phase-C scan configs and build missing p100K tables.
@@ -39,20 +46,36 @@ EHS = [0.5, 1.0, 1.5, 2.0, 2.5, 3.8]
 MEDIATORS = ["heavy", "light"]
 
 
+# ----------------------------------------------------------------------------
+# ev_tag
+#   Energy formatted for file names: one decimal with '.' replaced by 'p' (1.0 -> "1p0").
+# ----------------------------------------------------------------------------
 def ev_tag(x: float) -> str:
     # Keep one decimal for integer-like entries (1.0 -> 1p0).
     s = f"{x:.1f}"
     return s.replace(".", "p")
 
 
+# ----------------------------------------------------------------------------
+# gap_tag
+#   File-name tag of a band gap, "gap<value>".
+# ----------------------------------------------------------------------------
 def gap_tag(g: float) -> str:
     return f"gap{ev_tag(g)}"
 
 
+# ----------------------------------------------------------------------------
+# is_valid_cell
+#   A (gap, eh) cell is physical only if eps_h >= E_gap.
+# ----------------------------------------------------------------------------
 def is_valid_cell(gap: float, eh: float) -> bool:
     return eh >= gap
 
 
+# ----------------------------------------------------------------------------
+# is_existing_complete
+#   True for cells that already have a complete scan: the B-thresh row (eh = 3.8 eV) and the D-equal points (eh = gap) at 0.5, 0.7, 0.9 and 1.2 eV.
+# ----------------------------------------------------------------------------
 def is_existing_complete(gap: float, eh: float) -> bool:
     # Existing B-thresh row.
     if abs(eh - 3.8) < 1e-12:
@@ -61,26 +84,50 @@ def is_existing_complete(gap: float, eh: float) -> bool:
     return abs(eh - gap) < 1e-12 and gap in {0.5, 0.7, 0.9, 1.2}
 
 
+# ----------------------------------------------------------------------------
+# all_valid_cells
+#   Every physical (gap, eh) cell of the 2D grid.
+# ----------------------------------------------------------------------------
 def all_valid_cells() -> list[tuple[float, float]]:
     return [(g, e) for g in GAPS for e in EHS if is_valid_cell(g, e)]
 
 
+# ----------------------------------------------------------------------------
+# new_cells
+#   The physical cells that still need a scan.
+# ----------------------------------------------------------------------------
 def new_cells() -> list[tuple[float, float]]:
     return [(g, e) for (g, e) in all_valid_cells() if not is_existing_complete(g, e)]
 
 
+# ----------------------------------------------------------------------------
+# table_csv
+#   Relative path of the p100K ionization table of a cell.
+# ----------------------------------------------------------------------------
 def table_csv(gap: float, eh: float) -> str:
     return f"data/p100K_{gap_tag(gap)}_eh{ev_tag(eh)}.csv"
 
 
+# ----------------------------------------------------------------------------
+# config_name
+#   File name of the scan config of a cell.
+# ----------------------------------------------------------------------------
 def config_name(mediator: str, gap: float, eh: float) -> str:
     return f"scan_band_gap_2d_{mediator}_{ev_tag(gap)}_eh{ev_tag(eh)}.json"
 
 
+# ----------------------------------------------------------------------------
+# outdir_name
+#   Output directory of the scan of a cell.
+# ----------------------------------------------------------------------------
 def outdir_name(mediator: str, gap: float, eh: float) -> str:
     return f"outputs/scan_band_gap_2d_{mediator}_{ev_tag(gap)}_eh{ev_tag(eh)}"
 
 
+# ----------------------------------------------------------------------------
+# existing_scan_paths
+#   Config and output paths of an already existing scan (heavy or light naming scheme).
+# ----------------------------------------------------------------------------
 def existing_scan_paths(mediator: str, gap: float, eh: float) -> tuple[str, str]:
     gs = ev_tag(gap)
     es = ev_tag(eh)
@@ -93,6 +140,10 @@ def existing_scan_paths(mediator: str, gap: float, eh: float) -> tuple[str, str]
     return cfg, outdir
 
 
+# ----------------------------------------------------------------------------
+# build_missing_p100k
+#   Build the scaled p100K table of every cell with build_p100K_scaled.py, skipping existing files unless force is set.
+# ----------------------------------------------------------------------------
 def build_missing_p100k(cells: list[tuple[float, float]], force: bool) -> None:
     for gap, eh in cells:
         out_rel = table_csv(gap, eh)
@@ -120,6 +171,10 @@ def build_missing_p100k(cells: list[tuple[float, float]], force: bool) -> None:
             raise RuntimeError(f"build_p100K_scaled failed for gap={gap}, eh={eh}")
 
 
+# ----------------------------------------------------------------------------
+# write_scan_configs
+#   Write one scan config per mediator and cell from the template and return the corresponding manifest entries.
+# ----------------------------------------------------------------------------
 def write_scan_configs(cells: list[tuple[float, float]]) -> list[dict]:
     base = json.loads(TEMPLATE.read_text(encoding="utf-8"))
     entries: list[dict] = []
@@ -183,6 +238,10 @@ def write_scan_configs(cells: list[tuple[float, float]]) -> list[dict]:
     return entries
 
 
+# ----------------------------------------------------------------------------
+# update_manifest
+#   Update the scenario manifest JSON with the unphysical cells (marked invalid, eh < gap) and the newly generated cells.
+# ----------------------------------------------------------------------------
 def update_manifest(cells_new: list[tuple[float, float]]) -> None:
     data = json.loads(MANIFEST.read_text(encoding="utf-8"))
 
@@ -248,6 +307,10 @@ def update_manifest(cells_new: list[tuple[float, float]]) -> None:
     print(f"[ok] updated manifest: {MANIFEST.relative_to(ROOT)}")
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Generate the missing p100K tables, the scan configs and the manifest update for the 2D (gap, eh) grid; --force-p100k rebuilds existing tables.
+# ----------------------------------------------------------------------------
 def main() -> int:
     import argparse
 

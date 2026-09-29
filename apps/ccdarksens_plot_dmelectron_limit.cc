@@ -1,9 +1,12 @@
-// ============================================================================
-//  CCDarkSens — ccdarksens_plot_dmelectron_limit
-//  ROOT plotting executable that draws DM-electron 90% CL upper-limit curves from scan ROOT outputs and can overlay Brazilian-band envelopes from ccdarksens_band.
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  ccdarksens_plot_dmelectron_limit.cc -- ROOT plotting executable that
+//  draws DM-electron 90% CL upper-limit curves from scan ROOT outputs and
+//  can overlay Brazilian-band envelopes from ccdarksens_band.
+// ===========================================================================
 
 #include <cmath>
 #include <cctype>
@@ -47,17 +50,29 @@
 #include <limits>
 #include <cmath>
 
+// ----------------------------------------------------------------------------
+// EnsureOutputDirForFile
+//   Create the directory part of file_path (recursively) if the path contains one.
+// ----------------------------------------------------------------------------
 static void EnsureOutputDirForFile(const std::string& file_path) {
   const std::size_t slash = file_path.find_last_of('/');
   if (slash == std::string::npos || slash == 0) return;
   gSystem->mkdir(file_path.substr(0, slash).c_str(), true);
 }
 
+// ----------------------------------------------------------------------------
+// ResolveOutputPath
+//   Absolute version of a relative output path (prefixed with the current directory), used for log messages.
+// ----------------------------------------------------------------------------
 static std::string ResolveOutputPath(const std::string& rel) {
   if (rel.empty() || rel[0] == '/') return rel;
   return std::string(gSystem->pwd()) + "/" + rel;
 }
 
+// ----------------------------------------------------------------------------
+// SanitizeName
+//   Turn a label into a legal ROOT object name: every character that is not alphanumeric becomes '_', repeated underscores collapse and trailing ones are removed.
+// ----------------------------------------------------------------------------
 static std::string SanitizeName(const std::string& s) {
   std::string out;
   for (char c : s) out += (std::isalnum(static_cast<unsigned char>(c)) || c == '_') ? c : '_';
@@ -74,6 +89,12 @@ static std::string SanitizeName(const std::string& s) {
   return result;
 }
 
+// ----------------------------------------------------------------------------
+// SaveMainLimitOutputs
+//   Save the finished plot: the canvas as a PDF, and a ROOT file holding every limit curve
+//   (renamed from its label), the q histogram, the literature curves and the store-only curves.
+//   Returns true if the PDF exists afterwards.
+// ----------------------------------------------------------------------------
 static bool SaveMainLimitOutputs(TCanvas* c,
                                  const std::vector<TGraph*>& glimits,
                                  TH2D* hq,
@@ -122,6 +143,10 @@ static bool SaveMainLimitOutputs(TCanvas* c,
   return pdf_ok;
 }
 
+// ----------------------------------------------------------------------------
+// CsvEscape
+//   Quote a CSV field (doubling any quotes) if it contains a comma, quote or line break.
+// ----------------------------------------------------------------------------
 static std::string CsvEscape(const std::string& s) {
   bool need_quotes = false;
   for (char c : s) {
@@ -140,6 +165,11 @@ static std::string CsvEscape(const std::string& s) {
   return out;
 }
 
+// ----------------------------------------------------------------------------
+// SaveLimitContoursCsv
+//   Write the limit curves as CSV (mchi_MeV, sigma_e_cm2; a label column when there is more than
+//   one curve), skipping non-finite or non-positive points. Returns false if nothing was written.
+// ----------------------------------------------------------------------------
 static bool SaveLimitContoursCsv(const std::string& path,
                                  const std::vector<TGraph*>& glimits,
                                  const std::vector<std::string>& labels,
@@ -193,6 +223,11 @@ static bool SaveLimitContoursCsv(const std::string& path,
   return true;
 }
 
+// ----------------------------------------------------------------------------
+// MakeFilledBetween
+//   Closed polygon that fills the region between two curves over [x_min, x_max]: n_samples points
+//   log-spaced in x along each curve, with the given fill colour and transparency.
+// ----------------------------------------------------------------------------
 TGraph* MakeFilledBetween(const TGraph* g_bottom,
                           const TGraph* g_top,
                           double x_min,
@@ -207,7 +242,7 @@ TGraph* MakeFilledBetween(const TGraph* g_bottom,
     g_band->SetName("g_filled_between");
     g_band->SetTitle("");
 
-    // sample in log-x, since your axes are log
+    // sample in log-x, since my axes are log
     double logxmin = std::log10(x_min);
     double logxmax = std::log10(x_max);
 
@@ -336,6 +371,10 @@ static TGraph* FilterGraphPositiveLogSafe(const TGraph* g, const char* name)
     return out;
 }
 
+// ----------------------------------------------------------------------------
+// median_sorted_copy
+//   Median of v (NaN if empty); v is passed by value and sorted internally.
+// ----------------------------------------------------------------------------
 static double median_sorted_copy(std::vector<double> v)
 {
     if (v.empty()) return std::numeric_limits<double>::quiet_NaN();
@@ -741,6 +780,11 @@ TGraph* MakeLowerEnvelope(const std::vector<const TGraph*>& graphs,
     return g_env;
 }
 
+// ----------------------------------------------------------------------------
+// MakeExactEnvelope
+//   Lower envelope of several exclusion curves: at every x of any curve I take the smallest positive
+//   y among the curves that cover that x (interpolated). Returns a new graph owned by the caller.
+// ----------------------------------------------------------------------------
 TGraph* MakeExactEnvelope(const std::vector<const TGraph*>& graphs)
 {
     std::set<double> all_x;
@@ -790,6 +834,10 @@ TGraph* MakeExactEnvelope(const std::vector<const TGraph*>& graphs)
 
 
 
+// ----------------------------------------------------------------------------
+// EnforceMonotonicEnvelope
+//   Remove upward wiggles: going along the points, y is never allowed to rise above the previous value (in place).
+// ----------------------------------------------------------------------------
 void EnforceMonotonicEnvelope(TGraph* g)
 {
     if (!g) return;
@@ -813,6 +861,12 @@ void EnforceMonotonicEnvelope(TGraph* g)
     }
 }
 
+// ----------------------------------------------------------------------------
+// LoadExclusionCSV
+//   Read an exclusion curve from a two-column text file ("x, y", "x y", ";" or tab separated; comment
+//   and header lines are skipped), scale the columns and style the line. Returns nullptr if the file
+//   cannot be opened or has no valid points.
+// ----------------------------------------------------------------------------
 TGraph* LoadExclusionCSV(const std::string& csv_path,
                          int line_color = kGray+2,
                          int line_style = 1,
@@ -874,6 +928,7 @@ TGraph* LoadExclusionCSV(const std::string& csv_path,
 
 // Dark photon literature CSVs use several column layouts; mass is in keV, ε in
 // column k/limit.  x_col/y_col are 0-based field indices after comma-splitting.
+// True if the first significant character of the line is a letter (a header row).
 static bool LineLooksLikeCSVHeader(const std::string& line)
 {
   for (char c : line) {
@@ -883,6 +938,10 @@ static bool LineLooksLikeCSVHeader(const std::string& line)
   return false;
 }
 
+// ----------------------------------------------------------------------------
+// SplitCSVDoubles
+//   Split a line at commas into numbers, silently skipping empty or non-numeric fields.
+// ----------------------------------------------------------------------------
 static std::vector<double> SplitCSVDoubles(const std::string& line)
 {
   std::vector<double> vals;
@@ -955,12 +1014,18 @@ TGraph* LoadDarkPhotonLimitCSV(const std::string& csv_path,
   return g;
 }
 
+// The XENONnT HP bracket as two curves (lo, hi) and a band (TGraphAsymmErrors) between them.
 struct DarkPhotonXenonNtBracket {
   TGraph* lo = nullptr;
   TGraph* hi = nullptr;
   TGraphAsymmErrors* band = nullptr;
 };
 
+// ----------------------------------------------------------------------------
+// LoadDarkPhotonXenonNtHPBracket
+//   Read a CSV with mass, lower and upper epsilon columns (mass multiplied by mass_scale; rows with
+//   non-positive values skipped) and build the lower/upper curves plus the band between them.
+// ----------------------------------------------------------------------------
 static DarkPhotonXenonNtBracket LoadDarkPhotonXenonNtHPBracket(
     const std::string& csv_path,
     double mass_scale,
@@ -1024,6 +1089,10 @@ static DarkPhotonXenonNtBracket LoadDarkPhotonXenonNtHPBracket(
 
 
 
+// ----------------------------------------------------------------------------
+// LoadMassLimitDAT
+//   Read a "mass,limit" file (first line is a header), multiply the limit by yscale and style the line.
+// ----------------------------------------------------------------------------
 TGraph* LoadMassLimitDAT(const std::string& filename,
                          double yscale = 1,   // multiply Y column by this factor
                          Color_t  color  = kBlack,
@@ -1078,6 +1147,11 @@ TGraph* LoadMassLimitDAT(const std::string& filename,
 
 // need a function that reads in from txt file and makes a graph
 
+// ----------------------------------------------------------------------------
+// LoadTxtToTGraph
+//   Read an "x,y" text file (comment and blank lines skipped). x values above 1e4 are treated
+//   as masses in eV and converted to MeV. Returns nullptr if the file cannot be opened.
+// ----------------------------------------------------------------------------
 TGraph* LoadTxtToTGraph(const std::string& filename,
                         Color_t  color  = kBlack,
                         Style_t  lstyle = 1,
@@ -1133,6 +1207,7 @@ TGraph* LoadTxtToTGraph(const std::string& filename,
 }
 
 // Set the visible axis window without TGraph::SetLimits (which blocks ROOT GUI zoom).
+// Set the visible axis window of the current pad through the frame histogram.
 static void ApplyPadAxisRangeUser(double x_lo, double x_hi, double y_lo, double y_hi)
 {
   if (!gPad) return;
@@ -1159,6 +1234,10 @@ static void ApplyPadAxisRangeUser(double x_lo, double x_hi, double y_lo, double 
   gPad->Update();
 }
 
+// ----------------------------------------------------------------------------
+// UpdateRangesFromGraph
+//   Widen the running (xmin, xmax, ymin, ymax) so that it contains every point of g.
+// ----------------------------------------------------------------------------
 void UpdateRangesFromGraph(double& xmin, double& xmax,
                            double& ymin, double& ymax,
                            const TGraph* g)
@@ -1175,6 +1254,10 @@ void UpdateRangesFromGraph(double& xmin, double& xmax,
   }
 }
 
+// ----------------------------------------------------------------------------
+// UpdateRangesFromGraphWindow
+//   Same as UpdateRangesFromGraph but only for points with x inside [xwin_lo, xwin_hi].
+// ----------------------------------------------------------------------------
 static void UpdateRangesFromGraphWindow(double& xmin, double& xmax,
                                       double& ymin, double& ymax,
                                       const TGraph* g,
@@ -1192,6 +1275,10 @@ static void UpdateRangesFromGraphWindow(double& xmin, double& xmax,
   }
 }
 
+// ----------------------------------------------------------------------------
+// MakeFilledBand
+//   Polygon that fills the area between curve g and the level y_bottom (points sorted in x), with transparency alpha and no outline.
+// ----------------------------------------------------------------------------
 TGraph* MakeFilledBand(const TGraph* g,
                        double y_bottom,
                        int fill_color,
@@ -1230,6 +1317,11 @@ TGraph* MakeFilledBand(const TGraph* g,
   return gf;
 }
 
+// ----------------------------------------------------------------------------
+// MakeFilledBandAbove
+//   Polygon that fills the area between curve g and the level y_top over [x_left, x_right] (default:
+//   the range of g); where the range goes beyond the curve the gap is filled up to y_top.
+// ----------------------------------------------------------------------------
 TGraph* MakeFilledBandAbove(const TGraph* g,
                             double y_top,
                             int fill_color,
@@ -1284,6 +1376,10 @@ TGraph* MakeFilledBandAbove(const TGraph* g,
   return gf;
 }
 
+// ----------------------------------------------------------------------------
+// LabelGraphAtX
+//   Text label placed next to the point of g nearest to x_label (compared in log x), 25% above the curve.
+// ----------------------------------------------------------------------------
 TLatex* LabelGraphAtX(const TGraph* g,
                       double x_label,
                       const char* text,
@@ -1322,8 +1418,8 @@ TLatex* LabelGraphAtX(const TGraph* g,
 }
 
 // graphs: all exclusion curves that define the union exclusion
-// xmin,xmax: mass range for the band (same as your plot axes)
-// y_top: top of fill (same as your plot max)
+// xmin,xmax: mass range for the band (same as my plot axes)
+// y_top: top of fill (same as my plot max)
 // fill_color/alpha: style
 TGraph* MakeUnionBandAbove(const std::vector<const TGraph*>& graphs,
                            double xmin, double xmax,
@@ -1334,7 +1430,7 @@ TGraph* MakeUnionBandAbove(const std::vector<const TGraph*>& graphs,
     if (graphs.empty()) return nullptr;
 
     // 1) Build the lower envelope sampled densely in log x
-    const int N = 4000;  // can push to 6000 if you want
+    const int N = 4000;  // can push to 6000 if needed
     TGraph* g_env = new TGraph();
     g_env->SetName("g_env_union");
     g_env->SetTitle("");
@@ -1366,7 +1462,7 @@ TGraph* MakeUnionBandAbove(const std::vector<const TGraph*>& graphs,
 
         if (y_min < std::numeric_limits<double>::infinity()) {
             // 2) tiny downward fudge so we never sit above the true best curve
-            y_min *= 0.98;  // try 0.99 if you prefer tighter
+            y_min *= 0.98;  // try 0.99 for a tighter fill
             g_env->SetPoint(ip++, x, y_min);
         }
     }
@@ -1466,6 +1562,14 @@ TGraph* MakeDcBandPolygon(TGraph* g_lo, TGraph* g_hi, TGraph* g_cen,
     return new TGraph(bx.size(), bx.data(), by.data());
 }
 
+// ----------------------------------------------------------------------------
+// main
+//   Plot the exclusion limit from one or more scan ROOT files (each optionally followed by a label),
+//   with options for dark-photon and Migdal plots, the Brazilian band from ccdarksens_band, DC bands,
+//   literature curves, axis ranges and output paths (see the usage text for the flags). Flow: open the
+//   files and get q(m_chi, sigma), extract the limit curves, overlay the band and external exclusions,
+//   set the axis ranges from all curves, draw the plot and write the PDF, ROOT and CSV outputs.
+// ----------------------------------------------------------------------------
 int main(int argc, char** argv)
 {
   // ---------------------------------------------------------------------------
@@ -1513,7 +1617,8 @@ int main(int argc, char** argv)
               << "  overwrite with final axis ranges (or use --batch for a one-shot save).\n"
               << "  Multiple files:\n"
               << "    scan1.root \"label1\" scan2.root \"label2\" ... [q_threshold] [mediator]\n"
-              << "  mediator: 'heavy' or 'light' (default: heavy). Chooses literature curves.\n";
+              << "  mediator: 'heavy', 'light', or 'intermediate' (default: heavy). Chooses literature curves.\n"
+              << "    --intermediate  Intermediate mediator plot; suppresses all literature curves.\n";
     return 1;
   }
 
@@ -1723,6 +1828,10 @@ int main(int argc, char** argv)
       mediator = "heavy";
       continue;
     }
+    if (tok_lc == "intermediate" || tok_lc == "--intermediate") {
+      mediator = "intermediate";
+      continue;
+    }
     if (tok_lc == "light" || tok_lc == "--light") {
       mediator = "light";
       continue;
@@ -1786,8 +1895,8 @@ int main(int argc, char** argv)
     return 1;
   }
 
-  if (mediator != "heavy" && mediator != "light") {
-    std::cerr << "[limit] ERROR: mediator must be 'heavy' or 'light', got '" << mediator << "'\n";
+  if (mediator != "heavy" && mediator != "light" && mediator != "intermediate") {
+    std::cerr << "[limit] ERROR: mediator must be 'heavy', 'light', or 'intermediate', got '" << mediator << "'\n";
     return 1;
   }
 
@@ -1832,7 +1941,7 @@ int main(int argc, char** argv)
           a_lc == "--band-per-toy-hists" || a_lc == "--show-damic" ||
           a_lc == "--plain-legend" || a_lc == "--legend-left" ||
           a_lc == "--legend-right" || a_lc == "--dark-photon" ||
-          a_lc == "--migdal") {
+          a_lc == "--migdal" || a_lc == "--intermediate") {
         continue;
       }
       if (skip_value_flag(a_lc)) {
@@ -2246,6 +2355,10 @@ int main(int argc, char** argv)
               << " literature curve(s) from " << migdal_base << "\n";
   } else if (!dark_photon) {
     // --- DM-electron literature curves ---
+    if (mediator == "intermediate") {
+      // No published literature curves for intermediate mediator — skip all loading.
+      std::cout << "[limit] intermediate mediator: no literature curves loaded.\n";
+    } else {
     const std::string limits_base = "data/previous_limits/" + mediator + "_mediator/";
     const std::string damic_paper_export_heavy =
         "collab_frameworks/pydme/analysis/DailyModulation/LBC-Sep2024/paper_figures/data/"
@@ -2285,6 +2398,7 @@ int main(int argc, char** argv)
     g_solar_reflected = LoadMassLimitDAT(limits_base + srdm_file, 1e-38, kOrange+2, 1, 2);
     g_srdm         = LoadExclusionCSV(
         "data/previous_limits/srdm/carlos_srdm_ulm_limit.csv", c_freezein, 1, 3);
+    } // end heavy/light literature block
   } else {
     // --- Dark photon absorption literature (ScienceRun2024 notebook HP figure) ---
     const std::string dp_base = "data/previous_limits/dark_photon/";
@@ -2455,7 +2569,7 @@ int main(int argc, char** argv)
       g_model_fill = MakeFilledBand(g_model, y_bottom, kRed - 4, 0.35);
   }
 
-  // (Optional) if you ever draw g_damicm_mike and want it shaded too:
+  // (Optional) if I ever draw g_damicm_mike and want it shaded too:
   // TGraph* g_damicm_mike_fill = MakeFilledBand(
   //     g_damicm_mike, y_bottom, g_damicm_mike->GetLineColor(), 0.25);
 
@@ -2527,7 +2641,7 @@ int main(int argc, char** argv)
 //   double ymax = *std::max_element(sigma_lim_vals.begin(), sigma_lim_vals.end());
 
   // Load external exclusion(s) from CSV
-  // IMPORTANT: use the correct path where your CSV actually lives
+  // IMPORTANT: use the correct path where the CSV actually lives
   // e.g. "./SRDM_XENON1T-s20_ulightmediator.csv"
 
 //   glimit->GetXaxis()->SetLimits(xmin * 0.8, xmax );
@@ -2554,7 +2668,7 @@ int main(int argc, char** argv)
 // The DAMIC-M 2025 solid line is drawn separately on top.
 TGraph* g_env_electron      = nullptr;
 TGraph* g_env_fill_electron = nullptr;
-if (!dark_photon && !migdal_mode) {
+if (!dark_photon && !migdal_mode && mediator != "intermediate") {
   const std::string env_csv = "data/previous_limits/" + mediator + "_mediator/direct_detection_envelope.csv";
   g_env_electron = LoadExclusionCSV(env_csv, kGray + 1, 1, 0);
   if (g_env_electron) {
@@ -2945,7 +3059,7 @@ if (!dark_photon && !migdal_mode) {
 
   // Legacy Migdal comparison canvas (batch DM-e only — skip for dark photon and migdal mode).
   TCanvas* c_migdal_limit = nullptr;
-  if (batch && !dark_photon && !migdal_mode) {
+  if (batch && !dark_photon && !migdal_mode && mediator != "intermediate") {
   // Now we make a new plot for the migdal case
   // ------------------------------------------------------------------
 

@@ -19,7 +19,7 @@ CCDarkSens is a C++17 dark matter sensitivity framework for DAMIC-M. It computes
 | Efficiency MC JSON struct | `EfficiencyMCJSON` | `PatternMCJSON` |
 | Config member accessor | `.emc` | `.pmc` |
 | App local JSON alias | `emj` | `pmj` |
-| Diffusion formula | `DiffusionPhysics.hh::ComputeSigmaXYUm` | duplicated in Diffusion.cc + ChargeTransport.cc |
+| Diffusion formula | `DiffusionPhysics.hh::ComputeSigmaXYUm` | previously duplicated in Diffusion.cc + ChargeTransport.cc — **resolved**, both now delegate to the shared header |
 | Shared stats helper | `StatsUtils.hh::ccdarksens::stats::safe_log` | duplicated local lambdas |
 | Shared app utilities | `AppUtils.hh::ccdarksens::utils::` | copy-pasted per-app |
 
@@ -35,6 +35,8 @@ CCDarkSens is a C++17 dark matter sensitivity framework for DAMIC-M. It computes
 
 `ClusterMCJSON` and the `cmc` member **still exist** in `ConfigManager` as a legacy read shim (copies into `emc` so old JSON configs don't silently break), but the corresponding C++ class is gone.
 
+**Do not confuse this with `ClusterFitMC`** (`include/ccdarksens/response/ClusterFitMC.hh`) — a new, unrelated module for the WIMP-nucleon channel's per-event ΔLL reconstruction (see `docs/ClusterFitMC_Design.md`). Similar name, different purpose, not a revival of the deleted backend.
+
 ---
 
 ## Important shared headers (use these, don't duplicate)
@@ -42,6 +44,19 @@ CCDarkSens is a C++17 dark matter sensitivity framework for DAMIC-M. It computes
 - **`include/ccdarksens/response/DiffusionPhysics.hh`** — `ComputeSigmaXYUm(z, E, A, b, alpha, beta)`. Use this instead of reimplementing the formula.
 - **`include/ccdarksens/stats/StatsUtils.hh`** — `ccdarksens::stats::safe_log(x)`. Use this in any stats code.
 - **`include/ccdarksens/utils/AppUtils.hh`** — `MakeFlatEfficiency`, `SumROI`, `ExpandAxis`. Use these in apps instead of copy-pasting.
+
+---
+
+## Efficiency MC — two paths, different DC treatment
+
+`EfficiencyMC` computes P(pattern | n_e) and is DC-free by design. DC is handled separately as a background term. **Do not enable `include_dc_pileup` for production scans** — it is a diagnostic flag only.
+
+| Path | Config trigger | DC handling |
+|---|---|---|
+| **1D row** (production default) | `response.efficiency_mc.use_2d_image_efficiency: false` | No DC — pure diffusion + readout noise |
+| **2D image** (diagnostic) | `response.efficiency_mc.use_2d_image_efficiency: true` | Set `response.pattern_image.lambda_dc` to study efficiency degradation at a given DC level |
+
+The separation is deliberate and matches pydme: efficiency is a detector geometry property; DC enters only as a background rate.
 
 ---
 
@@ -99,12 +114,20 @@ The following values were cross-checked against the collaboration Python referen
 | App | Purpose |
 |-----|---------|
 | `ccdarksens_example_one_point_pattern` | Single (mχ, σ) diagnostic run — run this first |
-| `ccdarksens_scan_srdm_pattern_csv` | Full (mχ, σ) grid scan |
-| `ccdarksens_band` | Sensitivity band (median ± 1σ, 2σ) |
+| `ccdarksens_scan_dmelectron_pattern` | The DM-electron reference scan app (pattern- and n_e-space, every `run.*` statistical mode). **Do not modify** — kept as the trusted reference/consumer for `ccdarksens_scan_generic`'s parity gates; see `docs/GenericScanApp_Design.md`. |
+| `ccdarksens_scan_generic` | **Preferred for new work.** Single config-driven scan app for any channel (dm_electron, dark_photon, migdal, wimp_nucleon) × any analysis space (pattern, n_e, cluster_energy), including the 2D `pydme` minimizer, `Bp_theta_Br` background, `single_bin_likelihood`, `smooth_ul_envelope`, and `run.mode="threshold_toys"` for `ccdarksens_band`'s toy-MC calibration. Verified bit-exact against `ccdarksens_scan_dmelectron_pattern` on real production configs — see `docs/GenericScanApp_Design.md` §6-§9. |
+| `ccdarksens_scan_srdm_pattern_csv` | Secondary scan app reading pre-folded `S_pat` CSVs (pattern-space only); also the original home of the `threshold_toys` toy-MC algorithm, since ported into `ccdarksens_scan_generic`. |
+| `ccdarksens_band` | Sensitivity band (median ± 1σ, 2σ); works unmodified against either scan app above via `band.scan_binary`. |
 | `ccdarksens_plot_dmelectron_limit` | Exclusion limit plot from ROOT output |
+| `ccdarksens_validate_response_factory` | Diff `ResponseFactory`/`BackgroundFactory` output against reference-app ground truth (both `background_source` modes) |
 | `ccdarksens_compute_brc` | Compute B^rc_p from θ parameters and confusion matrix |
 | `ccdarksens_validate_pattern_efficiency` | Cross-check EfficiencyMC vs reference CSV |
 | `ccdarksens_validate_background_efficiency` | Cross-check B[p\|q] matrix vs reference CSV |
+| `ccdarksens_validate_cluster_fit_engine` | WIMP-nucleon channel: inject known signals, cross-check Nelder-Mead vs Minuit2 fit recovery |
+| `ccdarksens_calibrate_noise_tail` | WIMP-nucleon channel: pure-noise ΔLL tail calibration, convergence/stability checks |
+| `ccdarksens_build_cluster_fit_kernel` | WIMP-nucleon channel: build K[E_true,E_reco] kernel, efficiency-curve sanity checks |
+| `ccdarksens_example_one_point_cluster` | WIMP-nucleon channel: full config-driven single-point run (calibrate → build kernel → fold → PLR) |
+| `ccdarksens_validate_wimp_nucleon_paper_repro` | WIMP-nucleon channel: config-driven calibration+kernel reproduction check against PhysRevD.94.082006's own Figs. 6/9 (paper detector parameters, not the modern-projection defaults) |
 
 ---
 
@@ -118,3 +141,5 @@ The following values were cross-checked against the collaboration Python referen
 | `docs/Pydme_CCDarkSens_crosscheck.md` | Crosscheck of likelihood and background against pydme |
 | `docs/App_flow_walkthrough.md` | Step-by-step walkthrough of scan and example apps |
 | `docs/DM_Signal_Models_Physics_Reference.md` | Consolidated physics reference: DM-e (QEDark/QCDark2), dark photon absorption, Migdal effect, charge ionization (Klein's formula), and the shared PLR pipeline — Si and SrCd₂Sb₂ cases |
+| `docs/ClusterFitMC_Design.md` | WIMP-nucleus SI channel Phase 3/4 (noise-tail ΔLL calibration, per-event cluster reconstruction): pixel-shape derivation, closed-form ΔLL, minimizer strategy, validation results — built up slice by slice |
+| `docs/GenericScanApp_Design.md` | `ccdarksens_scan_generic`: the `ResponseFold`/`ResponseFactory`/`BackgroundFactory` abstractions, and how every DM-electron reference-app statistical mode (2D `pydme` minimizer, `Bp_theta_Br`, `single_bin_likelihood`, `smooth_ul_envelope`, `threshold_toys`) was ported and verified bit-exact — built up slice by slice |

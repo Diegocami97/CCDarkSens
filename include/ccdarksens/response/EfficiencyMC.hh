@@ -1,9 +1,11 @@
-// ============================================================================
-//  CCDarkSens — EfficiencyMC
-//  Header for EfficiencyMC configuration, pattern-table construction, and ε(n_e) application to spectra.
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  EfficiencyMC.hh -- Header for EfficiencyMC configuration, pattern-table
+//  construction, and ε(n_e) application to spectra.
+// ===========================================================================
 
 #pragma once
 
@@ -38,11 +40,11 @@ class PatternImageGenerator;
  */
 struct EfficiencyMCConfig {
   /// Trials for each n_e
-  int ne_trials = 50000;          // you requested 50k MC events per n_e
+  int ne_trials = 50000;          // 50k MC events per n_e
 
   /// Length of the 1D row segment in pixels used in the MC
   /// (must be consistent with pix_cfg.nx and ny=1).
-  int row_length = 32;            // you requested 32-pixel rows
+  int row_length = 32;            // 32-pixel rows
 
   /// Pixel simulator configuration (should typically have
   ///  mode = PixelSimMode::RowSegment,
@@ -56,7 +58,10 @@ struct EfficiencyMCConfig {
 
   /// Random seed (if needed for additional internal RNG)
   unsigned long seed = 12345;
-  /// When true, Poisson dark current is added as pileup during MC trials.
+  /// Diagnostic only — not used in production scans. When true, Poisson DC is
+  /// overlaid on the 1D row segment before classification. For DC-dependent
+  /// efficiency studies, use the 2D image path (PatternImageGenerator::lambda_dc)
+  /// which models DC pileup in the correct 2D spatial context.
   bool include_dc_pileup = false;
 };
 
@@ -84,6 +89,7 @@ inline std::vector<int> DecodePatternCode(int code) {
  */
 class EfficiencyMC {
 public:
+  // Constructor: settings, the shared charge-transport model and the pattern classifier.
   EfficiencyMC(const EfficiencyMCConfig& cfg,
             std::shared_ptr<ChargeTransport> ct,
             std::shared_ptr<PatternClassifier> classifier);
@@ -137,9 +143,9 @@ public:
                                   const std::map<std::pair<int,int>, double>& pattern_eff);
 
 private:
-  EfficiencyMCConfig cfg_;
-  std::shared_ptr<ChargeTransport>   ct_;
-  std::shared_ptr<PatternClassifier> classifier_;
+  EfficiencyMCConfig cfg_;  // settings
+  std::shared_ptr<ChargeTransport>   ct_;  // depth / diffusion sampler
+  std::shared_ptr<PatternClassifier> classifier_;  // turns pixel charges into pattern labels
   std::shared_ptr<PatternImageGenerator> img_gen_;  ///< optional: 2D image path for efficiency
 
   /// Probability table: P(pattern label | n_e).

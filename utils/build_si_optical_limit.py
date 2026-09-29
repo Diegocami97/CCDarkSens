@@ -1,4 +1,18 @@
 #!/usr/bin/env python3
+# ============================================================================
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  File: build_si_optical_limit.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  build_si_optical_limit.py -- Generate Si_eps_electron_opticallimit.dat for
+#  DarkELF, temperature-corrected to 130 K.
+# ============================================================================
+
 """
 Generate Si_eps_electron_opticallimit.dat for DarkELF, temperature-corrected to 130 K.
 
@@ -46,6 +60,10 @@ _A_VAR = 7.021e-4  # eV/K
 _B_VAR = 1108.0    # K
 _PHONONS = [(1.827e-2, 5.5), (5.773e-2, 4.0)]  # (E_p eV, A cm⁻¹/eV²)
 
+# ----------------------------------------------------------------------------
+# _eg
+#   Temperature-dependent silicon band gap (Varshni form): E_g(T) = E_g0 - A*T^2/(T + B).
+# ----------------------------------------------------------------------------
 def _eg(T):
     return _EG0 - _A_VAR * T**2 / (T + _B_VAR)
 

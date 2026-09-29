@@ -1,9 +1,12 @@
-// ============================================================================
-//  CCDarkSens — ExperimentSetup
-//  Computes experiment summary quantities (exposure in kg·year, ROI bins, mode string) from JSON experiment settings and detector mass.
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  ExperimentSetup.cc -- I compute the experiment summary (exposure in
+//  kg*year, ROI bin list, mode string) from the JSON experiment settings and
+//  the detector mass.
+// ===========================================================================
 
 #include "ccdarksens/experiment/ExperimentSetup.hh"
 #include <algorithm>
@@ -12,6 +15,7 @@
 
 namespace ccdarksens {
 
+// Human-readable name of an ExperimentMode (used in logs and output files).
 static std::string mode_to_string(ExperimentMode m) {
   switch (m) {
     case ExperimentMode::Observed: return "observed";
@@ -21,6 +25,12 @@ static std::string mode_to_string(ExperimentMode m) {
   return "unknown";
 }
 
+// ----------------------------------------------------------------------------
+// ExperimentSetup::ExperimentSetup
+//   I store the configuration and reject unphysical settings:
+//   livetime <= 0, duty_cycle outside (0,1], or ne_max <= ne_min
+//   (std::invalid_argument).
+// ----------------------------------------------------------------------------
 ExperimentSetup::ExperimentSetup(ExperimentConfig cfg,
                                  double detector_mass_kg,
                                  uint64_t rng_seed)
@@ -34,6 +44,14 @@ ExperimentSetup::ExperimentSetup(ExperimentConfig cfg,
     throw std::invalid_argument("ne_max must be > ne_min");
 }
 
+// ----------------------------------------------------------------------------
+// ExperimentSetup::prepare_summary
+//   I compute
+//       exposure [kg*year] = livetime_days * duty_cycle * mass_kg / 365.25
+//   and build the ROI list: every n_e in [ne_min, ne_max] if the config gave
+//   none, otherwise the config list sorted and de-duplicated. The pattern ROI
+//   and the observable name are passed through unchanged.
+// ----------------------------------------------------------------------------
 ExperimentSummary ExperimentSetup::prepare_summary() const {
   ExperimentSummary s;
   // Exposure in kg·year: (livetime_days * duty_cycle) * mass_kg / days_per_year

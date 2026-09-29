@@ -1,9 +1,11 @@
-// ============================================================================
-//  CCDarkSens — PatternRates
-//  Header for folding n_e spectra to pattern rates and migrating true-pattern backgrounds to identified bins.
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  PatternRates.hh -- Header for folding n_e spectra to pattern rates and
+//  migrating true-pattern backgrounds to identified bins.
+// ===========================================================================
 
 #pragma once
 

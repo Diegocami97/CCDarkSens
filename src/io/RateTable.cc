@@ -1,9 +1,11 @@
-// ============================================================================
-//  CCDarkSens — RateTable
-//  Loads two-column QEDark-style rate CSVs and interpolates dR/dE onto a uniform ROOT energy histogram in events/(kg·year·eV).
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  RateTable.cc -- I load two-column rate CSVs and interpolate dR/dE onto a
+//  uniform ROOT energy histogram in eV.
+// ===========================================================================
 
 #include "ccdarksens/io/RateTable.hh"
 #include <TH1D.h>
@@ -16,17 +18,21 @@
 namespace ccdarksens {
 
 namespace {
+// True if the line is blank or its first non-blank character is '#'.
 inline bool is_comment_or_empty(const std::string& s) {
   for (char c : s) { if (c == '#') return true; if (!std::isspace(static_cast<unsigned char>(c))) return false; }
   return true;
 }
 
+// Strip leading and trailing whitespace from s in place.
 inline void trim(std::string& s) {
   size_t i = 0; while (i < s.size() && std::isspace(static_cast<unsigned char>(s[i]))) ++i;
   size_t j = s.size(); while (j > i && std::isspace(static_cast<unsigned char>(s[j-1]))) --j;
   s = s.substr(i, j - i);
 }
 
+// Parse a data line into two doubles. I try comma-separated first and fall back
+// to whitespace-separated. Returns false if the line is not two numbers.
 inline bool split_line(const std::string& line, double& a, double& b) {
   // try comma first
   {
@@ -46,6 +52,13 @@ inline bool split_line(const std::string& line, double& a, double& b) {
 }
 } // namespace
 
+// ----------------------------------------------------------------------------
+// RateTable::LoadCSV
+//   I read a two-column table (E [eV], dR/dE): blank and '#' lines are
+//   skipped, the first data line is treated as the header, and unparsable
+//   lines are dropped. Returns true only if I got at least one row and both
+//   columns have the same length.
+// ----------------------------------------------------------------------------
 bool RateTable::LoadCSV(const std::string& path) {
   E_eV_.clear(); R_kg_year_eV_.clear(); meta_ = RateMeta{};
 
@@ -65,6 +78,14 @@ bool RateTable::LoadCSV(const std::string& path) {
   return (!E_eV_.empty() && E_eV_.size() == R_kg_year_eV_.size());
 }
 
+// ----------------------------------------------------------------------------
+// RateTable::MakeTH1D
+//   I fill a histogram of nbins between Emin_eV and Emax_eV. Each bin gets
+//   dR/dE linearly interpolated at its centre; below the table's first energy
+//   I use its first value, above its last energy I use 0. Bin content is
+//   events/(kg*year*eV) -- multiply by the exposure and the bin width for
+//   counts. Sumw2 is enabled. Returns a new histogram owned by the caller.
+// ----------------------------------------------------------------------------
 std::unique_ptr<TH1D> RateTable::MakeTH1D(const std::string& name,
                                           double Emin_eV, double Emax_eV,
                                           int nbins) const {

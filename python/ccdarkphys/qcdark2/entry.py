@@ -1,3 +1,17 @@
+# ============================================================================
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  File: entry.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  entry.py -- QCDark2 entry point for DM-electron scattering using
+#  dielectric-function inputs.
+# ============================================================================
+
 """
 QCDark2 entry point for DM-electron scattering using dielectric-function inputs.
 
@@ -24,6 +38,10 @@ from ccdarkphys.common.mediator_map import MEDIATOR_TO_FDM_INDEX
 _ENV_EPSILON = "CCDARK_SENS_QCDARK2_EPSILON"
 
 
+# ----------------------------------------------------------------------------
+# _resolve_epsilon_path
+#   Path of the QCDark2 dielectric-function HDF5: the explicit argument, else the environment variable; raises FileNotFoundError if neither is given.
+# ----------------------------------------------------------------------------
 def _resolve_epsilon_path(explicit: str | None) -> str:
     if explicit:
         return os.path.abspath(os.path.expanduser(explicit))
@@ -56,9 +74,14 @@ def compute_dRdE(
     """
     if material.lower() not in ("si", "silicon"):
         raise NotImplementedError("Only Silicon is currently supported for QCDark2 backend.")
-    if mediator not in MEDIATOR_TO_FDM_INDEX:
-        raise ValueError("mediator: heavy/massive/0 or light/massless/2")
-    q2_mediator = "heavy" if MEDIATOR_TO_FDM_INDEX[mediator] == 0 else "light"
+    # mediator can be a named string ("heavy"/"light") or a float/numeric string mA' in eV
+    try:
+        mA_eV = float(mediator)
+        q2_mediator: str | float = mA_eV   # pass numeric mA' directly to QCDark2
+    except (TypeError, ValueError):
+        if mediator not in MEDIATOR_TO_FDM_INDEX:
+            raise ValueError("mediator: 'heavy'/'light' or a float mA' in eV (e.g. 5000.0)")
+        q2_mediator = "heavy" if MEDIATOR_TO_FDM_INDEX[mediator] == 0 else "light"
 
     path = _resolve_epsilon_path(epsilon_h5)
     if not os.path.isfile(path):
@@ -119,6 +142,7 @@ def compute_dRdE(
     meta = {
         "material": material,
         "mediator": mediator,
+        **({"mA_eV": float(mediator)} if isinstance(q2_mediator, float) else {}),
         "table_path": path,
         "table_sha1": CIO.sha1sum(path),
         "v0_cm_s": v0_cm_s,
@@ -139,11 +163,16 @@ def compute_dRdE(
     }
 
 
+# ----------------------------------------------------------------------------
+# _cli
+#   Command-line front end: compute one QCDark2 rate table (mediator 'heavy', 'light' or a mediator mass in eV; default halo v0 = 238, vE = 263, vesc = 544 km/s) and write it to --out_csv.
+# ----------------------------------------------------------------------------
 def _cli():
     ap = argparse.ArgumentParser()
     ap.add_argument("--material", default="Si")
     ap.add_argument(
-        "--mediator", required=True, choices=["heavy", "massive", "light", "massless"]
+        "--mediator", required=True,
+        help="'heavy', 'light', or a float mA' in eV (e.g. 5000.0 for 5 keV)"
     )
     ap.add_argument("--mchi_MeV", type=float, required=True)
     ap.add_argument("--sigma_e_cm2", type=float, required=True)

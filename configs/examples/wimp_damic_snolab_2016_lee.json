@@ -1,0 +1,154 @@
+{
+  "run": {
+    "label": "wimp_damic_snolab_2016_lee",
+    "outdir": "outputs/wimp_damic_snolab_2016_lee",
+    "cl": 0.9,
+    "rng_seed": 12345,
+    "verbosity": 1,
+    "use_profile_likelihood": true,
+    "background_source": "dc_flat_migration",
+    "background_model": "scale",
+    "profile_minimizer": "brent"
+  },
+  "detector": {
+    "rows": 4000,
+    "cols": 2000,
+    "pixel_size_um": 15.0,
+    "thickness_mm": 0.675,
+    "active_fraction": 1.0,
+    "target_element": "Si",
+    "density_g_cm3": 2.329,
+    "mass_kg": 0.01
+  },
+  "experiment": {
+    "mode": "asimov",
+    "livetime_days": 60.0,
+    "duty_cycle": 1.0,
+    "binning": {
+      "ne_min": 1,
+      "ne_max": 5
+    },
+    "roi_bins": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "observable_bins": "ne"
+  },
+  "backgrounds": {
+    "dark_current": {
+      "lambda_e_per_pix_per_year": 0.0,
+      "norm_scale": 1.0
+    },
+    "timing": {
+      "exposure_time_s": 1800
+    },
+    "flat_background": {
+      "norm_per_kg_year_keV": 5478.75,
+      "Emin_eV": 0,
+      "Emax_eV": 4000,
+      "nbins": 400
+    },
+    "lee": {
+      "enabled": true,
+      "preset": "damic_snolab_2023_skipper"
+    }
+  },
+  "response": {
+    "analysis_space": "cluster_energy",
+    "cluster_fit_mc": {
+      "window_nx": 11,
+      "window_ny": 11,
+      "pixel_size_um": 15.0,
+      "sigma_readout_e": 1.8,
+      "diffusion": {
+        "A_um2": 215.0,
+        "b_umInv": 0.0013,
+        "alpha": 1.0,
+        "beta_per_keV": 0.0,
+        "thickness_um": 675.0
+      },
+      "fit_method": "nelder_mead",
+      "sigma_xy_lo_px": 0.1,
+      "sigma_xy_hi_px": 2.0,
+      "n_toys": 5000,
+      "target_tail_prob": 0.001,
+      "calib_rng_seed": 20260825,
+      "ne_trials_per_point": 1500,
+      "sigma_xy_fid_min_px": 0.35,
+      "sigma_xy_fid_max_px": 1.22,
+      "eh_pair_eV": 3.77,
+      "fano_factor": 0.133,
+      "rng_seed": 24680,
+      "Etrue_min_eV": 60.0,
+      "Etrue_max_eV": 4000.0,
+      "Etrue_npoints": 16,
+      "Ereco_min_eV": 0.0,
+      "Ereco_max_eV": 4000.0,
+      "Ereco_nbins": 80
+    },
+    "background_efficiency_csv": "data/wimp_nucleon_damic2016_fig9_background_1x1.csv"
+  },
+  "model": {
+    "type": "wimp_nucleon",
+    "target_nucleus": "Si28",
+    "nuclear_A": 28,
+    "nuclear_Z": 14,
+    "mediator": "heavy",
+    "rates_dir": "data/wimp_nucleon_rates_ee/Si/heavy_damic2016halo_izraelevitch",
+    "filename_template": "dRdE_ee_{target_nucleus}_{mediator}_m{mchi_MeV}_s{sigma_n_cm2}.csv",
+    "Emin_eV": 0,
+    "Emax_eV": 4000,
+    "nbins": 400,
+    "grid": {
+      "mchi_MeV": {
+        "values": [
+          500.0,
+          558.671222,
+          624.227068,
+          697.475397,
+          779.318864,
+          870.766044,
+          972.943859,
+          1087.111468,
+          1214.675784,
+          1357.208808,
+          1516.467006,
+          1694.412949,
+          1893.239505,
+          2115.396854,
+          2363.622689,
+          2640.97595,
+          2950.874521,
+          3297.137347,
+          3684.031499,
+          4116.324756,
+          4599.34436,
+          5139.042664,
+          5742.070486,
+          6415.859066,
+          7168.711644,
+          8009.905784,
+          8949.807698,
+          10000.0
+        ]
+      },
+      "sigma_n_cm2": {
+        "logspace": {
+          "start_exp": -42,
+          "stop_exp": -33,
+          "num": 20,
+          "endpoint": true
+        }
+      },
+      "format": {
+        "mchi": ".6f",
+        "sigma": ".1e"
+      }
+    }
+  },
+  "_comment": "WIMP-nucleon SI exclusion-limit reproduction, DAMIC 0.6 kg-day (PhysRevD.94.082006 / arXiv:1607.07410), Fig. 11 -- SINGLE-CHANNEL 1x1-only version, WITH the low-energy-excess (LEE) background enabled (damic_snolab_2023_skipper preset, arXiv:2306.01717). Identical to wimp_damic_snolab_2016.json except for backgrounds.lee. WHY 1x1-only, not joint: an earlier joint (response.channels[]) version of this comparison produced BIT-IDENTICAL upper limits to its baseline sibling across all 28 mass points -- traced to RunJointChannelScan (apps/ccdarksens_scan_generic.cc) never checking cfg.backgrounds().has_lee_bkg at all (only the single-channel MakeBackground() path in BackgroundFactory.cc does). Per explicit instruction, scope reduced to 1x1-only for now, which correctly applies the LEE term via the already-working single-channel path (verified: this config's upper limits differ from the baseline's at every mass point once the LEE preset's exponential rate is added). A joint-channel LEE fix is a known follow-up, not done here.",
+  "_header": "Diego Venegas-Vargas | DAMIC-M collaboration | CCDarkSens Framework -- Student example: WIMP-nucleon SI, DAMIC at SNOLAB (2016) reproduction, single-channel (1x1 only) cluster-energy likelihood, WITH the low-energy-excess (LEE) background enabled (damic_snolab_2023_skipper preset, arXiv:2306.01717). First working on/off comparison for this feature -- see _comment for the joint-path bug this scope change sidesteps."
+}

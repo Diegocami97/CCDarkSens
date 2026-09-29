@@ -1,0 +1,50 @@
+{
+  "backend": "qcdark2",
+  "model_type": "dm_electron",
+  "material": "Si",
+  "mediator": "5000.0",
+  "halo_type": "SHM",
+  "halo": {
+    "v0_kms": 238.0,
+    "vE_kms": 263.0,
+    "vesc_kms": 544.0
+  },
+  "detector": {
+    "band_gap_eV": 1.2,
+    "eh_pair_eV": 3.8,
+    "binsize_eV": 0.1
+  },
+  "epsilon_h5": "data/qcdark2_epsilon/Si/Si_fast_gap1p2.h5",
+  "rates_dir": "data/qcdark2_rates/Si/intermediate/mA_5keV_gap1p2",
+  "filename_template": "dRdE_mchi_{mchi_MeV}MeV_sigma_e_{sigma_e_cm2}.csv",
+  "grid": {
+    "mchi_MeV": {
+      "logspace": {
+        "start": 0.2,
+        "stop": 1000.0,
+        "num": 800,
+        "endpoint": true
+      }
+    },
+    "sigma_e_cm2": {
+      "values": [1e-35, 1e-36, 1e-37, 1e-38, 1e-39, 1e-40, 1e-41, 1e-42]
+    },
+    "format": {
+      "mchi": ".6f",
+      "sigma": ".1e"
+    }
+  },
+  "options": {
+    "skip_existing": true,
+    "overwrite": false,
+    "compress": false,
+    "parallel": 4,
+    "progress": true,
+    "use_sigma_scaling": true,
+    "sigma_ref": 1e-38,
+    "format": {
+      "mchi": ".6f",
+      "sigma": ".1e"
+    }
+  }
+}

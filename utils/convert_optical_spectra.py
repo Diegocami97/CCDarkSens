@@ -1,3 +1,18 @@
+# ============================================================================
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  File: convert_optical_spectra.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  convert_optical_spectra.py -- Convert Tom Arbaugh's optical spectra .dat
+#  files (scalar or SOC) into the CCDarkSens custom dielectric CSV format
+#  expected by entry.py (_load_eps_csv).
+# ============================================================================
+
 """
 Convert Tom Arbaugh's optical spectra .dat files (scalar or SOC) into the
 CCDarkSens custom dielectric CSV format expected by entry.py (_load_eps_csv).
@@ -21,6 +36,10 @@ Usage:
 import sys
 import numpy as np
 
+# ----------------------------------------------------------------------------
+# convert
+#   Convert an optical-spectrum .dat file (energy, Re, Im) into the CCDarkSens custom dielectric CSV, skipping comment, malformed and non-finite rows.
+# ----------------------------------------------------------------------------
 def convert(dat_path: str, out_path: str) -> None:
     energies, eps1s, eps2s = [], [], []
     with open(dat_path) as f:

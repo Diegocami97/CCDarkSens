@@ -1,9 +1,12 @@
-// ============================================================================
-//  CCDarkSens — PatternImageGenerator
-//  Generates binned 2D charge images (and ideal 3×5 clusters) from deposited electrons, diffusion, readout noise, and optional dark current.
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  PatternImageGenerator.cc -- Generates binned 2D charge images (and ideal
+//  3×5 clusters) from deposited electrons, diffusion, readout noise, and
+//  optional dark current.
+// ===========================================================================
 
 #include "ccdarksens/response/PatternImageGenerator.hh"
 #include "ccdarksens/response/ChargeTransport.hh"
@@ -15,6 +18,12 @@
 
 namespace ccdarksens {
 
+// ----------------------------------------------------------------------------
+// PatternImageGenerator::PatternImageGenerator
+//   I check the configuration: with a raw size, the binning factors must be
+//   positive and divide the raw size; otherwise every dimension must be positive.
+//   The charge-transport pointer must not be null. Throws std::runtime_error.
+// ----------------------------------------------------------------------------
 PatternImageGenerator::PatternImageGenerator(const PatternImageConfig& cfg,
                                              std::shared_ptr<ChargeTransport> ct)
   : cfg_(cfg),
@@ -35,6 +44,10 @@ PatternImageGenerator::PatternImageGenerator(const PatternImageConfig& cfg,
     throw std::runtime_error("PatternImageGenerator: ChargeTransport is null");
 }
 
+// ----------------------------------------------------------------------------
+// PatternImageGenerator::NrowsBinned
+//   Number of binned rows: raw_rows / row_binning if the raw size is set, otherwise nrows_binned.
+// ----------------------------------------------------------------------------
 int PatternImageGenerator::NrowsBinned() const
 {
   if (cfg_.raw_rows > 0 && cfg_.raw_cols > 0)
@@ -42,6 +55,10 @@ int PatternImageGenerator::NrowsBinned() const
   return cfg_.nrows_binned;
 }
 
+// ----------------------------------------------------------------------------
+// PatternImageGenerator::Ncols
+//   Number of binned columns: raw_cols / col_binning if the raw size is set, otherwise ncols.
+// ----------------------------------------------------------------------------
 int PatternImageGenerator::Ncols() const
 {
   if (cfg_.raw_rows > 0 && cfg_.raw_cols > 0)
@@ -49,6 +66,14 @@ int PatternImageGenerator::Ncols() const
   return cfg_.ncols;
 }
 
+// ----------------------------------------------------------------------------
+// PatternImageGenerator::GenerateImage
+//   One simulated event as a binned image [row][col]. I sample a depth, get
+//   sigma_xy(z, E), place a Gaussian cloud of n_e electrons at the image centre (or a
+//   random position if randomize_center is set), drop each electron in its raw
+//   pixel, sum row_binning raw rows and col_binning raw columns, add Gaussian
+//   readout noise to every binned pixel, and optionally Poisson dark current.
+// ----------------------------------------------------------------------------
 std::vector<std::vector<double>> PatternImageGenerator::GenerateImage(int n_e, double Ee_eV)
 {
   const int ny_raw = (cfg_.raw_rows > 0 && cfg_.raw_cols > 0)
@@ -142,6 +167,10 @@ std::vector<std::vector<double>> PatternImageGenerator::GenerateImage(int n_e, d
   return out;
 }
 
+// ----------------------------------------------------------------------------
+// PatternImageGenerator::GenerateImageToTH2D
+//   Same as GenerateImage, written into a ROOT TH2D with the first row at the top (a null pointer is ignored).
+// ----------------------------------------------------------------------------
 void PatternImageGenerator::GenerateImageToTH2D(int n_e, double Ee_eV, TH2D* h2)
 {
   if (!h2) return;
@@ -155,6 +184,11 @@ void PatternImageGenerator::GenerateImageToTH2D(int n_e, double Ee_eV, TH2D* h2)
   }
 }
 
+// ----------------------------------------------------------------------------
+// PatternImageGenerator::SimulateCluster
+//   An ideal 3x5 cluster whose middle row is [0, b, c, d, 0], with Gaussian readout
+//   noise added to every pixel and rounded to five decimals.
+// ----------------------------------------------------------------------------
 std::vector<std::vector<double>> PatternImageGenerator::SimulateCluster(double b, double c, double d)
 {
   // Match notebook: 3x5 array, middle row [0, b, c, d, 0], add N(0, sigma) then round to 5 decimals

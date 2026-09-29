@@ -1,10 +1,17 @@
 #!/usr/bin/env python3
 # ============================================================================
-#  CCDarkSens — run_band_gap_refix
-#  Non-destructive regeneration of band-gap pheno limit scans + B/D overlays
-#  after the efficiency/ROI fix (single-pixel epsilon in n_e space).
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
 #
-#  Author: Diego Venegas-Vargas
+#  File: run_band_gap_refix.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  run_band_gap_refix.py -- Non-destructive regeneration of band-gap pheno
+#  limit scans + B/D overlays after the efficiency/ROI fix (single-pixel
+#  epsilon in n_e space).
 # ============================================================================
 """Re-run the band-gap pheno scans with the corrected n_e-space efficiency and
 regenerate the heavy/light x B-thresh/D-equal limit overlays, WITHOUT touching
@@ -65,6 +72,10 @@ def redirected_configs() -> list[Path]:
     return out
 
 
+# ----------------------------------------------------------------------------
+# cmd_scan
+#   Sub-command scan: re-run every redirected config into the refix output tree with the scan binary, skipping outputs that exist unless --force; returns 1 if the binary is missing or any scan fails.
+# ----------------------------------------------------------------------------
 def cmd_scan(args: argparse.Namespace) -> int:
     if not BUILD_SCAN.is_file():
         print(f"ERROR: missing {BUILD_SCAN}; build it first.", file=sys.stderr)
@@ -94,6 +105,10 @@ def _redirect_path(p: Path) -> Path:
     return ROOT / REFIX_BASE / p.parent.name / p.name
 
 
+# ----------------------------------------------------------------------------
+# cmd_plot
+#   Sub-command plot: redirect the scan-path resolvers of the Phase C plotting scripts to the refix outputs and make the gap and eps_h sweep plots.
+# ----------------------------------------------------------------------------
 def cmd_plot(_args: argparse.Namespace) -> int:
     sys.path.insert(0, str(ROOT / "utils"))
     import band_gap_scan_paths as bsp  # noqa: E402
@@ -144,6 +159,10 @@ def cmd_plot(_args: argparse.Namespace) -> int:
     return rc
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Command line with the sub-commands scan, plot and all.
+# ----------------------------------------------------------------------------
 def main() -> int:
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter

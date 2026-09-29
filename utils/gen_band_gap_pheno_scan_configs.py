@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
 # ============================================================================
-#  CCDarkSens — gen_band_gap_pheno_scan_configs
-#  Generate scan configs for Phase C band-gap pheno scan (6 gaps × B-thresh + D-equal)
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
 #
-#  Author: Diego Venegas-Vargas
+#  File: gen_band_gap_pheno_scan_configs.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  gen_band_gap_pheno_scan_configs.py -- Generate scan configs for Phase C
+#  band-gap pheno scan (6 gaps × B-thresh + D-equal)
 # ============================================================================
 """Generate scan_band_gap_pheno_*.json for Phase C (6 gaps x D-equal + B-thresh)."""
 
@@ -19,20 +26,36 @@ GAPS = [0.1, 0.3, 0.5, 0.7, 0.9, 1.2]
 EH_B_THRESH = 3.8
 
 
+# ----------------------------------------------------------------------------
+# gap_tag
+#   File-name tag of a band gap, e.g. "gap0p7" (1.2 eV gives "gap1p2").
+# ----------------------------------------------------------------------------
 def gap_tag(g: float) -> str:
     return "gap1p2" if abs(g - 1.2) < 1e-9 else f"gap{g:.1f}".replace(".", "p")
 
 
+# ----------------------------------------------------------------------------
+# eh_tag
+#   Electron-hole pair energy formatted for file names with '.' replaced by 'p'.
+# ----------------------------------------------------------------------------
 def eh_tag(eh: float) -> str:
     return f"{eh:g}".replace(".", "p")
 
 
+# ----------------------------------------------------------------------------
+# config_stem
+#   File-name stem of the scan config of a gap and scenario (eps_h = gap for D-equal, the fixed B-thresh value otherwise).
+# ----------------------------------------------------------------------------
 def config_stem(gap: float, scenario: str) -> str:
     eh = gap if scenario == "D-equal" else EH_B_THRESH
     gs = gap_tag(gap)[3:]  # gap0p1 -> 0p1
     return f"scan_band_gap_pheno_{gs}_eh{eh_tag(eh)}"
 
 
+# ----------------------------------------------------------------------------
+# build_case
+#   Scan config of one (gap, scenario) case: the template with the label, output directory, rate files and ionization table replaced.
+# ----------------------------------------------------------------------------
 def build_case(gap: float, scenario: str, base: dict) -> dict:
     eh = gap if scenario == "D-equal" else EH_B_THRESH
     gt = gap_tag(gap)
@@ -54,6 +77,10 @@ def build_case(gap: float, scenario: str, base: dict) -> dict:
     return cfg
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Write the heavy-mediator Phase C pheno scan configs for every band gap and scenario.
+# ----------------------------------------------------------------------------
 def main() -> int:
     base = json.loads(TEMPLATE.read_text(encoding="utf-8"))
     written = []

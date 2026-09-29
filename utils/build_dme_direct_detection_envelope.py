@@ -1,4 +1,18 @@
 #!/usr/bin/env python3
+# ============================================================================
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  File: build_dme_direct_detection_envelope.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  build_dme_direct_detection_envelope.py -- Build a lower-envelope CSV for
+#  the DM-electron direct detection limits.
+# ============================================================================
+
 """
 Build a lower-envelope CSV for the DM-electron direct detection limits.
 
@@ -84,6 +98,10 @@ def lower_envelope(curves: list[tuple[np.ndarray, np.ndarray]],
     return np.array(masses_out), np.array(sigmas_out)
 
 
+# ----------------------------------------------------------------------------
+# write_csv
+#   Write the envelope as a two-column CSV (mass_MeV, sigma_cm2) with a short comment header.
+# ----------------------------------------------------------------------------
 def write_csv(path: Path, masses: np.ndarray, sigmas: np.ndarray) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w") as f:
@@ -94,6 +112,10 @@ def write_csv(path: Path, masses: np.ndarray, sigmas: np.ndarray) -> None:
     print(f"Wrote {path}  ({len(masses)} points)")
 
 
+# ----------------------------------------------------------------------------
+# build
+#   Build the lower envelope of the direct-detection limits for one mediator: load the DAMIC-M 2025 curve (from the collaboration framework, if present) and the other curves of that mediator, take their minimum, and write it as CSV.
+# ----------------------------------------------------------------------------
 def build(mediator: str) -> None:
     d = DATA / mediator
     damic_key = ("DAMIC-M_2025_QEDark_DMe_heavymediator.txt"

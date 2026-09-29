@@ -1,9 +1,11 @@
-// ============================================================================
-//  CCDarkSens — StatisticsConfig
-//  Header for statistical-method settings (test statistic name, CL, toys, bin selection) derived from run config.
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  StatisticsConfig.hh -- Header for statistical-method settings (test
+//  statistic name, CL, toys, bin selection) derived from run config.
+// ===========================================================================
 
 #pragma once
 

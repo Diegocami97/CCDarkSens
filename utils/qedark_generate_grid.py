@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
 # ============================================================================
-#  CCDarkSens — qedark_generate_grid
-#  Multiprocess grid driver that expands (mχ, σe) JSON grids and writes dR/dE CSVs via QEDark, QCDark, or QCDark2 backends.
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
 #
-#  Author: Diego Venegas-Vargas
+#  File: qedark_generate_grid.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  qedark_generate_grid.py -- Multiprocess grid driver that expands (mχ, σe)
+#  JSON grids and writes dR/dE CSVs via QEDark, QCDark, or QCDark2 backends.
 # ============================================================================
 
 """
@@ -51,6 +58,10 @@ def _dispatch_compute(backend: str):
 # Grid expansion helpers
 # ---------------------------
 
+# ----------------------------------------------------------------------------
+# _uniq_preserve
+#   The items of xs without duplicates, in their original order.
+# ----------------------------------------------------------------------------
 def _uniq_preserve(xs):
     seen = set(); out = []
     for x in xs:
@@ -108,6 +119,10 @@ def _expand_axis(spec: Any, kind: str) -> List[float]:
 # Worker
 # ---------------------------
 
+# ----------------------------------------------------------------------------
+# _build_out_path
+#   Output path of one grid point from the file-name and sub-directory templates (with a .gz suffix when compressing); creates the directory.
+# ----------------------------------------------------------------------------
 def _build_out_path(base_dir: Path,
                     filename_template: str,
                     subdir_template: str,
@@ -142,6 +157,10 @@ def _exists_any(out_path: Path) -> bool:
         gz = Path(str(out_path) + ".gz")
         return gz.exists()
 
+# ----------------------------------------------------------------------------
+# _write_csv_maybe_gz
+#   Write the rate CSV, gzip-compressing it (through a temporary file) when compress is set.
+# ----------------------------------------------------------------------------
 def _write_csv_maybe_gz(
     out_path: Path, E, R, meta, compress: bool, *, entry: str = "QEDark"
 ):
@@ -239,6 +258,10 @@ def _one_task_mass(task: Dict[str, Any]) -> List[Tuple[bool, str]]:
 # Main
 # ---------------------------
 
+# ----------------------------------------------------------------------------
+# run_from_config
+#   Generate the whole (mass, cross-section) rate grid described by the config for the chosen backend (qedark, qcdark or qcdark2): compute every point with the backend's entry point and write the CSVs.
+# ----------------------------------------------------------------------------
 def run_from_config(cfg: Dict[str, Any]) -> None:
     backend = str(cfg.get("backend", "qedark")).lower().strip()
     _, csv_entry = _dispatch_compute(backend)
@@ -390,6 +413,10 @@ def run_from_config(cfg: Dict[str, Any]) -> None:
                     print(f"[{i}/{len(tasks)}] {msg}")
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Read the JSON config and run run_from_config().
+# ----------------------------------------------------------------------------
 def main(cfg_path: str) -> None:
     with open(cfg_path, "r") as f:
         cfg = json.load(f)

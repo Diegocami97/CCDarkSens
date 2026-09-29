@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
 # ============================================================================
-#  CCDarkSens — gen_band_gap_light_pheno_scan_configs
-#  Generate scan configs for band-gap pheno scans with the light mediator (QCDark2)
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
 #
-#  Author: Diego Venegas-Vargas
+#  File: gen_band_gap_light_pheno_scan_configs.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  gen_band_gap_light_pheno_scan_configs.py -- Generate scan configs for
+#  band-gap pheno scans with the light mediator (QCDark2)
 # ============================================================================
 """
 Generate Phase C scan JSONs for band-gap pheno study with light mediator.
@@ -31,18 +38,34 @@ GAPS = [0.1, 0.3, 0.5, 0.7, 0.9, 1.2]
 EH_B = 3.8
 
 
+# ----------------------------------------------------------------------------
+# gap_short
+#   Band gap without the "gap" prefix, e.g. "0p7" (1.2 eV gives "1p2").
+# ----------------------------------------------------------------------------
 def gap_short(g: float) -> str:
     return "1p2" if abs(g - 1.2) < 1e-9 else f"{g:.1f}".replace(".", "p")
 
 
+# ----------------------------------------------------------------------------
+# gap_tag
+#   File-name tag of a band gap, e.g. "gap0p7" (1.2 eV gives "gap1p2").
+# ----------------------------------------------------------------------------
 def gap_tag(g: float) -> str:
     return "gap1p2" if abs(g - 1.2) < 1e-9 else f"gap{g:.1f}".replace(".", "p")
 
 
+# ----------------------------------------------------------------------------
+# eh_tag
+#   Electron-hole pair energy formatted for file names with '.' replaced by 'p'.
+# ----------------------------------------------------------------------------
 def eh_tag(eh: float) -> str:
     return f"{eh:g}".replace(".", "p")
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Write the light-mediator Phase C pheno scan configs: one per band gap and scenario (D-equal, B-thresh), all derived from the template.
+# ----------------------------------------------------------------------------
 def main() -> int:
     base = json.loads(TEMPLATE.read_text(encoding="utf-8"))
 

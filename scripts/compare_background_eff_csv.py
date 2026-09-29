@@ -1,8 +1,32 @@
 #!/usr/bin/env python3
+# ============================================================================
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  File: compare_background_eff_csv.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  File: compare_background_eff_csv.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  compare_background_eff_csv.py -- Compare
+#  outputs/scan_pattern/Background_efficiencies.csv to
+#  data/Background_efficiencies.csv.
+# ============================================================================
+
 """Compare outputs/scan_pattern/Background_efficiencies.csv to data/Background_efficiencies.csv."""
 import pandas as pd
 import sys
 
+# ----------------------------------------------------------------------------
+# load_csv
+#   Read a Background_efficiencies.csv into a DataFrame indexed by the identified pattern (iden_pat).
+# ----------------------------------------------------------------------------
 def load_csv(path):
     df = pd.read_csv(path)
     df = df.set_index("iden_pat")
@@ -10,6 +34,10 @@ def load_csv(path):
     df.index = df.index.astype(str)
     return df
 
+# ----------------------------------------------------------------------------
+# main
+#   Compare the background-efficiency CSV produced by the app with the collaboration reference: structure (rows and columns), the diagonal, the 15 largest cell differences and the row sums.
+# ----------------------------------------------------------------------------
 def main():
     ref_path = "data/Background_efficiencies.csv"
     out_path = "outputs/scan_pattern/Background_efficiencies.csv"

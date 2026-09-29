@@ -1,9 +1,11 @@
-// ============================================================================
-//  CCDarkSens — PoissonAsimovPLR
-//  Header for the Poisson Asimov profile-likelihood-ratio test statistic.
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  PoissonAsimovPLR.hh -- Header for the Poisson Asimov profile-likelihood-
+//  ratio test statistic.
+// ===========================================================================
 
 #pragma once
 

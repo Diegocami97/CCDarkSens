@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
 # ============================================================================
-#  CCDarkSens — diagnose_qedark_low_mass_heavy
-#  Diagnose low-mass heavy-mediator QEdark upper-limit deviations vs DAMIC-M
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
 #
-#  Author: Diego Venegas-Vargas
+#  File: diagnose_qedark_low_mass_heavy.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  diagnose_qedark_low_mass_heavy.py -- Diagnose low-mass heavy-mediator
+#  QEdark upper-limit deviations vs DAMIC-M
 # ============================================================================
 """Low-mass heavy-mediator QEdark UL diagnostic vs DAMIC-M reference."""
 from __future__ import annotations
@@ -17,6 +24,10 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[1]
 
 
+# ----------------------------------------------------------------------------
+# load_scan
+#   Upper-limit histogram of a scan ROOT file as (mass centres, limits) plus the q0 histogram when it exists.
+# ----------------------------------------------------------------------------
 def load_scan(root_path: Path):
     import uproot
 
@@ -28,6 +39,10 @@ def load_scan(root_path: Path):
     return m, s, q0
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Diagnose the low-mass heavy-mediator QEDark limit: compare the scan result with the reference curve and write the diagnostic plots to --outdir.
+# ----------------------------------------------------------------------------
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument(

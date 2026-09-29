@@ -1,4 +1,21 @@
 #!/usr/bin/env bash
+# ============================================================================
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  File: run_band_gap_light_phase_c_batch.sh
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  run_band_gap_light_phase_c_batch.sh -- I run the full Phase C of the band-
+#  gap phenomenology with the light mediator (QCDark2): generate the light
+#  rate configs and the 12 light scan configs, then for every gap the dR/dE
+#  grids and both scans (B-thresh and D-equal), and finally overlay the two
+#  limit curves.
+# ============================================================================
+
 # Phase C full run for band-gap pheno with light mediator (QCDark2).
 #
 # This script:
@@ -16,7 +33,7 @@ source "${ROOT_INSTALL:-}/bin/thisroot.sh" 2>/dev/null || true
 
 LOGDIR="$ROOT/outputs/phase_c_logs"
 
-# Set CCDARK_QCDARK2_DIR to your local QCDark2 checkout.
+# Set CCDARK_QCDARK2_DIR to the local QCDark2 checkout.
 QCDARK2_DIR="${CCDARK_QCDARK2_DIR:-}"
 QCDARK2_VENV_PY="${QCDARK2_DIR:+$QCDARK2_DIR/.venv/bin/python3}"
 QCDARK2_VENV_PY="${QCDARK2_VENV_PY:-python3}"
@@ -38,6 +55,10 @@ declare -a GAP_VALS=("0.1" "0.3" "0.5" "0.7" "0.9" "1.2")
 
 GAP_TO_TAG="gap" # tag = gap${gap_short}
 
+# ----------------------------------------------------------------------------
+# run_scan
+#   Run the scan binary on a config and keep the log (arguments: config, tier label, log file).
+# ----------------------------------------------------------------------------
 run_scan() {
   local cfg="$1"
   local tierlabel="$2"
@@ -46,6 +67,10 @@ run_scan() {
   "$BUILD_SCAN" "$cfg" 2>&1 | tee "$log"
 }
 
+# ----------------------------------------------------------------------------
+# run_rates
+#   Generate a QCDark2 rate grid from a config with the QCDark2 Python environment and keep the log (arguments: config, log file).
+# ----------------------------------------------------------------------------
 run_rates() {
   local cfg="$1"
   local log="$2"

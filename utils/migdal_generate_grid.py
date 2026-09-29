@@ -1,10 +1,16 @@
 #!/usr/bin/env python3
 # ============================================================================
-#  CCDarkSens — migdal_generate_grid
-#  Grid driver that expands a (mchi, sigma_n) JSON grid and writes dR/dE_e
-#  CSV rate tables for the Migdal effect via darkelf.
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
 #
-#  Author: Diego Venegas-Vargas
+#  File: migdal_generate_grid.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  migdal_generate_grid.py -- Grid driver that expands a (mchi, sigma_n) JSON
+#  grid and writes dR/dE_e CSV rate tables for the Migdal effect via darkelf.
 # ============================================================================
 
 """
@@ -62,6 +68,10 @@ _MATERIAL_TO_TARGET_NUCLEUS = {
 }
 
 
+# ----------------------------------------------------------------------------
+# _build_out_path
+#   Output file path of one (mass, cross-section) point from the filename template (the target nucleus is derived from the material); creates the directory.
+# ----------------------------------------------------------------------------
 def _build_out_path(base_dir: Path, filename_template: str, material: str,
                     mediator: str, mchi_str: str, sigma_str: str) -> Path:
     target_nucleus = _MATERIAL_TO_TARGET_NUCLEUS.get(material.lower(), material)
@@ -76,6 +86,10 @@ def _build_out_path(base_dir: Path, filename_template: str, material: str,
     return base_dir / fname
 
 
+# ----------------------------------------------------------------------------
+# _exists_any
+#   True if the output file exists, either plain or gzip-compressed.
+# ----------------------------------------------------------------------------
 def _exists_any(out_path: Path) -> bool:
     return out_path.exists() or Path(str(out_path) + ".gz").exists()
 
@@ -96,6 +110,7 @@ def _one_mass_task(task: dict) -> tuple[bool, str]:
     Emax_eV = task["Emax_eV"]
     binsize_eV = task["binsize_eV"]
     darkelf_dir = task["darkelf_dir"]
+    rate_method = task.get("rate_method", "darkelf")
     idx = task.get("index", 0)
     n_tasks = task.get("n_tasks", 0)
     prefix = f"[{idx}/{n_tasks}] " if idx and n_tasks else ""
@@ -123,6 +138,7 @@ def _one_mass_task(task: dict) -> tuple[bool, str]:
                     Emax_eV=Emax_eV,
                     binsize_eV=binsize_eV,
                     darkelf_dir=darkelf_dir,
+                    rate_method=rate_method,
                 )
     except Exception as e:
         return False, f"[migdal-grid][ERROR] {prefix}mchi={mchi_str}: darkelf call failed: {e}"
@@ -150,9 +166,14 @@ def _one_mass_task(task: dict) -> tuple[bool, str]:
     return True, ""
 
 
+# ----------------------------------------------------------------------------
+# run_from_config
+#   Generate the Migdal rate grid described by the config: for every mass and cross section compute the DarkELF Migdal rate and write the CSV.
+# ----------------------------------------------------------------------------
 def run_from_config(cfg: dict) -> None:
     material = cfg.get("material", "Si")
     mediator = cfg.get("mediator", "heavy")
+    rate_method = cfg.get("rate_method", "darkelf")
     darkelf_dir = cfg.get("darkelf_dir") or os.environ.get("CCDARK_SENS_DARKELF_DIR")
     if not darkelf_dir:
         raise FileNotFoundError(
@@ -201,6 +222,7 @@ def run_from_config(cfg: dict) -> None:
                 "Emax_eV": Emax_eV,
                 "binsize_eV": binsize_eV,
                 "darkelf_dir": darkelf_dir,
+                "rate_method": rate_method,
             })
 
     if not tasks:
@@ -228,6 +250,10 @@ def run_from_config(cfg: dict) -> None:
             print(msg, file=sys.stderr, flush=True)
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Command line: python3 utils/migdal_generate_grid.py <config.json>.
+# ----------------------------------------------------------------------------
 def main() -> None:
     if len(sys.argv) != 2:
         print("usage: python3 utils/migdal_generate_grid.py <config.json>")

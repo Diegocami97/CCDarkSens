@@ -1,9 +1,12 @@
-// ============================================================================
-//  CCDarkSens — ccdarksens_scan_dmelectron_pattern_Edep
-//  Pattern-mode DM-electron grid scan variant that uses energy-dependent detector folding via DetectorResponsePipeline::ApplyEDependent.
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  ccdarksens_scan_dmelectron_pattern_Edep.cc -- Pattern-mode DM-electron
+//  grid scan variant that uses energy-dependent detector folding via
+//  DetectorResponsePipeline::ApplyEDependent.
+// ===========================================================================
 
 #include <algorithm>
 #include <cmath>
@@ -48,6 +51,10 @@ static auto expand_axis = [](const json& spec, const std::string& kind) {
   return ccdarksens::utils::ExpandAxis(spec, kind);
 };
 
+// ----------------------------------------------------------------------------
+// format_sigma
+//   Coupling value -> the string used in the rate-file names; a format like ".3e" gives 3 digits in scientific notation, anything else falls back to 6.
+// ----------------------------------------------------------------------------
 static std::string format_sigma(double sigma, const std::string& fmt)
 {
   int prec = 6;
@@ -65,6 +72,10 @@ static std::string format_sigma(double sigma, const std::string& fmt)
   return ss.str();
 }
 
+// ----------------------------------------------------------------------------
+// make_edges_from_centers
+//   Histogram bin edges for bin centres c: midpoints between neighbors, outer edges extended by half a step (a single centre gets +/-50%).
+// ----------------------------------------------------------------------------
 static std::vector<double> make_edges_from_centers(const std::vector<double>& c)
 {
   const std::size_t N = c.size();
@@ -89,6 +100,13 @@ static std::vector<double> make_edges_from_centers(const std::vector<double>& c)
 // -----------------------------------------------------------------------------
 // Main
 // -----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// main
+//   Pattern-space DM-electron scan variant that folds the signal with the energy-dependent efficiency
+//   (DetectorResponsePipeline::ApplyEDependent). Usage: <program> config.json. Steps: parse the
+//   config; set up the experiment and the detector-response components; build the dark-current and
+//   flat backgrounds in n_e; scan the (m_chi, sigma_e) grid computing the Asimov q; write the results.
+// ----------------------------------------------------------------------------
 int main(int argc, char** argv)
 {
   if (argc < 2) {
@@ -436,7 +454,7 @@ int main(int argc, char** argv)
           std::cout << "  ∫ S_obs(n_e) = " << S_int << " events\n";
         }
 
-        // After you compute S_obs and before q_ts calculation:
+        // After computing S_obs and before q_ts calculation:
         if (mchi == 0.53 /*or use the actual variable */) {
             std::cout << "[debug] mchi=" << mchi << " sigma=" << sigma_val << "\n";
             for (int ne = ne_min; ne <= ne_max; ++ne) {

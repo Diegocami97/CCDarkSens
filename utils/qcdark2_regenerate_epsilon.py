@@ -1,4 +1,18 @@
 #!/usr/bin/env python3
+# ============================================================================
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  File: qcdark2_regenerate_epsilon.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  qcdark2_regenerate_epsilon.py -- Regenerate QCDark2 dielectric-function
+#  HDF5 files (proper band-gap control via scissor).
+# ============================================================================
+
 """
 Regenerate QCDark2 dielectric-function HDF5 files (proper band-gap control via scissor).
 
@@ -40,11 +54,19 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 FALLBACK_QCDARK2 = Path("/Users/diegovenegasvargas/Documents/Software/QCDark2")
 
 
+# ----------------------------------------------------------------------------
+# _looks_like_qcdark2_root
+#   True if the path is a directory that looks like a QCDark2 checkout (has a qcdark2 folder or a pyproject.toml).
+# ----------------------------------------------------------------------------
 def _looks_like_qcdark2_root(path: Path) -> bool:
     p = path.expanduser().resolve()
     return p.is_dir() and ((p / "qcdark2").is_dir() or (p / "pyproject.toml").is_file())
 
 
+# ----------------------------------------------------------------------------
+# _infer_qcdark2_root_from_python
+#   QCDark2 root inferred from the running interpreter when it lives in a .venv of that checkout, else None.
+# ----------------------------------------------------------------------------
 def _infer_qcdark2_root_from_python() -> Path | None:
     exe = Path(sys.executable).resolve()
     parts = exe.parts
@@ -54,6 +76,10 @@ def _infer_qcdark2_root_from_python() -> Path | None:
     return root if _looks_like_qcdark2_root(root) else None
 
 
+# ----------------------------------------------------------------------------
+# _resolve_qcdark2_root
+#   QCDark2 checkout to use: --qcdark2-root, else CCDARK_QCDARK2_DIR, the active .venv or the default location; raises FileNotFoundError if none looks valid.
+# ----------------------------------------------------------------------------
 def _resolve_qcdark2_root(cli_root: Path | None) -> Path:
     if cli_root is not None:
         root = cli_root.expanduser().resolve()
@@ -83,6 +109,10 @@ def _resolve_qcdark2_root(cli_root: Path | None) -> Path:
     )
 
 
+# ----------------------------------------------------------------------------
+# _resolve_python
+#   Python interpreter that runs QCDark2: the explicit one, else the checkout's .venv, else the current interpreter.
+# ----------------------------------------------------------------------------
 def _resolve_python(qcdark2_root: Path, python_exe: str | None) -> Path:
     if python_exe:
         return Path(python_exe).expanduser().resolve()
@@ -92,6 +122,10 @@ def _resolve_python(qcdark2_root: Path, python_exe: str | None) -> Path:
     return Path(sys.executable)
 
 
+# ----------------------------------------------------------------------------
+# _render_template
+#   Fill the {SCISSOR} and {SCISSOR_TAG} placeholders of an input template for a scissor gap; raises ValueError if the template has no placeholder.
+# ----------------------------------------------------------------------------
 def _render_template(template_path: Path, scissor_eV: float) -> str:
     text = template_path.read_text()
     if "{SCISSOR}" not in text:
@@ -100,6 +134,10 @@ def _render_template(template_path: Path, scissor_eV: float) -> str:
     return text.replace("{SCISSOR}", gap).replace("{SCISSOR_TAG}", gap.replace(".", "p"))
 
 
+# ----------------------------------------------------------------------------
+# _run_qcdark2
+#   Run qcdark2.dielectric_pyscf on an input file from the QCDark2 root (PYTHONPATH set accordingly); a failure raises CalledProcessError.
+# ----------------------------------------------------------------------------
 def _run_qcdark2(python: Path, qcdark2_root: Path, input_path: Path) -> None:
     if not qcdark2_root.is_dir():
         raise FileNotFoundError(f"QCDark2 cwd does not exist: {qcdark2_root}")
@@ -111,6 +149,10 @@ def _run_qcdark2(python: Path, qcdark2_root: Path, input_path: Path) -> None:
     subprocess.run(cmd, cwd=str(qcdark2_root), env=env, check=True)
 
 
+# ----------------------------------------------------------------------------
+# _infer_name_from_input
+#   Value of the "name=" line of a QCDark2 input file; raises ValueError if it is missing.
+# ----------------------------------------------------------------------------
 def _infer_name_from_input(inp: Path) -> str:
     for line in inp.read_text().splitlines():
         line = line.split("#", 1)[0].strip().replace(" ", "")
@@ -119,6 +161,10 @@ def _infer_name_from_input(inp: Path) -> str:
     raise ValueError(f"Could not find name= in {inp}")
 
 
+# ----------------------------------------------------------------------------
+# _infer_save_path_from_input
+#   Value of the "save_path=" line of a QCDark2 input file; raises ValueError if it is missing.
+# ----------------------------------------------------------------------------
 def _infer_save_path_from_input(inp: Path) -> Path:
     for line in inp.read_text().splitlines():
         line = line.split("#", 1)[0].strip().replace(" ", "")
@@ -165,6 +211,10 @@ def package_epsilon(
     )
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Command line: regenerate the QCDark2 dielectric-function HDF5 files, from a ready input (--input) or from a template for each scissor gap (--template, --scissor).
+# ----------------------------------------------------------------------------
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument(

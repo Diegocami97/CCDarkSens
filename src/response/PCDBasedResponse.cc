@@ -1,9 +1,11 @@
-// ============================================================================
-//  CCDarkSens — PCDBasedResponse
-//  Monte Carlo simulation of normalized P(q|n_e) pixel-charge distributions using ChargeTransport and PixelSimulator.
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  PCDBasedResponse.cc -- Monte Carlo simulation of normalized P(q|n_e)
+//  pixel-charge distributions using ChargeTransport and PixelSimulator.
+// ===========================================================================
 
 #include "ccdarksens/response/PCDBasedResponse.hh"
 
@@ -15,6 +17,7 @@
 
 namespace ccdarksens {
 
+// Constructor: keep the settings; throws std::runtime_error if the charge-transport pointer is null.
 PCDBasedResponse::PCDBasedResponse(const PCDResponseConfig& cfg,
                                    std::shared_ptr<ChargeTransport> ct)
 : cfg_(cfg),
@@ -66,6 +69,10 @@ PCDBasedResponse::BuildPCDTable(int ne_min, int ne_max, double Ee_ref_eV)
 
       // Sample electron cloud
       std::vector<double> xs(ne_true), ys(ne_true);
+      // NOTE for review: SampleCloudXY's third argument is the lateral width sigma_xy [um],
+      // but I pass Ee_ref_eV here, so in this (reserved) PCD path the width is the
+      // reference energy value itself (zero by default). The dark-current call below is
+      // also deliberately switched off.
       ct_->SampleCloudXY(0.0, 0.0, Ee_ref_eV, ne_true, xs, ys);
 
       // Deposit electrons

@@ -1,8 +1,15 @@
 # ============================================================================
-#  CCDarkSens — DM_halo_dist
-#  Reference halo velocity distribution integrals (SHM, Tsallis, etc.) used by QEDark rate calculations.
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
 #
-#  Author: Diego Venegas-Vargas
+#  File: DM_halo_dist.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  DM_halo_dist.py -- Reference halo velocity distribution integrals (SHM,
+#  Tsallis, etc.) used by QEDark rate calculations.
 # ============================================================================
 
 import numpy as np
@@ -12,6 +19,10 @@ from scipy.integrate import quad, dblquad, nquad
 from QEdark_constants import *
 
 
+# ----------------------------------------------------------------------------
+# vmin
+#   Minimum DM speed [km/s] needed to deposit energy EE [eV] with momentum transfer q = qin*alpha*m_e for a DM mass mX [eV]: v_min = E/q + q/(2 m_X).
+# ----------------------------------------------------------------------------
 def vmin(EE,qin,mX):
     q = qin * alpha *me_eV
     return (EE/q+q/(2*mX))*c_light*1e-3 # to convert to km/s
@@ -197,6 +208,10 @@ def etaMSW(vmin_in, params):
     else:
         return 0
 
+# ----------------------------------------------------------------------------
+# etaDebris
+#   Mean inverse speed eta(v_min) for a debris-flow stream of speed vflow shifted by vE; params = [vE, vflow]. It is 1/vflow below vflow - vE, falls linearly to zero at vflow + vE, and is zero above.
+# ----------------------------------------------------------------------------
 def etaDebris(vmin, params):
     vE = params[0]
     vflow = params[1]

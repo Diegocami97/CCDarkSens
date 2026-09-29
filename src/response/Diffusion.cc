@@ -1,9 +1,12 @@
-// ============================================================================
-//  CCDarkSens — Diffusion
-//  Applies z-averaged lateral diffusion as a Gaussian smearing kernel on integer n_e histograms with readout noise in quadrature.
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  Diffusion.cc -- Applies z-averaged lateral diffusion as a Gaussian
+//  smearing kernel on integer n_e histograms with readout noise in
+//  quadrature.
+// ===========================================================================
 
 #include "ccdarksens/response/Diffusion.hh"
 #include "ccdarksens/response/DiffusionPhysics.hh"
@@ -15,10 +18,21 @@
 
 namespace ccdarksens {
 
+// ----------------------------------------------------------------------------
+// Diffusion::sigma_xy_um_
+//   Lateral width at depth z for energy Ee: forwards to the shared ComputeSigmaXYUm().
+// ----------------------------------------------------------------------------
 double Diffusion::sigma_xy_um_(double z_um, double Ee_eV) const {
   return ComputeSigmaXYUm(z_um, Ee_eV, A_um2_, b_umInv_, alpha_, beta_per_keV_);
 }
 
+// ----------------------------------------------------------------------------
+// Diffusion::ComputeSigmaElectrons
+//   Width of the smearing in electrons: I average sigma_xy over the thickness
+//   with the trapezoidal rule (nz_steps intervals, non-finite values skipped),
+//   convert it with kappa, and add the readout noise in quadrature. With no
+//   thickness, or a negative kappa, only the readout noise remains.
+// ----------------------------------------------------------------------------
 double Diffusion::ComputeSigmaElectrons(double Ee_eV, std::size_t nz_steps) const {
   if (thickness_um_ <= 0.0 || kappa_e_per_um_ < 0.0)
     return std::sqrt(std::max(0.0, sigma_readout_e_ * sigma_readout_e_));
@@ -40,11 +54,13 @@ double Diffusion::ComputeSigmaElectrons(double Ee_eV, std::size_t nz_steps) cons
   return std::sqrt(std::max(0.0, sigma_e2));
 }
 
+// Standard normal CDF.
 double Diffusion::normal_cdf_(double x) {
   // Phi(x) = 0.5 * [1 + erf(x / sqrt(2))]
   return 0.5 * (1.0 + std::erf(x / std::sqrt(2.0)));
 }
 
+// Probability that a Gaussian(mu, sigma) lands in [a, b); a point mass if sigma <= 0.
 double Diffusion::interval_prob_(double mu, double sigma, double a, double b) {
   if (!(sigma > 0.0)) return (a <= mu && mu < b) ? 1.0 : 0.0;
   const double z1 = (a - mu) / sigma;
@@ -52,6 +68,14 @@ double Diffusion::interval_prob_(double mu, double sigma, double a, double b) {
   return std::max(0.0, normal_cdf_(z2) - normal_cdf_(z1));
 }
 
+// ----------------------------------------------------------------------------
+// Diffusion::Apply
+//   I redistribute every n_e bin over its neighbors with a Gaussian of width
+//   ComputeSigmaElectrons(Ee), truncated at 5 sigma, using bin-integrated
+//   probabilities so the total content is conserved (except for what leaves
+//   the histogram range). The histogram is modified in place; nothing happens
+//   if the width is zero.
+// ----------------------------------------------------------------------------
 void Diffusion::Apply(TH1D& h_ne, double Ee_eV) const {
   const int nb = h_ne.GetNbinsX();
   if (nb <= 0) return;

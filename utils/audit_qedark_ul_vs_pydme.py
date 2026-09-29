@@ -1,4 +1,18 @@
 #!/usr/bin/env python3
+# ============================================================================
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  File: audit_qedark_ul_vs_pydme.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  audit_qedark_ul_vs_pydme.py -- Audit CCDarkSens full-grid UL vs DAMIC-M
+#  reference and pydme conventions.
+# ============================================================================
+
 """Audit CCDarkSens full-grid UL vs DAMIC-M reference and pydme conventions."""
 from __future__ import annotations
 
@@ -20,6 +34,10 @@ PAPER_EXPORT = (
 ) if _pydme_ref_dir else None
 
 
+# ----------------------------------------------------------------------------
+# load_paper_ref
+#   Read the reference limit curve (mass, sigma) from a text/CSV file, converting masses above 1e4 from eV to MeV, and return it sorted by mass.
+# ----------------------------------------------------------------------------
 def load_paper_ref(path: Path):
     rows = []
     for ln in path.read_text().splitlines():
@@ -36,6 +54,10 @@ def load_paper_ref(path: Path):
     return arr[np.argsort(arr[:, 0])]
 
 
+# ----------------------------------------------------------------------------
+# load_ul
+#   Open a scan ROOT file with uproot and return the upper-limit curve (graph if present, else the histogram bin centres), q0, D_pat and the q histogram, plus the open file.
+# ----------------------------------------------------------------------------
 def load_ul(root_path: Path):
     import uproot
 
@@ -98,6 +120,10 @@ def constraint_ccdarksens_tau(theta: float, bp, br, strength: float = 98.0) -> f
     return out
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Compare the stored upper limit of a scan with the reference curve, print the median ratios over several mass ranges (and the same from the q histogram when available).
+# ----------------------------------------------------------------------------
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument(

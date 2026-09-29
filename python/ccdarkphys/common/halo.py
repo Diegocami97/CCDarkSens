@@ -1,9 +1,23 @@
+# ============================================================================
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  File: halo.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  halo.py -- Standard Halo Model helper(s): eta_SHM(vmin; v0, vE, vesc). All
+#  velocities in cm/s. Returns η(vmin) in (cm/s)^-1.
+# ============================================================================
+
 """
 Standard Halo Model helper(s): eta_SHM(vmin; v0, vE, vesc).
 All velocities in cm/s. Returns η(vmin) in (cm/s)^-1.
 
-Local DM density for rate codes is the single constant ``constants.rho_X_eVcm3`` (set
-that file if you change ρ_χ). ``qedark.entry`` uses ``eta_shm_numeric`` here; the
+Local DM density for rate codes is the single constant ``constants.rho_X_eVcm3`` (edit
+that file to change ρ_χ). ``qedark.entry`` uses ``eta_shm_numeric`` here; the
 QCDark-style kernel keeps its own SHM η (see ``qcdark.kernel``).
 """
 
@@ -11,11 +25,19 @@ from __future__ import annotations
 import numpy as np
 from math import erf, sqrt, pi, exp
 
+# ----------------------------------------------------------------------------
+# _erf
+#   Element-wise error function (math.erf applied to an array).
+# ----------------------------------------------------------------------------
 def _erf(x: np.ndarray) -> np.ndarray:
     # vectorized math.erf
     vfunc = np.vectorize(erf, otypes=[float])
     return vfunc(x)
 
+# ----------------------------------------------------------------------------
+# _exp
+#   Element-wise exponential (math.exp applied to an array).
+# ----------------------------------------------------------------------------
 def _exp(x: np.ndarray) -> np.ndarray:
     vfunc = np.vectorize(exp, otypes=[float])
     return vfunc(x)
@@ -218,5 +240,9 @@ def eta_shm_numeric(vmin_cm_s: np.ndarray,
     return out
 
 
+# ----------------------------------------------------------------------------
+# kms_to_cms
+#   Convert a velocity from km/s to cm/s.
+# ----------------------------------------------------------------------------
 def kms_to_cms(x_kms: float) -> float:
     return float(x_kms) * 1.0e5

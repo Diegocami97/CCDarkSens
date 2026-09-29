@@ -1,4 +1,5 @@
 {
+  "_header": "Diego Venegas-Vargas | DAMIC-M collaboration | CCDarkSens Framework -- Example scan config: Asimov projection in n_e space for a 0.5 kg-year exposure with the QCDark2 heavy-mediator full grid (Si_comp dielectric), flat dark-current and flat d.r.u. backgrounds, and a theta nuisance in the profile likelihood.",
   "_comment": "Asimov projection: 0p5 kg\u00b7year exposure, QCDark2 heavy-mediator full grid (Si_comp dielectric). Uses flat DC + flat d.r.u backgrounds (profile likelihood with theta nuisance on B_ne).",
   "_comment_change_exposure": ">>> EDIT HERE: detector.mass_kg sets exposure when livetime_days=365.25 and duty_cycle=1 (exposure_kg_year = mass_kg). For other livetimes, also edit experiment.livetime_days. Copy this file per scenario and change mass_kg + run.outdir.",
   "run": {

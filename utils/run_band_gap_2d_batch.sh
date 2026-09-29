@@ -1,4 +1,19 @@
 #!/usr/bin/env bash
+# ============================================================================
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  File: run_band_gap_2d_batch.sh
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  run_band_gap_2d_batch.sh -- I run the 2D (E_gap, eh) band-gap scans for
+#  the heavy and then the light mediator, skipping scans whose ROOT outputs
+#  already exist.
+# ============================================================================
+
 # Run 2D (gap,eh) scans for heavy then light mediator.
 # Skips scans whose ROOT outputs already exist.
 
@@ -22,6 +37,10 @@ fi
 
 echo -e "mediator\tgap\teh\tstatus\tconfig\toutroot" > "$SUMMARY"
 
+# ----------------------------------------------------------------------------
+# run_one
+#   Run one 2D-grid scan (mediator, gap, eps_h): skip it if its ROOT output already exists or its config is missing, otherwise run the scan binary; every outcome is appended to the summary file.
+# ----------------------------------------------------------------------------
 run_one() {
   local mediator="$1"
   local gap="$2"

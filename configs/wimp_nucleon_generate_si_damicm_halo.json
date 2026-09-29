@@ -1,0 +1,53 @@
+{
+  "_comment": "WIMP-nucleon SI rate generation, DAMIC-M halo parameters. Sourced ONLY from pydme (collab_frameworks/pydme/pydme/detector/pattern_efficiency.py has DIFF_A/DIFF_b/sigma_res; collab_frameworks/pydme/pydme/dme_nLL_exclusion.py lines 306-343 has v0/vE/vesc) and this repo own existing defaults (python/ccdarkphys/wimp_nucleon/halo.py, Baxter et al. 2021 convention). v0=238, vesc=544, rho=0.3 agree between pydme and CCDarkSens exactly; vE differs slightly (pydme: 263, CCDarkSens/Baxter: 253.7) -- CCDarkSens own existing default (253.7) used here for internal consistency with the rest of this repo, not pydme own 263. quenching.model=chavarria_izraelevitch_table is this project own best-available quenching model (Chavarria 2016 + Izraelevitch 2017 combined, see quenching.py), NOT a DAMIC-M-specific measurement -- DAMIC-M own quenching calibration, if different, is not available here. UPDATED: sigma grid extended to 1e-45 (was 1e-42), 50 points (was 20) -- the original 1e-42 lower bound was appropriate for DAMIC 2016 but left DAMIC-Ms much better projected sensitivity crossing the exclusion threshold within the first 1-2 grid points, an unresolved grid-edge artifact (q jumped from 0 to >25 between the first two points at every mass tested) rather than real physics.",
+  "target_nucleus": "Si28",
+  "A": 28,
+  "mediator": "heavy",
+  "recoil": {
+    "Emin_keV": 0.001,
+    "Emax_keV": 30.0,
+    "nbins": 3000
+  },
+  "halo": {
+    "rho_chi_gev_cm3": 0.3,
+    "v0_kms": 238.0,
+    "vE_kms": 253.7,
+    "vesc_kms": 544.0
+  },
+  "quenching": {
+    "_comment": "chavarria_table = measured Si nuclear recoil ionization efficiency, Chavarria et al. 2016 (Phys. Rev. D 94, 082007), Table I, with linear-to-zero below 0.68 keV_nr (crossing at 0.3 keV_nr per PhysRevD.94.082006) and Lindhard fallback above 2.28 keV_nr (no measurement there). See python/ccdarkphys/wimp_nucleon/quenching.py. Alternative: 'lindhard'.",
+    "model": "chavarria_izraelevitch_table",
+    "ee_Emin_eV": 0.0,
+    "ee_Emax_eV": 4000.0,
+    "ee_nbins": 400
+  },
+  "rates_dir": "data/wimp_nucleon_rates_ee/Si/heavy_damicm_halo",
+  "filename_template": "dRdE_ee_{target_nucleus}_{mediator}_m{mchi_MeV}_s{sigma_n_cm2}.csv",
+  "grid": {
+    "mchi_MeV": {
+      "logspace": {
+        "start": 500.0,
+        "stop": 10000.0,
+        "num": 28,
+        "endpoint": true
+      }
+    },
+    "sigma_n_cm2": {
+      "logspace": {
+        "start_exp": -45,
+        "stop_exp": -33,
+        "num": 50,
+        "endpoint": true
+      }
+    }
+  },
+  "options": {
+    "skip_existing": true,
+    "overwrite": false,
+    "parallel": 0,
+    "format": {
+      "mchi": ".6f",
+      "sigma": ".1e"
+    }
+  }
+}

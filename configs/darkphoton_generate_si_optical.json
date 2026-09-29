@@ -1,0 +1,26 @@
+{
+  "_comment": "Generate Si dark photon absorption rates using optical constants temperature-corrected to 130 K (CCD operating temperature). Source: Edwards/Palik (1997) + Rajkanan (1979) parametrization — same method as DAMIC-M PRL 2025 (End Matter, Refs. 86+87). E1 peak at ~3.465 eV, E2 at ~4.335 eV. Generate the optical file first: python3 utils/build_si_optical_limit.py. Then: python3 utils/darkphoton_generate_grid.py configs/darkphoton_generate_si_optical.json",
+  "material": "Si_optical",
+  "darkelf_dir": "/Users/diegovenegasvargas/Documents/Software/DarkELF",
+
+  "detector": {
+    "band_gap_eV": null,
+    "binsize_eV": 0.1
+  },
+
+  "rates_dir": "data/darkphoton_rates/Si_optical",
+  "filename_template": "dRdE_{material}_absorption_m{mA_eV}_e{epsilon}.csv",
+
+  "grid": {
+    "mA_eV": { "logspace": {"start_exp": 0.0, "stop_exp": 2.0, "num": 200} },
+    "epsilon": { "logspace": {"start_exp": -20, "stop_exp": -10, "num": 40} }
+  },
+
+  "options": {
+    "skip_existing": true,
+    "overwrite": false,
+    "parallel": 1,
+    "progress": true,
+    "format": { "mA": ".6f", "epsilon": ".3e" }
+  }
+}

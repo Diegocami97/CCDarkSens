@@ -1,9 +1,11 @@
-// ============================================================================
-//  CCDarkSens — DetectorResponsePipeline
-//  Header for the unified pattern/PCD detector-response pipeline and E-dependent folding entry points.
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  DetectorResponsePipeline.hh -- Header for the unified pattern/PCD
+//  detector-response pipeline and E-dependent folding entry points.
+// ===========================================================================
 
 #pragma once
 
@@ -46,10 +48,11 @@ enum class AnalysisSpace {
  *      - Produces TH1D in q (continuous charge)
  *
  *   In addition, ApplyEDependent implements an E-dependent triple convolution
- *   used by your dedicated pattern-scan app.
+ *   used by my dedicated pattern-scan app.
  */
 class DetectorResponsePipeline {
 public:
+  // Constructor: the ionization table is the one component both analysis spaces need.
   DetectorResponsePipeline(std::shared_ptr<ChargeIonization> ion)
   : ion_(std::move(ion)) {}
 
@@ -115,11 +118,11 @@ public:
   AnalysisSpace GetAnalysisSpace() const { return analysis_space_; }
 
   // Flag for apps that want to use the dedicated E-dependent logic.
-  // (Your scan app is already calling ApplyEDependent directly.)
-  bool use_Edependent_pattern_ = false;
+  // (My scan app is already calling ApplyEDependent directly.)
+  bool use_Edependent_pattern_ = false;  // true = the scan app uses ApplyEDependent()
   void EnableEDependentPattern(bool v) { use_Edependent_pattern_ = v; }
 
-  /// E-dependent triple convolution used by your pattern-scan app.
+  /// E-dependent triple convolution used by my pattern-scan app.
   std::unique_ptr<TH1D> ApplyEDependent( TH1D& dRdE,
                                          double exposure_kg_year,
                                          int ne_min, int ne_max,
@@ -128,26 +131,26 @@ public:
 
 private:
   // Core required component for both modes:
-  std::shared_ptr<ChargeIonization> ion_;
+  std::shared_ptr<ChargeIonization> ion_;  // dR/dE -> n_e folding
 
   // Pattern-mode components:
-  std::shared_ptr<Diffusion>         diff_;
-  std::shared_ptr<PatternEfficiency> pe_;
-  std::shared_ptr<EfficiencyMC>      emc_;
+  std::shared_ptr<Diffusion>         diff_;  // optional histogram-level diffusion
+  std::shared_ptr<PatternEfficiency> pe_;  // efficiency applied to the observed n_e spectrum
+  std::shared_ptr<EfficiencyMC>      emc_;  // MC efficiency table for ApplyEDependent
 
   // PCD-mode components:
-  std::shared_ptr<PCDBasedResponse>  pcd_response_;
-  std::shared_ptr<PCDCalculator>     pcd_calc_;
+  std::shared_ptr<PCDBasedResponse>  pcd_response_;  // MC P(q | n_e)
+  std::shared_ptr<PCDCalculator>     pcd_calc_;  // folds spectra with P(q | n_e)
 
   // Selected analysis space
-  AnalysisSpace analysis_space_ = AnalysisSpace::Pattern;
+  AnalysisSpace analysis_space_ = AnalysisSpace::Pattern;  // pattern or PCD observable
 
-  bool skip_pattern_efficiency_ = false;
+  bool skip_pattern_efficiency_ = false;  // true = leave epsilon(n_e) to the pattern fold
 
   // PCD kernel parameters (used in BuildNeKernelFromPCD calls)
-  double pcd_sigma_res_e_ = 0.21;
-  double pcd_Dqmin_       = 0.5;
-  double pcd_Dqmax_       = 0.5;
+  double pcd_sigma_res_e_ = 0.21;  // readout sigma of the PCD n_e kernel [e-]
+  double pcd_Dqmin_       = 0.5;  // lower charge window of the PCD n_e kernel [e-]
+  double pcd_Dqmax_       = 0.5;  // upper charge window of the PCD n_e kernel [e-]
 };
 
 } // namespace ccdarksens

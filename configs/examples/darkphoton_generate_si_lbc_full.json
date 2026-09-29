@@ -1,0 +1,38 @@
+{
+  "_header": "Diego Venegas-Vargas | DAMIC-M collaboration | CCDarkSens Framework -- Example input for utils/darkphoton_generate_grid.py: generates dark-photon-absorption dR/dE rate CSVs for real Si, used by both absorption_si_lbc_1p3kgday.json and (subset, mA'<=50 eV) absorption_si_projection_1kgyear.json.",
+  "_comment": "Dark-photon absorption rate generation: Si target, band_gap_eV=null lets darkphoton_generate_grid.py use Si's native gap. 200 masses (1-100 eV log) x 40 couplings (eps=1e-20..1e-10 log) = 8000 files. Run: python3 utils/darkphoton_generate_grid.py configs/examples/darkphoton_generate_si_lbc_full.json",
+  "material": "Si",
+  "darkelf_dir": "/Users/diegovenegasvargas/Documents/Software/DarkELF",
+  "detector": {
+    "band_gap_eV": null,
+    "binsize_eV": 0.1
+  },
+  "rates_dir": "data/darkphoton_rates/Si_lbc_full",
+  "filename_template": "dRdE_{material}_absorption_m{mA_eV}_e{epsilon}.csv",
+  "grid": {
+    "mA_eV": {
+      "logspace": {
+        "start_exp": 0.0,
+        "stop_exp": 2.0,
+        "num": 200
+      }
+    },
+    "epsilon": {
+      "logspace": {
+        "start_exp": -20,
+        "stop_exp": -10,
+        "num": 40
+      }
+    }
+  },
+  "options": {
+    "skip_existing": true,
+    "overwrite": false,
+    "parallel": 8,
+    "progress": true,
+    "format": {
+      "mA": ".6f",
+      "epsilon": ".3e"
+    }
+  }
+}

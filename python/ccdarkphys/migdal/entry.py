@@ -1,3 +1,12 @@
+# ============================================================================
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  entry.py -- Diego Venegas-Vargas DAMIC-M collaboration CCDarkSens
+#  Framework entry.py -- DarkELF entry point for the Migdal effect.
+# ============================================================================
+
 """
 DarkELF entry point for the Migdal effect.
 
@@ -56,6 +65,10 @@ _COMPOUND_NUCLEI: dict[str, list[dict]] = {
 }
 
 
+# ----------------------------------------------------------------------------
+# _resolve_darkelf_dir
+#   Directory of the DarkELF source: the explicit argument, else the environment variable; raises FileNotFoundError if neither is given.
+# ----------------------------------------------------------------------------
 def _resolve_darkelf_dir(explicit: str | None) -> str:
     if explicit:
         return os.path.abspath(os.path.expanduser(explicit))
@@ -67,6 +80,10 @@ def _resolve_darkelf_dir(explicit: str | None) -> str:
     )
 
 
+# ----------------------------------------------------------------------------
+# _load_darkelf
+#   Put the DarkELF directory on sys.path and return the darkelf class; raises ImportError with instructions if it cannot be imported.
+# ----------------------------------------------------------------------------
 def _load_darkelf(darkelf_dir: str):
     if darkelf_dir not in sys.path:
         sys.path.insert(0, darkelf_dir)
@@ -80,12 +97,20 @@ def _load_darkelf(darkelf_dir: str):
     return darkelf_cls
 
 
+# ----------------------------------------------------------------------------
+# _make_energy_grid
+#   Bin centres of a uniform energy grid between Emin and Emax with the requested bin size (at least one bin).
+# ----------------------------------------------------------------------------
 def _make_energy_grid(Emin_eV: float, Emax_eV: float, binsize_eV: float):
     n_bins = max(1, int(round((Emax_eV - Emin_eV) / binsize_eV)))
     e_edges = np.linspace(Emin_eV, Emax_eV, n_bins + 1)
     return 0.5 * (e_edges[:-1] + e_edges[1:])
 
 
+# ----------------------------------------------------------------------------
+# _call_migdal
+#   Migdal rate from DarkELF with Enth = 0 and the analytic Lindhard method (the reasons are given in the comment below).
+# ----------------------------------------------------------------------------
 def _call_migdal(obj, e_centers, sigma_n_cm2: float) -> np.ndarray:
     # Enth=0: include all nuclear recoil energies. The default Enth=4*ombar≈0.12 eV
     # kills all phase space for mchi < 15 MeV on Si (E_R,max < 0.12 eV at those masses).
@@ -106,13 +131,31 @@ def compute_dRdE(
     *,
     darkelf_dir: str | None = None,
     darkelf_kwargs: dict | None = None,
+    rate_method: str = "darkelf",
 ) -> dict:
     """
     Same outward contract as other CCDarkSens backends.
 
+    rate_method: "darkelf" (default, DarkELF dRdomega_migdal/Lindhard, both
+    mediators) or "shakeoff" (the DAMIC-M collaboration's own reference
+    implementation, heavy mediator only -- see shakeoff.py).
+
     Returns:
       dict with ``E_eV``, ``dRdE_kg_year_eV`` (events / kg / year / eV), ``meta``.
     """
+    if rate_method == "shakeoff":
+        if MEDIATOR_TO_FDM_INDEX.get(mediator) != 0:
+            raise NotImplementedError(
+                "rate_method='shakeoff' only implements the heavy mediator "
+                "(the reference script's light-mediator path is an incomplete sketch)."
+            )
+        from ccdarkphys.migdal.shakeoff import compute_dRdE as _compute_shakeoff
+        return _compute_shakeoff(
+            material=material, mchi_eV=mchi_eV, sigma_n_cm2=sigma_n_cm2,
+            Emin_eV=Emin_eV, Emax_eV=Emax_eV, binsize_eV=binsize_eV,
+            darkelf_dir=darkelf_dir,
+        )
+
     key = material.lower()
     if mediator not in MEDIATOR_TO_FDM_INDEX:
         raise ValueError("mediator: heavy/massive/0 or light/massless/2")
@@ -130,6 +173,13 @@ def compute_dRdE(
         drde_total = np.zeros_like(e_centers)
         for nuc in nuclei:
             f_nu = nuc["N"] * nuc["A"] / M_cell
+            # Halo parameters from Baxter et al. 2021 (EPJC 81, 907) --
+            # confirmed as the actual values used in the DAMIC-M collaboration's
+            # own reference Migdal implementation (collab_frameworks/dim,
+            # scripts/calculate_rates/migdal.py, Migdal.__init__ defaults).
+            # Do not change to vE=263 (that was a mistaken "fix" tried once;
+            # it made agreement with the reference curve slightly worse, not
+            # better -- reverted).
             obj = darkelf_cls(mX=float(mchi_eV), v0kms=238.0, vekms=253.7,
                               vesckms=544.0, **si_kwargs)
             obj.rhoX = 0.3e9
@@ -170,7 +220,13 @@ def compute_dRdE(
     if darkelf_kwargs:
         file_kwargs.update(darkelf_kwargs)
 
-    # Halo parameters from Baxter et al. 2021 (EPJC 81, 907)
+    # Halo parameters from Baxter et al. 2021 (EPJC 81, 907) -- confirmed as
+    # the actual values used in the DAMIC-M collaboration's own reference
+    # Migdal implementation (collab_frameworks/dim,
+    # scripts/calculate_rates/migdal.py, Migdal.__init__ defaults). Do not
+    # change to vE=263 (that was a mistaken "fix" tried once; it made
+    # agreement with the reference curve slightly worse, not better --
+    # reverted).
     obj = darkelf_cls(mX=float(mchi_eV), v0kms=238.0, vekms=253.7,
                       vesckms=544.0, **file_kwargs)
     obj.rhoX = 0.3e9
@@ -196,6 +252,10 @@ def compute_dRdE(
     }
 
 
+# ----------------------------------------------------------------------------
+# _header_lines
+#   Comment header of a Migdal rate CSV: material and mediator, mass, DM-nucleon cross section, energy grid, DarkELF settings and the output units.
+# ----------------------------------------------------------------------------
 def _header_lines(meta: dict) -> list:
     lines = [
         "# Differential Rates computed with CCDarkSens (DarkELF-Migdal entry)",
@@ -220,6 +280,10 @@ def _header_lines(meta: dict) -> list:
     return lines
 
 
+# ----------------------------------------------------------------------------
+# _cli
+#   Command-line front end: compute one Migdal ionization rate table and write it to --out_csv.
+# ----------------------------------------------------------------------------
 def _cli():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--material", default="Si")

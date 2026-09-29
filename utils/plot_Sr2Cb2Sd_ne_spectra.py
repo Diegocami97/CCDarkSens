@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
 # ============================================================================
-#  CCDarkSens — plot_Sr2Cb2Sd_ne_spectra
-#  Phase 2: n_e-space signal spectra for Sr2Cb2Sd (Option C backgrounds).
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
 #
-#  Author: Diego Venegas-Vargas
+#  File: plot_Sr2Cb2Sd_ne_spectra.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  plot_Sr2Cb2Sd_ne_spectra.py -- Phase 2: n_e-space signal spectra for
+#  Sr2Cb2Sd (Option C backgrounds).
 # ============================================================================
 """
 Sr2Cb2Sd n_e imaging figures (2 PDFs: heavy + light mediator).
@@ -62,10 +69,18 @@ MEDIATORS = [
 ]
 
 
+# ----------------------------------------------------------------------------
+# scan_path
+#   Path of the scan ROOT file of a scenario, mediator and dark-current tier.
+# ----------------------------------------------------------------------------
 def scan_path(scen_key: str, med: str, dc_suffix: str) -> Path:
     return OUTBASE / f"{scen_key}_{med}_{dc_suffix}" / "scan_dmelectron_pattern.root"
 
 
+# ----------------------------------------------------------------------------
+# _first_key
+#   Name (without the cycle number) of the first object in a ROOT file whose name starts with prefix, or None.
+# ----------------------------------------------------------------------------
 def _first_key(f, prefix: str) -> str | None:
     for k in f.keys():
         kk = k.split(";")[0]
@@ -74,6 +89,10 @@ def _first_key(f, prefix: str) -> str | None:
     return None
 
 
+# ----------------------------------------------------------------------------
+# _values_by_ne
+#   Histogram content at the bin nearest to each n_e of the list.
+# ----------------------------------------------------------------------------
 def _values_by_ne(hist, ne_list: list[int] = NE_BINS) -> np.ndarray:
     centers = hist.axis().centers()
     vals = hist.values()
@@ -84,6 +103,10 @@ def _values_by_ne(hist, ne_list: list[int] = NE_BINS) -> np.ndarray:
     return np.array(out)
 
 
+# ----------------------------------------------------------------------------
+# load_scan
+#   Read S_true(n_e), S_obs(n_e) and the total background B_tot(n_e) from a scan file (None entries and a warning if the file is missing).
+# ----------------------------------------------------------------------------
 def load_scan(scen_key: str, med: str, dc_suffix: str) -> dict:
     path = scan_path(scen_key, med, dc_suffix)
     out = {"S_true": None, "S_obs": None, "B_tot": None}
@@ -102,10 +125,18 @@ def load_scan(scen_key: str, med: str, dc_suffix: str) -> dict:
     return out
 
 
+# ----------------------------------------------------------------------------
+# dc_rate_text
+#   Legend text of a dark-current rate in e-/pix/yr.
+# ----------------------------------------------------------------------------
 def dc_rate_text(lam_e_per_pix_per_year: float) -> str:
     return rf"DC $= {lam_e_per_pix_per_year:g}\ \mathrm{{e}}^-\!/\mathrm{{pix}}/\mathrm{{yr}}$"
 
 
+# ----------------------------------------------------------------------------
+# _draw_grouped_bars
+#   Draw one group of bars per n_e, one bar per scenario, dropping values below the log floor.
+# ----------------------------------------------------------------------------
 def _draw_grouped_bars(ax, data_by_scen: list, key: str, scenarios) -> None:
     x = np.arange(len(NE_BINS))
     n = len(scenarios)
@@ -128,6 +159,10 @@ def _draw_grouped_bars(ax, data_by_scen: list, key: str, scenarios) -> None:
         )
 
 
+# ----------------------------------------------------------------------------
+# _draw_backgrounds
+#   Draw the background of each dark-current tier as short horizontal lines at every n_e bin.
+# ----------------------------------------------------------------------------
 def _draw_backgrounds(ax, bkg_data: list[tuple[np.ndarray | None, str, str, tuple]]) -> None:
     x = np.arange(len(NE_BINS))
     for b_tot, dc_label, color, _dashes in bkg_data:
@@ -151,6 +186,10 @@ def _draw_backgrounds(ax, bkg_data: list[tuple[np.ndarray | None, str, str, tupl
             )
 
 
+# ----------------------------------------------------------------------------
+# plot_mediator
+#   Signal n_e spectra of the scenarios with the background tiers for one mediator, saved as PDF; returns 1 if there are no signal scans.
+# ----------------------------------------------------------------------------
 def plot_mediator(med_key: str, med_label: str, out_path: Path) -> int:
     signal_data = [
         load_scan(scen_key, med_key, "1x") for scen_key, _, _ in SIGNAL_SCENARIOS
@@ -211,6 +250,10 @@ def plot_mediator(med_key: str, med_label: str, out_path: Path) -> int:
     return 0
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Command line: make the n_e spectrum figure for the heavy mediator, the light one, or both.
+# ----------------------------------------------------------------------------
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--mediator", choices=["heavy", "light", "both"], default="both")

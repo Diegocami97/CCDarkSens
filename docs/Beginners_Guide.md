@@ -562,6 +562,34 @@ Set `model.rates_dir` and `filename_template` in the scan JSON to match. Generat
 }
 ```
 
+### `response.cluster_fit_mc` block (WIMP-nucleon channel only — `analysis_space: "cluster_energy"`)
+
+Not used by the DM-electron/dark-photon/Migdal channels above; this is the WIMP-nucleus SI channel's continuous-energy reconstruction (see `docs/ClusterFitMC_Design.md` for the full derivation and validation).
+
+```json
+"response": {
+  "analysis_space":  "cluster_energy",
+  "cluster_fit_mc": {
+    "window_nx": 15, "window_ny": 15,           // pixel window size for the ΔLL fit
+    "pixel_size_um": 15.0,
+    "sigma_readout_e": 0.16,                     // switch to 1.8 for a literal PhysRevD.94.082006 reproduction
+    "diffusion": {                               // same convention as efficiency_mc's diffusion block
+      "A_um2": 803.25, "b_umInv": 0.00065, "alpha": 1.0, "beta_per_keV": 0.0, "thickness_um": 670.0
+    },
+    "fit_method": "nelder_mead",                 // "nelder_mead" | "minuit2"
+    "sigma_xy_lo_px": 0.1, "sigma_xy_hi_px": 2.0, // search bounds on the fitted width
+    "n_toys": 100000,                            // Phase 3: noise-tail calibration toy count
+    "target_tail_prob": 1e-3,
+    "ne_trials_per_point": 5000,                 // Phase 4: forward-sim trials per E_true grid point
+    "sigma_xy_fid_min_px": 0.35, "sigma_xy_fid_max_px": 1.22,  // paper's fiducial (surface-rejection) cut
+    "eh_pair_eV": 3.77,                          // PhysRevD.94.082006's stated value
+    "fano_factor": 0.133,                        // the paper's own measured value; treat as a systematic to sweep
+    "Etrue_min_eV": 10.0, "Etrue_max_eV": 300.0, "Etrue_npoints": 12,
+    "Ereco_min_eV": 0.0, "Ereco_max_eV": 400.0, "Ereco_nbins": 40
+  }
+}
+```
+
 ### `backgrounds` block (for `dc_flat_migration` source)
 
 ```json

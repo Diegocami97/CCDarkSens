@@ -1,9 +1,12 @@
-// ============================================================================
-//  CCDarkSens — ccdarksens_band
-//  Orchestrates repeated subprocess calls to a configured scan binary to build median and ±1σ/±2σ expected sensitivity bands from Poisson background-only toys.
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  ccdarksens_band.cc -- Orchestrates repeated subprocess calls to a
+//  configured scan binary to build median and ±1σ/±2σ expected sensitivity
+//  bands from Poisson background-only toys.
+// ===========================================================================
 
 #include <algorithm>
 #include <atomic>
@@ -68,6 +71,10 @@ static const json& resolve_dotted(const json& root, const std::string& dotted) {
   return *cur;
 }
 
+// ----------------------------------------------------------------------------
+// resolve_dotted_double_vec
+//   Read the array of numbers at a dotted JSON path (e.g. "run.background_Bp"). Throws if the path is missing or the leaf is not an array.
+// ----------------------------------------------------------------------------
 static std::vector<double> resolve_dotted_double_vec(const json& root,
                                                      const std::string& dotted) {
   const json& leaf = resolve_dotted(root, dotted);
@@ -147,6 +154,10 @@ static UlCurve read_tgraph(const fs::path& root_path,
   return out;
 }
 
+// ----------------------------------------------------------------------------
+// make_tgraph
+//   A TGraph with the given name and title, filled from the xs and ys vectors (same length).
+// ----------------------------------------------------------------------------
 static TGraph make_tgraph(const std::string& name, const std::string& title,
                           const std::vector<double>& xs,
                           const std::vector<double>& ys) {
@@ -163,6 +174,7 @@ static TGraph make_tgraph(const std::string& name, const std::string& title,
 // Subprocess invocation
 // -----------------------------------------------------------------------------
 
+// Outcome of one scan-binary invocation: its exit code and the path of its log file.
 struct ScanInvocationResult {
   int exit_code = 0;
   std::string log_path;
@@ -229,6 +241,18 @@ static double quantile_inplace(std::vector<double>& v, double q) {
 
 }  // namespace
 
+// ----------------------------------------------------------------------------
+// main
+//   Sensitivity band from repeated scans. Usage: <program> config.json [--stop-after phase0|phase1|phase2].
+//   The config needs a "band" block (scan_binary, n_toys, outdir). Phases:
+//     Phase 0 - asymptotic (Asimov) upper limit -> sigma_threshold per mass (toy_mc / both only);
+//     Phase 1 - toy-MC calibration of the q threshold per mass (toy_mc / both only);
+//     Phase 2 - outer loop: for every toy, draw Poisson counts around the background, run the
+//               scan binary on them and collect the upper-limit curve;
+//     then the quantiles of the curves per mass are written to band.root together with
+//     the phase artifacts and provenance metadata.
+//   Returns 0 on success, 1 for bad arguments or errors.
+// ----------------------------------------------------------------------------
 int main(int argc, char** argv) {
   if (argc < 2) {
     std::cerr << "Usage: " << argv[0] << " config.json [--stop-after phase0|phase1|phase2]\n"

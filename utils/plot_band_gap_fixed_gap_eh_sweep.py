@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
 # ============================================================================
-#  CCDarkSens — plot_band_gap_fixed_gap_eh_sweep
-#  Plot σ_UL vs ε_h at fixed band gap for heavy and light mediators
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
 #
-#  Author: Diego Venegas-Vargas
+#  File: plot_band_gap_fixed_gap_eh_sweep.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  plot_band_gap_fixed_gap_eh_sweep.py -- Plot σ_UL vs ε_h at fixed band gap
+#  for heavy and light mediators
 # ============================================================================
 """
 Overlay DM-e limits at fixed E_gap, scanning epsilon_h (2D-grid row).
@@ -41,6 +48,10 @@ OUT_PLOTS = ROOT / "outplots" / "band_gap_pheno" / "step5_limits"
 MEDIATORS = ("heavy", "light")
 
 
+# ----------------------------------------------------------------------------
+# eh_values
+#   Sorted eps_h values of the sweep, with eps_h = gap added when include_dequal is set.
+# ----------------------------------------------------------------------------
 def eh_values(gap: float, include_dequal: bool) -> list[float]:
     ehs = list(EH_GRID)
     if include_dequal and gap not in ehs and gap >= 0:
@@ -48,11 +59,19 @@ def eh_values(gap: float, include_dequal: bool) -> list[float]:
     return sorted(ehs)
 
 
+# ----------------------------------------------------------------------------
+# sweep_title
+#   Title of a fixed-gap sweep figure.
+# ----------------------------------------------------------------------------
 def sweep_title(mediator: str, gap: float) -> str:
     med = "light" if mediator == "light" else "heavy"
     return f"Band-gap pheno: E_{{gap}} = {gap:g} eV ({med} mediator)"
 
 
+# ----------------------------------------------------------------------------
+# plot_one
+#   Plot the limit curves of all valid eps_h values at a fixed gap for one mediator (missing scans skipped), optionally with the silicon reference; with dry_run only the command is printed.
+# ----------------------------------------------------------------------------
 def plot_one(
     mediator: str, gap: float, include_dequal: bool, si_reference: bool, dry_run: bool
 ) -> int:
@@ -104,12 +123,20 @@ def plot_one(
     return subprocess.call(cmd, cwd=ROOT)
 
 
+# ----------------------------------------------------------------------------
+# gaps_for_args
+#   Gaps to plot: the whole grid with --all-gaps, else --gap, else 0.1 eV.
+# ----------------------------------------------------------------------------
 def gaps_for_args(args: argparse.Namespace) -> list[float]:
     if args.all_gaps:
         return list(GAP_GRID)
     return args.gap if args.gap else [0.1]
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Command line: choose the gaps, the mediator(s) and whether to include the eps_h = gap curve and the silicon reference.
+# ----------------------------------------------------------------------------
 def main() -> int:
     gap_help = (
         f"Fixed E_gap [eV]; study grid: {', '.join(f'{g:g}' for g in GAP_GRID)}. "

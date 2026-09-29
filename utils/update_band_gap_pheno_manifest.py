@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
 # ============================================================================
-#  CCDarkSens — update_band_gap_pheno_manifest
-#  Refresh configs/band_gap_pheno_scenarios.json Phase C entries
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
 #
-#  Author: Diego Venegas-Vargas
+#  File: update_band_gap_pheno_manifest.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  update_band_gap_pheno_manifest.py -- Refresh
+#  configs/band_gap_pheno_scenarios.json Phase C entries
 # ============================================================================
 """Refresh configs/band_gap_pheno_scenarios.json Phase C entries."""
 
@@ -18,14 +25,26 @@ GAPS = [0.1, 0.3, 0.5, 0.7, 0.9, 1.2]
 EH_B = 3.8
 
 
+# ----------------------------------------------------------------------------
+# gap_tag
+#   File-name tag of a band gap, e.g. "gap0p7" (1.2 eV gives "gap1p2").
+# ----------------------------------------------------------------------------
 def gap_tag(g: float) -> str:
     return "gap1p2" if abs(g - 1.2) < 1e-9 else f"gap{g:.1f}".replace(".", "p")
 
 
+# ----------------------------------------------------------------------------
+# eh_tag
+#   Electron-hole pair energy formatted for file names with '.' replaced by 'p'.
+# ----------------------------------------------------------------------------
 def eh_tag(eh: float) -> str:
     return f"{eh:g}".replace(".", "p")
 
 
+# ----------------------------------------------------------------------------
+# scenario_entry
+#   Manifest entry of one (gap, scenario) case: label, gap, eps_h, and the paths of its epsilon file, rates, ionization table and scan config.
+# ----------------------------------------------------------------------------
 def scenario_entry(gap: float, scenario: str) -> dict:
     eh = gap if scenario == "D-equal" else EH_B
     gt = gap_tag(gap)
@@ -44,6 +63,10 @@ def scenario_entry(gap: float, scenario: str) -> dict:
     }
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Update the band-gap pheno manifest: set the sweep status of every gap and rebuild the list of scenarios.
+# ----------------------------------------------------------------------------
 def main() -> int:
     man = json.loads(MANIFEST.read_text(encoding="utf-8"))
     for g in GAPS:

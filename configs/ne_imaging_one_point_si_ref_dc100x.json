@@ -1,0 +1,157 @@
+{
+  "_comment": "Figure 2 (ne_imaging) one-point example run: Si reference, E_gap=1.2 eV, eh=3.8 eV. Writes example_one_point_pattern.root with S_obs_ne + B_tot_ne.  Dark current dc100x: lambda_e_per_pix_per_year=3.65 (100x baseline 0.0365).",
+  "run": {
+    "label": "ne_imaging_si_ref_dc100x",
+    "outdir": "outputs/band_gap_ne_imaging/si_ref_dc100x",
+    "n_toys": 0,
+    "rng_seed": 12345,
+    "verbosity": 1,
+    "cl": 0.9,
+    "test_stat": "PLR",
+    "use_profile_likelihood": false,
+    "data_path": "",
+    "background_source": "dc_flat",
+    "background_model": "scale",
+    "profile_minimizer": "brent",
+    "pydme_style_ul": false,
+    "dump_point_spectra_root": true
+  },
+  "detector": {
+    "rows": 1300,
+    "cols": 6300,
+    "pixel_size_um": 15.0,
+    "thickness_mm": 0.67,
+    "active_fraction": 0.98,
+    "target_element": "Si",
+    "density_g_cm3": 2.329,
+    "mass_kg": 0.5
+  },
+  "experiment": {
+    "mode": "asimov",
+    "livetime_days": 365.25,
+    "duty_cycle": 1.0,
+    "binning": {
+      "ne_min": 1,
+      "ne_max": 20
+    },
+    "roi_bins": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "pattern_roi": [
+      11,
+      21,
+      111,
+      31,
+      22,
+      211
+    ],
+    "observable_bins": "ne"
+  },
+  "response": {
+    "mode": "pattern",
+    "analysis_space": "pattern",
+    "efficiency_mc": {
+      "efficiency_csv": "data/efficiencies_paolo.csv",
+      "efficiency_csv_reference": "data/efficiencies_paolo.csv",
+      "n_events_per_ne": 1000000,
+      "sigma_readout_e": 0.16,
+      "Qmin_e": 0.6,
+      "Qmax_e": 20.0,
+      "A_um2": 803.25,
+      "b_umInv": 0.00065,
+      "alpha": 1.0,
+      "beta_per_keV": 0.0,
+      "pileup_with_dc": true,
+      "enable_MN": true,
+      "enable_MNL": true,
+      "use_2d_image_efficiency": false,
+      "rng_seed": 987654321
+    },
+    "pattern_image": {
+      "nrows_binned": 3,
+      "ncols": 50,
+      "row_binning": 100,
+      "col_binning": 1,
+      "pixel_size_um": 15.0,
+      "sigma_readout_e": 0.16,
+      "lambda_dc": 0.00041,
+      "rng_seed": 987654321
+    },
+    "pattern_classifier": {
+      "max_e_per_pixel": 5,
+      "Qmin_e": 0.6,
+      "neighbor_Qmax_e": 0.6,
+      "thr_M": 3.5,
+      "thr_MN": 4.0,
+      "thr_MNL": 5.5
+    },
+    "pcd": {
+      "q_min": 0.0,
+      "q_max": 20.0,
+      "nbins": 200,
+      "mc_trials": 50000
+    },
+    "charge_ionization": {
+      "table_csv": "data/p100K_gap1p2_eh3p8.csv",
+      "band_gap_eV": 1.2,
+      "eh_pair_eV": 3.8,
+      "scenario": "B-thresh"
+    }
+  },
+  "background_source": "dc_flat",
+  "backgrounds": {
+    "dark_current": {
+      "lambda_e_per_pix_per_year": 3.65,
+      "norm_scale": 1.0
+    },
+    "pattern_efficiency": {
+      "type": "flat",
+      "epsilon": 0.95
+    },
+    "timing": {
+      "exposure_time_s": 1800,
+      "n_exposures": null
+    },
+    "flat_background": {
+      "norm_per_kg_year_keV": 1.0,
+      "Emin_eV": 0,
+      "Emax_eV": 20,
+      "nbins": 200
+    },
+    "background_efficiency_csv": ""
+  },
+  "model": {
+    "type": "dm_electron",
+    "material": "Si",
+    "mediator": "heavy",
+    "rates_dir": "data/qcdark2_rates/Si/heavy/Si_fast_gap1p2",
+    "filename_template": "dRdE_{material}_{mediator}_m{mchi_MeV}_s{sigma_e_cm2}.csv",
+    "Emin_eV": 0,
+    "Emax_eV": 20,
+    "nbins": 200,
+    "example_point": {
+      "mchi_MeV": 1.007781,
+      "sigma_e_cm2": 1.1e-35
+    },
+    "grid": {
+      "mchi_MeV": {
+        "values": [
+          1.007781
+        ]
+      },
+      "sigma_e_cm2": {
+        "values": [
+          1.1e-35
+        ]
+      },
+      "format": {
+        "mchi": ".6f",
+        "sigma": ".1e"
+      }
+    }
+  }
+}

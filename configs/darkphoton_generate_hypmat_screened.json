@@ -1,0 +1,37 @@
+{
+  "darkelf_dir": "/Users/diegovenegasvargas/Documents/Software/DarkELF",
+  "detector": {
+    "band_gap_eV": 0.34,
+    "binsize_eV": 0.05
+  },
+  "options": {
+    "skip_existing": true,
+    "overwrite": false,
+    "parallel": 1,
+    "progress": true,
+    "format": {
+      "mA": ".6f",
+      "epsilon": ".3e"
+    }
+  },
+  "grid": {
+    "mA_eV": {
+      "logspace": {
+        "start_exp": -1.0,
+        "stop_exp": 2.0,
+        "num": 300
+      }
+    },
+    "epsilon": {
+      "logspace": {
+        "start_exp": -20,
+        "stop_exp": -8,
+        "num": 40
+      }
+    }
+  },
+  "_comment": "Generate dark photon absorption rates for hypothetical narrow-gap material, screened bracket (eps1=12). E_gap=0.34 eV. Run: python3 utils/darkphoton_generate_grid.py configs/darkphoton_generate_hypmat_screened.json",
+  "material": "hypmat_screened",
+  "rates_dir": "data/darkphoton_rates/HypMat_0p34_screened",
+  "filename_template": "dRdE_{material}_absorption_m{mA_eV}_e{epsilon}.csv"
+}

@@ -1,9 +1,12 @@
-// ============================================================================
-//  CCDarkSens — ccdarksens_pattern_background_eff
-//  Monte Carlo app that simulates ideal patterns through ChargeTransport and PatternClassifier and writes background identification-efficiency CSVs.
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  ccdarksens_pattern_background_eff.cc -- Monte Carlo app that simulates
+//  ideal patterns through ChargeTransport and PatternClassifier and writes
+//  background identification-efficiency CSVs.
+// ===========================================================================
 
 #include <algorithm>
 #include <fstream>
@@ -21,6 +24,12 @@
 using namespace ccdarksens;
 
 // Enumerate ideal patterns: (0) first (background), then (1)..(5), (1,1),..., (1,1,1),... with sum <= max_sum (notebook pattern_simulation_background).
+// ----------------------------------------------------------------------------
+// enumerate_ideal_patterns
+//   All ideal patterns with total charge <= max_sum: first the empty pattern (0),
+//   then the one-, two- and three-pixel patterns with 1..5 e- per pixel, ordered by
+//   length and then lexicographically.
+// ----------------------------------------------------------------------------
 static std::vector<std::vector<int>> enumerate_ideal_patterns(int max_sum) {
   std::vector<std::vector<int>> out;
   out.push_back({0});  // background / empty
@@ -50,25 +59,35 @@ static std::vector<std::vector<int>> enumerate_ideal_patterns(int max_sum) {
   return out;
 }
 
+// Pattern digits -> integer code, e.g. {2,1,1} -> 211.
 static int pattern_to_code(const std::vector<int>& p) {
   int code = 0;
   for (int d : p) code = code * 10 + d;
   return code;
 }
 
+// Pattern digits -> string, e.g. {2,1,1} -> "211".
 static std::string pattern_to_str(const std::vector<int>& p) {
   std::string s;
   for (int d : p) s += std::to_string(d);
   return s;
 }
 
+// ----------------------------------------------------------------------------
+// main
+//   Monte Carlo of the background pattern-identification matrix. For every ideal
+//   pattern I simulate Nsims noisy 3x5 clusters, classify each with the 2D isolation
+//   scan and count which pattern is identified, then write
+//   eff(identified | ideal) to <outdir>/Background_efficiencies.csv.
+//   Usage: <program> config.json [Nsims=10000] [outdir=.]. Returns 0 on success, 1 on error.
+// ----------------------------------------------------------------------------
 int main(int argc, char** argv) {
   if (argc < 2) {
     std::cerr << "Usage: " << argv[0] << " config.json [Nsims] [outdir]\n";
     return 1;
   }
   const std::string config_path = argv[1];
-  int Nsims = 10000;
+  int Nsims = 10000;  // simulated clusters per ideal pattern
   if (argc >= 3) Nsims = std::max(1, std::stoi(argv[2]));
   std::string outdir = ".";
   if (argc >= 4) outdir = argv[3];
@@ -134,7 +153,7 @@ int main(int argc, char** argv) {
       if (ideal.size() >= 1) b = static_cast<double>(ideal[0]);
       if (ideal.size() >= 2) c = static_cast<double>(ideal[1]);
       if (ideal.size() >= 3) d = static_cast<double>(ideal[2]);
-      std::map<int, int> counts;
+      std::map<int, int> counts;  // identified code -> number of clusters
       for (int t = 0; t < Nsims; ++t) {
         auto cl = img_gen->SimulateCluster(b, c, d);
         // 2D scan with isolation (notebook scan_image_background uses 3-row image)

@@ -1,0 +1,19 @@
+# Measured nuclear recoil ionization efficiency in Si, Chavarria et al. 2016
+# (Phys. Rev. D 94, 082007), Table I. Measured with a 124Sb-9Be photoneutron
+# source, integral method result (final reported values). Uncertainties
+# (statistical + systematic, on Er, strongly correlated between bins) are
+# in the paper's Table I but not reproduced here -- this file carries only
+# the central Ee(Er) values used for interpolation.
+# Columns: Er_keV_nr, Ee_keV_ee
+0.68,0.06
+0.86,0.09
+1.05,0.12
+1.22,0.15
+1.36,0.18
+1.52,0.21
+1.66,0.24
+1.81,0.27
+1.94,0.30
+2.07,0.33
+2.18,0.36
+2.28,0.39

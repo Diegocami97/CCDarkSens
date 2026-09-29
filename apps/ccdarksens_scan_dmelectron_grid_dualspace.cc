@@ -1,9 +1,12 @@
-// ============================================================================
-//  CCDarkSens — ccdarksens_scan_dmelectron_grid_dualspace
-//  Dual-space DM-electron grid scan that computes test statistics in both reconstructed n_e and PCD q observables on the same (mχ, σe) grid.
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  ccdarksens_scan_dmelectron_grid_dualspace.cc -- Dual-space DM-electron
+//  grid scan that computes test statistics in both reconstructed n_e and PCD
+//  q observables on the same (mχ, σe) grid.
+// ===========================================================================
 
 #include <algorithm>
 #include <cmath>
@@ -48,6 +51,10 @@ static auto expand_axis = [](const json& spec, const std::string& kind) {
   return ccdarksens::utils::ExpandAxis(spec, kind);
 };
 
+// ----------------------------------------------------------------------------
+// format_sigma
+//   Coupling value -> the string used in the rate-file names; a format like ".3e" gives 3 digits in scientific notation, anything else falls back to 6.
+// ----------------------------------------------------------------------------
 static std::string format_sigma(double sigma, const std::string& fmt)
 {
   int prec = 6;
@@ -65,6 +72,10 @@ static std::string format_sigma(double sigma, const std::string& fmt)
   return ss.str();
 }
 
+// ----------------------------------------------------------------------------
+// make_edges_from_centers
+//   Histogram bin edges for bin centres c: midpoints between neighbors, outer edges extended by half a step (a single centre gets +/-50%).
+// ----------------------------------------------------------------------------
 static std::vector<double> make_edges_from_centers(const std::vector<double>& c)
 {
   const std::size_t N = c.size();
@@ -89,6 +100,14 @@ static std::vector<double> make_edges_from_centers(const std::vector<double>& c)
 // -----------------------------------------------------------------------------
 // Main
 // -----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// main
+//   Dual-space DM-electron scan: on the same (m_chi, sigma_e) grid I compute the Asimov q in
+//   pattern space or in PCD space (reconstructed charge). Usage: <program> config.json. Steps:
+//   parse the config; set up the experiment and the detector-response components
+//   (ChargeTransport, EfficiencyMC, PCD response, DetectorResponsePipeline); build the dark-current
+//   and flat backgrounds in the chosen space; scan the grid; write the results.
+// ----------------------------------------------------------------------------
 int main(int argc, char** argv)
 {
   if (argc < 2) {
@@ -223,7 +242,7 @@ int main(int argc, char** argv)
     pcc.thr_M     = pcc_temp.thr_M;
     pcc.thr_MN    = pcc_temp.thr_MN;
     pcc.thr_MNL   = pcc_temp.thr_MNL;
-    // plus any new thresholds / sigma_res_e you added
+    // plus any new thresholds / sigma_res_e I added
 
     auto classifier = std::make_shared<PatternClassifier>(pcc);
     EfficiencyMC emc(emc_cfg, ct, classifier);

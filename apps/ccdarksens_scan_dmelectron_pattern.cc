@@ -67,9 +67,8 @@
 #include <nlohmann/json.hpp>
 
 #include "ccdarksens/io/ConfigManager.hh"
-#include "ccdarksens/model/DMElectronModel.hh"
-#include "ccdarksens/model/DarkPhotonModel.hh"
-#include "ccdarksens/model/MigdalModel.hh"
+#include "ccdarksens/model/ModelFactory.hh"
+#include "ccdarksens/scan/ScanUtils.hh"
 #include "ccdarksens/experiment/ExperimentSetup.hh"
 
 #include "ccdarksens/response/ChargeIonization.hh"
@@ -139,62 +138,6 @@ static std::string format_sigma(double sigma, const std::string& fmt)
   return ss.str();
 }
 
-// Dispatches on model.type to build the dR/dE(E) signal spectrum for a single
-// grid point. mass_val/coupling_str carry whichever physical quantities the
-// model expects (mchi_MeV/sigma_e_cm2 for dm_electron, mA_eV/epsilon for
-// dark_photon, mchi_MeV/sigma_n_cm2 for migdal) — the scan loop itself is
-// agnostic to which model produced the spectrum.
-static std::unique_ptr<TH1D> MakeSignalSpectrumE(const ccdarksens::ModelJSON& mj,
-                                                  double mass_val,
-                                                  const std::string& coupling_str,
-                                                  bool* ok = nullptr)
-{
-  using namespace ccdarksens;
-  bool good = false;
-  std::unique_ptr<TH1D> h;
-
-  // NOTE: MakeSpectrum_E() is called unconditionally, matching the prior
-  // DMElectronModel call sites this replaces — RateTable::MakeTH1D() returns
-  // a valid (possibly all-zero) histogram even when Configure()/LoadCSV()
-  // failed to find the requested grid point, which callers rely on for the
-  // dummy/flat-background spectrum. `good` only gates whether the *caller*
-  // should treat this grid point as a successful signal load.
-  if (mj.type == "dark_photon") {
-    DarkPhotonConfig c;
-    c.material = mj.material; c.mediator = mj.mediator;
-    c.rates_dir = mj.rates_dir; c.filename_template = mj.filename_template;
-    c.Emin_eV = mj.Emin_eV; c.Emax_eV = mj.Emax_eV; c.nbins = mj.nbins;
-    c.mA_eV = mass_val; c.epsilon = coupling_str; c.epsilon_ref = mj.epsilon_ref;
-    DarkPhotonModel m;
-    good = m.Configure(c);
-    h = m.MakeSpectrum_E();
-  } else if (mj.type == "migdal") {
-    // Migdal is a DM-nucleon process: target_nucleus/A/Z/mediator describe
-    // the DM<->nucleus coupling, not the DM-electron coupling used above.
-    DMNucleonConfig c;
-    c.target_nucleus = mj.target_nucleus; c.A = mj.nuclear_A; c.Z = mj.nuclear_Z;
-    c.mediator = mj.mediator;
-    c.rates_dir = mj.rates_dir; c.filename_template = mj.filename_template;
-    c.Emin_eV = mj.Emin_eV; c.Emax_eV = mj.Emax_eV; c.nbins = mj.nbins;
-    c.mchi_MeV = mass_val; c.sigma_n_cm2 = coupling_str;
-    MigdalModel m;
-    good = m.Configure(c);
-    h = m.MakeSpectrum_E();
-  } else { // "dm_electron" (default)
-    DMElectronConfig c;
-    c.material = mj.material; c.mediator = mj.mediator;
-    c.rates_dir = mj.rates_dir; c.filename_template = mj.filename_template;
-    c.Emin_eV = mj.Emin_eV; c.Emax_eV = mj.Emax_eV; c.nbins = mj.nbins;
-    c.mchi_MeV = mass_val; c.sigma_e_cm2 = coupling_str;
-    DMElectronModel m;
-    good = m.Configure(c);
-    h = m.MakeSpectrum_E();
-  }
-
-  if (ok) *ok = good;
-  return h;
-}
-
 static std::string format_double(double x, const std::string& fmt)
 {
   int prec = 6;
@@ -213,39 +156,6 @@ static std::string format_double(double x, const std::string& fmt)
   ss.setf(std::ios::fixed);
   ss << std::setprecision(prec) << x;
   return ss.str();
-}
-
-/// UL from monotonized q(σ) on the scan grid — same crossing logic as ccdarksens_plot_dmelectron_limit (--from-qhist).
-static double UlFromQMonoCrossing(const std::vector<double>& sigma_list,
-                                  const std::vector<double>& q_mono,
-                                  double target_q)
-{
-  if (sigma_list.empty() || q_mono.size() != sigma_list.size())
-    return sigma_list.empty() ? 0.0 : sigma_list.back();
-  const size_t Ny = sigma_list.size();
-  for (size_t k = 0; k + 1 < Ny; ++k) {
-    const double q1 = q_mono[k];
-    const double q2 = q_mono[k + 1];
-    if (q1 < target_q && q2 >= target_q && q2 > q1) {
-      const double s1 = sigma_list[k];
-      const double s2 = sigma_list[k + 1];
-      if (s1 <= 0.0 || s2 <= 0.0) break;
-      const double logS1 = std::log10(s1);
-      const double logS2 = std::log10(s2);
-      const double t = (target_q - q1) / (q2 - q1);
-      return std::pow(10.0, logS1 + t * (logS2 - logS1));
-    }
-  }
-  const double q_min = *std::min_element(q_mono.begin(), q_mono.end());
-  if (q_min >= target_q)
-    return sigma_list.front();
-  const int k_best = static_cast<int>(
-      std::min_element(q_mono.begin(), q_mono.end()) - q_mono.begin());
-  for (int k = k_best; k < static_cast<int>(Ny); ++k) {
-    if (q_mono[static_cast<size_t>(k)] >= target_q)
-      return sigma_list[static_cast<size_t>(k)];
-  }
-  return sigma_list.back();
 }
 
 /// Load observed counts from CSV (one row comma-separated or one per line). Returns empty on error.
@@ -1726,16 +1636,8 @@ int main(int argc, char** argv)
         const double nll_min = *std::min_element(nll_values.begin(), nll_values.end());
         const double q0_val = 2.0 * (nll_null - nll_min);
         h_q0.SetBinContent(idx_mchi + 1, q0_val > 0.0 ? q0_val : 0.0);
-        // Monotonicize q(σ): running max so UL crossing is well-defined and smooth
-        std::vector<double> q_mu(nll_values.size()), q_mono(nll_values.size());
-        for (size_t k = 0; k < nll_values.size(); ++k) {
-          double q = 2.0 * (nll_values[k] - nll_min);
-          q_mu[k] = (q > 0.0) ? q : 0.0;
-        }
-        q_mono[0] = q_mu[0];
-        for (size_t k = 1; k < nll_values.size(); ++k)
-          q_mono[k] = std::max(q_mono[k - 1], q_mu[k]);
-        double ul_sigma = UlFromQMonoCrossing(sigma_list, q_mono, target_q);
+        const auto q_mono = ccdarksens::scan::MonotonizeQ(nll_values, nll_min);
+        double ul_sigma = ccdarksens::scan::UlFromQMonoCrossing(sigma_list, q_mono, target_q);
         for (int k = 0; k < static_cast<int>(nll_values.size()); ++k) {
           if (q_mono[k] <= 0.0) continue;
           h_q.SetBinContent(idx_mchi + 1, k + 1, q_mono[k]);
@@ -1755,80 +1657,28 @@ int main(int argc, char** argv)
         const double q0_val = 2.0 * (nll_null - nll_min);
         h_q0.SetBinContent(idx_mchi + 1, q0_val > 0.0 ? q0_val : 0.0);
 
-        // Monotonicize q(σ): running max so UL crossing is well-defined and reduces sawtooth
-        std::vector<double> q_mu(nll_values.size()), q_mono(nll_values.size());
-        for (size_t k = 0; k < nll_values.size(); ++k) {
-          double q = 2.0 * (nll_values[k] - nll_min);
-          q_mu[k] = (q > 0.0) ? q : 0.0;
-        }
-        q_mono[0] = q_mu[0];
-        for (size_t k = 1; k < nll_values.size(); ++k)
-          q_mono[k] = std::max(q_mono[k - 1], q_mu[k]);
-
-        double ul_sigma = UlFromQMonoCrossing(sigma_list, q_mono, target_q);
+        const auto q_mono = ccdarksens::scan::MonotonizeQ(nll_values, nll_min);
+        double ul_sigma = ccdarksens::scan::UlFromQMonoCrossing(sigma_list, q_mono, target_q);
         double ul_pydme_bisection = -1.0;
         if (pydme_mode && S_grid.size() >= 2u) {
-          // Pydme diagnostic: bracket + bisection with re-minuit at each trial σ (can be spiky on fine mχ grids).
           const double log10_lo = std::log10(sigma_list.front());
           const double log10_hi = std::log10(sigma_list.back());
-          auto S_from_log10 = [&S_grid, &sigma_list, log10_lo, log10_hi](double log10_s) -> std::vector<double> {
-            const size_t n = S_grid.empty() ? 0u : S_grid[0].size();
-            std::vector<double> out(n, 0.0);
-            if (S_grid.size() < 2u) return S_grid.empty() ? out : S_grid[0];
-            const double log10_s_clamp = std::max(log10_lo, std::min(log10_hi, log10_s));
-            for (size_t j = 0; j + 1 < sigma_list.size(); ++j) {
-              const double l0 = std::log10(sigma_list[j]);
-              const double l1 = std::log10(sigma_list[j + 1]);
-              if (log10_s_clamp >= l0 && log10_s_clamp <= l1) {
-                const double t = (l1 - l0) > 1e-300 ? (log10_s_clamp - l0) / (l1 - l0) : 0.0;
-                for (size_t b = 0; b < n; ++b)
-                  out[b] = S_grid[j][b] + t * (S_grid[j + 1][b] - S_grid[j][b]);
-                return out;
-              }
-            }
-            if (log10_s_clamp <= std::log10(sigma_list[0])) return S_grid[0];
-            return S_grid.back();
-          };
           auto q_mu_at = [&](double log10_sig) {
-            std::vector<double> S = S_from_log10(log10_sig);
+            std::vector<double> S = ccdarksens::scan::InterpolateSignal(S_grid, sigma_list, log10_sig);
             const double nll = profile_pl->MinimizeOverScaleMinuit(S, profile_param_lo, profile_param_hi).second;
             return 2.0 * (nll - nll_min);
           };
           const int k_best_pydme = static_cast<int>(std::min_element(nll_values.begin(), nll_values.end()) - nll_values.begin());
           const double log10_sigma_best = std::log10(sigma_list[k_best_pydme]);
-          const double lo = use_2d_nll_min
+          const double log10_seed = use_2d_nll_min
               ? std::max({log10_sigma_hat_pydme, log10_lo, log10_sigma_best})
               : std::max(log10_lo, log10_sigma_best);
-          double hi = lo;
-          const double ul_brack_step = 0.3;
-          const int ul_max_expand = 12;
-          const int ul_max_iter = 24;
-          const double ul_q_tol = 0.01;
-          const double tol_x = std::max(1e-3, 0.01 * (log10_hi - log10_lo));
-          double step = ul_brack_step;
-          int brack_count = 0;
-          for (int _ = 0; _ < ul_max_expand && hi < log10_hi - 1e-12; ++_) {
-            brack_count++;
-            hi = std::min(hi + step, log10_hi);
-            if (q_mu_at(hi) >= target_q) break;
-            step *= 2.0;
-          }
-          if (q_mu_at(hi) >= target_q) {
-            double left = lo, right = hi;
-            for (int it = 0; it < ul_max_iter; ++it) {
-              const double mid = 0.5 * (left + right);
-              const double q_mid = q_mu_at(mid);
-              if (q_mid >= target_q)
-                right = mid;
-              else
-                left = mid;
-              if (std::abs(right - left) < tol_x || std::abs(q_mid - target_q) < ul_q_tol)
-                break;
-            }
-            ul_pydme_bisection = std::pow(10.0, right);
+          const double log10_ul = ccdarksens::scan::BisectUpperLimit(q_mu_at, log10_lo, log10_hi, log10_seed, target_q);
+          if (log10_ul < log10_hi) {
+            ul_pydme_bisection = std::pow(10.0, log10_ul);
             if (run.verbosity >= 1)
               std::cout << "[scan-pattern] mchi=" << mchi << " MeV pydme bisection (diagnostic): log10(sigma_e)="
-                        << std::log10(ul_pydme_bisection) << " (bracketing steps=" << brack_count << ")\n";
+                        << std::log10(ul_pydme_bisection) << "\n";
           } else if (run.verbosity >= 1) {
             const double q_at_hi = q_mu_at(log10_hi);
             std::cout << "[scan-pattern] mchi=" << mchi << " MeV pydme bisection: bracket did not reach target_q (q at log10_sigma_hi="

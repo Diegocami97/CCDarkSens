@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
 # ============================================================================
-#  CCDarkSens — plot_band_gap_pheno_ratio
-#  Plot σ_UL ratio vs reference from limit CSV (band-gap pheno Step 5)
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
 #
-#  Author: Diego Venegas-Vargas
+#  File: plot_band_gap_pheno_ratio.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  plot_band_gap_pheno_ratio.py -- Plot σ_UL ratio vs reference from limit
+#  CSV (band-gap pheno Step 5)
 # ============================================================================
 """Plot sigma_UL ratio vs reference from limit CSV (Step 5)."""
 
@@ -39,6 +46,10 @@ def load_limit_csv(path: Path) -> dict[str, tuple[np.ndarray, np.ndarray]]:
     return out
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Plot the ratio of the limit curves of a CSV to the reference curve (--reference), for the labels given with --compare (default all others), and save the figure to --out.
+# ----------------------------------------------------------------------------
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--csv", type=Path, required=True)

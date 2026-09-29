@@ -1,4 +1,18 @@
 #!/usr/bin/env python3
+# ============================================================================
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  File: compare_pydme_pattern_signal.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  compare_pydme_pattern_signal.py -- Compare CCDarkSens-style pattern signal
+#  to pydme Verne/QEDark rate tables (m=2 MeV).
+# ============================================================================
+
 """Compare CCDarkSens-style pattern signal to pydme Verne/QEDark rate tables (m=2 MeV)."""
 from __future__ import annotations
 
@@ -14,6 +28,10 @@ ROI = [11, 21, 111, 31, 22, 211]
 NE_FOLD = [1, 2, 3, 4, 5]
 
 
+# ----------------------------------------------------------------------------
+# load_eff
+#   Read a (pattern, ne, efficiency) CSV into a DataFrame with integer pattern and ne columns.
+# ----------------------------------------------------------------------------
 def load_eff(path: Path) -> pd.DataFrame:
     df = pd.read_csv(path, comment="#")
     df["pattern"] = df["pattern"].astype(int)
@@ -52,6 +70,10 @@ def rate_to_counts_gday(rate_gday: np.ndarray, exposure_gday: float) -> float:
     return float(np.mean(rate_gday)) * exposure_gday
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Compare the CCDarkSens-style pattern signal with the pydme (Verne/QEDark) signal and post-diffusion tables for one mass (default 2 MeV) and cross section, using the two reference efficiency tables.
+# ----------------------------------------------------------------------------
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--sigma", type=float, default=1.0800523745162496e-36)

@@ -1,9 +1,12 @@
-// ============================================================================
-//  CCDarkSens — ccdarksens_csv_to_root_data
-//  Converts observed pattern-count CSVs into ROOT TH1D data histograms (D_pat) with optional exposure/mass metadata for likelihood inputs.
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  ccdarksens_csv_to_root_data.cc -- Converts observed pattern-count CSVs
+//  into ROOT TH1D data histograms (D_pat) with optional exposure/mass
+//  metadata for likelihood inputs.
+// ===========================================================================
 
 #include <algorithm>
 #include <fstream>
@@ -281,6 +284,13 @@ static bool parse_csv(const std::string& path,
   return true;
 }
 
+// ----------------------------------------------------------------------------
+// main
+//   Convert an observed-counts CSV into a ROOT file holding the histogram D_pat (one bin per
+//   pattern). Usage: <program> <data.csv> <output.root> [config.json]; the optional config gives the
+//   pattern order (experiment.pattern_roi). When the CSV has texp and Nusedpix/Npix columns I also
+//   store livetime_days, mass_kg and exposure_kg_year. Returns 0 on success, 1 on error.
+// ----------------------------------------------------------------------------
 int main(int argc, char** argv) {
   if (argc < 3) {
     std::cerr << "Usage: " << argv[0] << " <data.csv> <output.root> [config.json]\n";

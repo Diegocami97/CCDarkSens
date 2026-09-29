@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
 # ============================================================================
-#  CCDarkSens — compare_baxter_fullgrid
-#  Compare Baxter fullgrid scan vs paper export and v_E=263 baseline
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
 #
-#  Author: Diego Venegas-Vargas
+#  File: compare_baxter_fullgrid.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  compare_baxter_fullgrid.py -- Compare Baxter fullgrid scan vs paper export
+#  and v_E=263 baseline
 # ============================================================================
 """Compare Baxter fullgrid scan vs paper export and vE=263 baseline."""
 from __future__ import annotations
@@ -27,6 +34,10 @@ PAPER_EXPORT = (
 ) if _pydme_ref_dir else None
 
 
+# ----------------------------------------------------------------------------
+# load_paper
+#   Read the paper-export limit curve, converting masses above 1e4 from eV to MeV; returns the sorted masses and cross sections.
+# ----------------------------------------------------------------------------
 def load_paper(path: Path):
     rows = []
     for ln in path.read_text().splitlines():
@@ -43,6 +54,10 @@ def load_paper(path: Path):
     return arr[order, 0], arr[order, 1]
 
 
+# ----------------------------------------------------------------------------
+# load_scan
+#   Upper-limit curve of a scan ROOT file (graph if present, else the histogram), keeping physical points: positive, below 0.9e-26 and at masses of at least 0.5 MeV.
+# ----------------------------------------------------------------------------
 def load_scan(root: Path):
     import uproot
 
@@ -60,6 +75,10 @@ def load_scan(root: Path):
     return xc[ok], v[ok]
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Compare the full-grid scan with the Baxter halo, the baseline scan and the paper curve and write the comparison plots to --outdir.
+# ----------------------------------------------------------------------------
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument(

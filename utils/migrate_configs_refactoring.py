@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
 # ============================================================================
-#  CCDarkSens — migrate_configs_refactoring
-#  Migrate JSON configs to EfficiencyMC naming conventions (Refactoring_Changelog.md)
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
 #
-#  Author: Diego Venegas-Vargas
+#  File: migrate_configs_refactoring.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  migrate_configs_refactoring.py -- Migrate JSON configs to EfficiencyMC
+#  naming conventions (Refactoring_Changelog.md)
 # ============================================================================
 """Migrate JSON configs to match Refactoring_Changelog.md conventions."""
 
@@ -17,6 +24,10 @@ REPO = Path(__file__).resolve().parent.parent
 CONFIG_DIRS = [REPO / "configs", REPO / "outputs"]
 
 
+# ----------------------------------------------------------------------------
+# flatten_cluster_to_efficiency
+#   Copy of a legacy cluster_mc block with its nested diffusion and binning sub-blocks flattened into the top level, as efficiency_mc expects.
+# ----------------------------------------------------------------------------
 def flatten_cluster_to_efficiency(cluster: dict) -> dict:
     out = deepcopy(cluster)
     if "diffusion" in out:
@@ -30,6 +41,10 @@ def flatten_cluster_to_efficiency(cluster: dict) -> dict:
     return out
 
 
+# ----------------------------------------------------------------------------
+# migrate_response
+#   Rename legacy response keys in place (mode cluster_mc -> pattern, pattern_mc -> efficiency_mc, cluster_mc block -> efficiency_mc) and return the list of changes made.
+# ----------------------------------------------------------------------------
 def migrate_response(response: dict) -> list[str]:
     changes: list[str] = []
 
@@ -59,6 +74,10 @@ def migrate_response(response: dict) -> list[str]:
     return changes
 
 
+# ----------------------------------------------------------------------------
+# migrate_file
+#   Migrate the response block of one config file and rewrite it if anything changed; returns the changes (empty for non-config files).
+# ----------------------------------------------------------------------------
 def migrate_file(path: Path) -> list[str]:
     try:
         data = json.loads(path.read_text())
@@ -76,6 +95,10 @@ def migrate_file(path: Path) -> list[str]:
     return changes
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Migrate every JSON config in the configured directories and print which files were updated.
+# ----------------------------------------------------------------------------
 def main() -> None:
     updated = []
     for cfg_dir in CONFIG_DIRS:

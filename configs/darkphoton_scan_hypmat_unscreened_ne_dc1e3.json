@@ -1,0 +1,160 @@
+{
+  "_comment": "Dark photon absorption scan \u2014 hypothetical material, unscreened bracket (eps1=1). 1 kg-year, E_gap=0.34 eV, E_eh=1.6 eV, DC=1e-5 e/pix/day. n_e space extended to roi=[1..19] covering up to ~30.7 eV (= 0.34 + 19x1.6). Table limit: p100K_gap0p34_eh1p6.csv has 20 columns.",
+  "run": {
+    "cl": 0.9,
+    "test_stat": "PLR",
+    "n_toys": 0,
+    "rng_seed": 12345,
+    "verbosity": 1,
+    "use_profile_likelihood": true,
+    "background_source": "dc_flat_migration",
+    "background_model": "scale",
+    "profile_minimizer": "pydme",
+    "pydme_style_ul": true,
+    "smooth_ul_envelope": false,
+    "label": "darkphoton_hypmat_unscreened_ne_dc1e3",
+    "outdir": "outputs/darkphoton/hypmat_unscreened_ne_dc1e3"
+  },
+  "detector": {
+    "rows": 1300,
+    "cols": 6300,
+    "pixel_size_um": 15.0,
+    "thickness_mm": 0.67,
+    "active_fraction": 0.98,
+    "target_element": "Si",
+    "density_g_cm3": 5.76,
+    "mass_kg": 1.0
+  },
+  "experiment": {
+    "mode": "asimov",
+    "livetime_days": 365.25,
+    "duty_cycle": 1.0,
+    "binning": {
+      "ne_min": 1,
+      "ne_max": 40
+    },
+    "roi_bins": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40
+    ],
+    "observable_bins": "ne"
+  },
+  "response": {
+    "mode": "ne",
+    "analysis_space": "ne",
+    "efficiency_mc": {
+      "efficiency_csv": "data/Efficiencies_patterns_Nsims1000000_DCTrue_alpha1_ne20.csv",
+      "n_events_per_ne": 1000000,
+      "sigma_readout_e": 0.16,
+      "Qmin_e": 0.6,
+      "Qmax_e": 40.0,
+      "A_um2": 803.25,
+      "b_umInv": 0.00065,
+      "alpha": 1.0,
+      "beta_per_keV": 0.0,
+      "half_window_pix": 2,
+      "row_length": 32,
+      "rows_bin": 1,
+      "cols_bin": 1,
+      "pileup_with_dc": false,
+      "enable_MN": true,
+      "enable_MNL": true,
+      "use_2d_image_efficiency": false,
+      "rng_seed": 987654321
+    },
+    "charge_ionization": {
+      "table_csv": "data/p100K_gap0p34_eh1p78.csv",
+      "band_gap_eV": 0.34,
+      "eh_pair_eV": 1.7778,
+      "scenario": "D-equal"
+    }
+  },
+  "backgrounds": {
+    "dark_current": {
+      "lambda_e_per_pix_per_year": 0.365,
+      "norm_scale": 1.0
+    },
+    "pattern_efficiency": {
+      "type": "flat",
+      "epsilon": 0.95
+    },
+    "timing": {
+      "exposure_time_s": 1668,
+      "n_exposures": null
+    },
+    "flat_background": {
+      "norm_per_kg_year_keV": 0.0,
+      "Emin_eV": 0.34,
+      "Emax_eV": 32.5,
+      "nbins": 4000
+    }
+  },
+  "model": {
+    "type": "dark_photon",
+    "material": "hypmat_unscreened",
+    "mediator": "absorption",
+    "rates_dir": "data/darkphoton_rates/HypMat_0p34_unscreened",
+    "filename_template": "dRdE_{material}_absorption_m{mA_eV}_e{epsilon}.csv",
+    "Emin_eV": 0.34,
+    "Emax_eV": 100.0,
+    "nbins": 4000,
+    "grid": {
+      "mA_eV": {
+        "logspace": {
+          "start_exp": -1.0,
+          "stop_exp": 2.0,
+          "num": 300
+        }
+      },
+      "epsilon": {
+        "logspace": {
+          "start_exp": -20,
+          "stop_exp": -8,
+          "num": 40
+        }
+      },
+      "format": {
+        "mchi": ".6f",
+        "sigma": ".3e"
+      }
+    }
+  }
+}

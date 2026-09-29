@@ -1,10 +1,17 @@
 #!/usr/bin/env python3
 # ============================================================================
-#  CCDarkSens — build_p100K_scaled
-#  Build pheno-scaled P(n_e|E) tables from the Si reference p100K_table.csv
-#  using the anchored energy map (see docs/band_gap_pheno_p100K_scaling_explained.md).
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
 #
-#  Author: Diego Venegas-Vargas
+#  File: build_p100K_scaled.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  build_p100K_scaled.py -- Build pheno-scaled P(n_e|E) tables from the Si
+#  reference p100K_table.csv using the anchored energy map (see
+#  docs/band_gap_pheno_p100K_scaling_explained.md).
 # ============================================================================
 
 from __future__ import annotations
@@ -22,6 +29,10 @@ DEFAULT_REF = "data/p100K_table.csv"
 DEFAULT_E_MIN_EV = 0.05
 
 
+# ----------------------------------------------------------------------------
+# infer_energy_step
+#   Energy step of a grid: E[1] - E[0] rounded to 6 decimals (0.05 eV for a grid with fewer than 2 points).
+# ----------------------------------------------------------------------------
 def infer_energy_step(E: np.ndarray) -> float:
     if E.size >= 2:
         return float(np.round(E[1] - E[0], 6))
@@ -49,6 +60,10 @@ def fmt_ev_tag(x: float) -> str:
     return s.replace(".", "p")
 
 
+# ----------------------------------------------------------------------------
+# default_out_path
+#   Default output file data/p100K_gap<gap>_eh<eh>.csv for a (band gap, e-h pair energy) pair.
+# ----------------------------------------------------------------------------
 def default_out_path(gap_eV: float, eh_eV: float) -> Path:
     return Path(f"data/p100K_gap{fmt_ev_tag(gap_eV)}_eh{fmt_ev_tag(eh_eV)}.csv")
 
@@ -73,6 +88,10 @@ def load_p100k_csv(path: Path) -> Tuple[np.ndarray, np.ndarray]:
     return E, P
 
 
+# ----------------------------------------------------------------------------
+# interp_linear_clamped
+#   Linear interpolation of y(x) at xq, with the end values held outside the range and the result clipped to [0,1] because it is a probability.
+# ----------------------------------------------------------------------------
 def interp_linear_clamped(x: np.ndarray, y: np.ndarray, xq: float) -> float:
     if xq <= x[0]:
         return float(np.clip(y[0], 0.0, 1.0))
@@ -85,6 +104,10 @@ def interp_linear_clamped(x: np.ndarray, y: np.ndarray, xq: float) -> float:
     return float(np.clip(v, 0.0, 1.0))
 
 
+# ----------------------------------------------------------------------------
+# map_E_prime
+#   Anchored energy map: the reference-table energy that corresponds to E for a new band gap and pair energy, E' = gap_ref + (E - gap_new)*(eh_ref/eh_new).
+# ----------------------------------------------------------------------------
 def map_E_prime(
     E: float,
     gap_new: float,
@@ -97,6 +120,10 @@ def map_E_prime(
     return gap_ref + (E - gap_new) * (eh_ref / eh_new)
 
 
+# ----------------------------------------------------------------------------
+# build_scaled_table
+#   P(n_e | E) of the new (gap, eh) pair: for each energy above the new gap I map E to E' and interpolate the reference probabilities there; below the gap the probabilities are zero.
+# ----------------------------------------------------------------------------
 def build_scaled_table(
     E_grid: np.ndarray,
     P_ref: np.ndarray,
@@ -117,6 +144,10 @@ def build_scaled_table(
     return P_new
 
 
+# ----------------------------------------------------------------------------
+# write_p100k_csv
+#   Write a scaled ionization table as CSV with a header that records the reference file, gaps and pair energies, and the scenario.
+# ----------------------------------------------------------------------------
 def write_p100k_csv(
     out: Path,
     E: np.ndarray,
@@ -148,6 +179,10 @@ def write_p100k_csv(
     print(f"[ok] wrote {out}  ({E.size} rows, {P.shape[0]} n_e columns)")
 
 
+# ----------------------------------------------------------------------------
+# plot_p100k_compare
+#   Plot P(n_e = ne_plot | E) of the reference table and of the scaled tables in one PDF.
+# ----------------------------------------------------------------------------
 def plot_p100k_compare(
     E_ref: np.ndarray,
     P_ref: np.ndarray,
@@ -175,6 +210,10 @@ def plot_p100k_compare(
     print(f"[ok] plot {out_pdf}")
 
 
+# ----------------------------------------------------------------------------
+# build_from_manifest
+#   Build every scaled table listed in the scenario manifest JSON (reference and scenarios), extending the energy grid down to E_min, skipping existing files unless force is set, with an optional comparison plot.
+# ----------------------------------------------------------------------------
 def build_from_manifest(
     manifest_path: Path,
     plot: bool,
@@ -224,6 +263,10 @@ def build_from_manifest(
         )
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Command line: build one scaled table from --band-gap-eV and --eh-pair-eV, or all tables of a manifest (--from-manifest); optional comparison plot (--plot).
+# ----------------------------------------------------------------------------
 def main() -> None:
     ap = argparse.ArgumentParser(description="Build scaled p100K ionization CSV tables.")
     ap.add_argument("--band-gap-eV", type=float, help="New pheno band gap [eV]")

@@ -1,4 +1,13 @@
 #!/usr/bin/env bash
+# ============================================================================
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  run_band_gap_2d_heatmaps.sh -- I extract sigma_UL on the 2D (E_gap,
+#  epsilon_h) grid and plot the gain heatmaps for each mediator and DM mass.
+# ============================================================================
+
 # Extract sigma_UL on the 2D (E_gap, epsilon_h) grid and plot gain heatmaps.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"

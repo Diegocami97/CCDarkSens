@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
 # ============================================================================
-#  CCDarkSens — plot_band_gap_pheno_p100K
-#  Compare P(n_e|E) for reference vs scaled p100K tables (band-gap pheno Step 2)
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
 #
-#  Author: Diego Venegas-Vargas
+#  File: plot_band_gap_pheno_p100K.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  plot_band_gap_pheno_p100K.py -- Compare P(n_e|E) for reference vs scaled
+#  p100K tables (band-gap pheno Step 2)
 # ============================================================================
 """Compare P(n_e|E) for reference vs scaled p100K tables (Step 2)."""
 
@@ -18,6 +25,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from build_p100K_scaled import load_p100k_csv, plot_p100k_compare  # noqa: E402
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Plot P(n_e = --ne | E) of the reference table (--ref) and of the tables given with --compare LABEL=CSV, and save the figure to --out.
+# ----------------------------------------------------------------------------
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--ref", default="data/p100K_table.csv")

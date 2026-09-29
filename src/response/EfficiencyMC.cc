@@ -1,9 +1,11 @@
-// ============================================================================
-//  CCDarkSens — EfficiencyMC
-//  Monte Carlo builder of P(pattern|n_e) and ε(n_e) by simulating rows or images and scanning them with PatternClassifier.
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  EfficiencyMC.cc -- Monte Carlo builder of P(pattern|n_e) and ε(n_e) by
+//  simulating rows or images and scanning them with PatternClassifier.
+// ===========================================================================
 
 #include "ccdarksens/response/EfficiencyMC.hh"
 #include "ccdarksens/response/PatternImageGenerator.hh"
@@ -18,6 +20,7 @@
 
 namespace ccdarksens {
 
+// Constructor: keep the settings and the shared helpers (the charge-transport model owns its own RNG).
 EfficiencyMC::EfficiencyMC(const EfficiencyMCConfig& cfg,
                      std::shared_ptr<ChargeTransport> ct,
                      std::shared_ptr<PatternClassifier> classifier)
@@ -25,9 +28,10 @@ EfficiencyMC::EfficiencyMC(const EfficiencyMCConfig& cfg,
     ct_(std::move(ct)),
     classifier_(std::move(classifier))
 {
-  // ct_ owns its RNG; cfg_.seed is available if you later want extra RNG here.
+  // ct_ owns its RNG; cfg_.seed is there in case I later want extra RNG here.
 }
 
+// Switch the pattern table to the 2D image path by handing over an image generator.
 void EfficiencyMC::SetPatternImageGenerator(std::shared_ptr<PatternImageGenerator> gen) {
   img_gen_ = std::move(gen);
 }
@@ -54,8 +58,8 @@ void EfficiencyMC::BuildPatternTable(int ne_min, int ne_max, double Ee_eV)
   // --- 2D image path (notebook-style: generate_image_E + scan with isolation) ---
   if (img_gen_) {
     for (int ne_true = ne_min; ne_true <= ne_max; ++ne_true) {
-      std::map<PatternLabel, std::size_t> counts;
-      std::size_t n_trials = 0;
+      std::map<PatternLabel, std::size_t> counts;  // how many images gave each pattern label
+      std::size_t n_trials = 0;  // images actually simulated
       for (int it = 0; it < cfg_.ne_trials; ++it) {
         auto image_2d = img_gen_->GenerateImage(ne_true, Ee_eV);
         const int nrows = img_gen_->NrowsBinned();
@@ -100,8 +104,8 @@ void EfficiencyMC::BuildPatternTable(int ne_min, int ne_max, double Ee_eV)
 
   for (int ne_true = ne_min; ne_true <= ne_max; ++ne_true) {
 
-    std::map<PatternLabel, std::size_t> counts;
-    std::size_t n_trials = 0;
+    std::map<PatternLabel, std::size_t> counts;  // how many trials gave each pattern label
+    std::size_t n_trials = 0;  // trials that produced a usable row
 
     for (int it = 0; it < cfg_.ne_trials; ++it) {
 
@@ -283,7 +287,7 @@ EfficiencyMC::PrecomputeEpsilonWithPatternEff(
       if (it_w != pattern_eff.end()) {
         eff_csv = it_w->second;
       } else {
-        // If no entry in CSV, you can choose eff_csv = 1.0 or 0.0.
+        // If there is no entry in the CSV, eff_csv could be 1.0 or 0.0.
         // Start with 1.0 to avoid artificially killing patterns that weren't tabulated.
         eff_csv = 1.0;
       }
@@ -403,6 +407,11 @@ void EfficiencyMC::PrecomputeEpsilonVsEnergy(const std::vector<double>& E_grid,
     }
 }
 
+// ----------------------------------------------------------------------------
+// EfficiencyMC::IsAcceptedPattern
+//   True if at least one accepted, isolated pattern label has a total charge
+//   (the sum of its digits) equal to ne.
+// ----------------------------------------------------------------------------
 bool EfficiencyMC::IsAcceptedPattern(int ne) const {
     for (const auto& lab : cfg_.accepted_labels) {
         int qsum = 0;

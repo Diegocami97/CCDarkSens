@@ -1,3 +1,18 @@
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
+//
+//  File: plot_darkphoton_band.C
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
+//
+//  plot_darkphoton_band.C -- Dark-photon projection plot: a central line (DC
+//  = 1e-3) with a hatched band from DC = 1e-5 to DC = 1e-1. Run with: root
+//  -b -q utils/plot_darkphoton_band.C
+// ===========================================================================
+
 // plot_darkphoton_band.C
 // Dark photon projection: central line (DC=1e-3) + hatched band (DC=1e-5 to DC=1e-1)
 // Run: root -b -q utils/plot_darkphoton_band.C
@@ -102,6 +117,10 @@ TGraph* MakeBand(TGraph* g_lo, TGraph* g_hi, TGraph* g_cen) {
     return new TGraph(bx.size(), bx.data(), by.data());
 }
 
+// ----------------------------------------------------------------------------
+// plot_darkphoton_band
+//   ROOT macro: draw the dark-photon projection with the central line (DC = 1e-3) and a hatched band between the DC = 1e-5 (best) and DC = 1e-1 (worst) scans, at the limit threshold q = 2.71.
+// ----------------------------------------------------------------------------
 void plot_darkphoton_band() {
     gStyle->SetOptStat(0);
     gStyle->SetOptTitle(0);

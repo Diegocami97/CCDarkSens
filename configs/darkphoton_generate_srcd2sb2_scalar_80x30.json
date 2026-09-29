@@ -1,0 +1,39 @@
+{
+  "_comment": "Generate dark photon absorption rates using SrCd2Sb2 DFT optical spectra (scalar calculation, Tom Arbaugh). density_g_cm3 and band_gap_eV are SrCd2Sb2 values. Prereq: data/custom_eps/srcd2sb2_eps_scalar.csv must exist.",
+  "darkelf_dir": "/Users/diegovenegasvargas/Documents/Software/DarkELF",
+  "material": "SrCd2Sb2_scalar",
+  "eps_csv": "data/custom_eps/srcd2sb2_eps_scalar.csv",
+  "density_g_cm3": 5.76,
+  "detector": {
+    "band_gap_eV": 0.34,
+    "binsize_eV": 0.1
+  },
+  "rates_dir": "data/darkphoton_rates/SrCd2Sb2_scalar",
+  "filename_template": "dRdE_{material}_absorption_m{mA_eV}_e{epsilon}.csv",
+  "grid": {
+    "mA_eV": {
+      "logspace": {
+        "start_exp": -1.3,
+        "stop_exp": 1.36,
+        "num": 82
+      }
+    },
+    "epsilon": {
+      "logspace": {
+        "start_exp": -20,
+        "stop_exp": -8,
+        "num": 30
+      }
+    }
+  },
+  "options": {
+    "skip_existing": true,
+    "overwrite": false,
+    "parallel": 1,
+    "progress": true,
+    "format": {
+      "mA": ".6f",
+      "epsilon": ".3e"
+    }
+  }
+}

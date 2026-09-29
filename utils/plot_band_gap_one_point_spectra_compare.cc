@@ -1,12 +1,19 @@
-// ============================================================================
-//  CCDarkSens — plot_band_gap_one_point_spectra_compare
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
+//
+//  File: plot_band_gap_one_point_spectra_compare.cc
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
+//
+//  File: plot_band_gap_one_point_spectra_compare.cc
 //  Overlay dR/dE and S_true(n_e) from one-point band-gap spectra dumps.
 //
 //  Usage:
 //    root -l -b -q 'utils/plot_band_gap_one_point_spectra_compare.cc("outputs/band_gap_one_point_spectra")'
-//
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+// ===========================================================================
 
 #include <TFile.h>
 #include <TSystem.h>
@@ -37,6 +44,10 @@ struct CaseSpectra {
   TH1* S_true = nullptr;
 };
 
+// ----------------------------------------------------------------------------
+// Basename
+//   File name of a path without the directory and without the extension.
+// ----------------------------------------------------------------------------
 std::string Basename(const std::string& path)
 {
   const auto slash = path.find_last_of('/');
@@ -45,6 +56,10 @@ std::string Basename(const std::string& path)
   return (dot == std::string::npos) ? name : name.substr(0, dot);
 }
 
+// ----------------------------------------------------------------------------
+// FindFirstHist
+//   First histogram of the file whose name starts with prefix, or nullptr.
+// ----------------------------------------------------------------------------
 TH1* FindFirstHist(TFile* f, const char* prefix)
 {
   if (!f) return nullptr;
@@ -58,6 +73,10 @@ TH1* FindFirstHist(TFile* f, const char* prefix)
   return nullptr;
 }
 
+// ----------------------------------------------------------------------------
+// LoadCase
+//   Load the dR/dE and S_true(n_e) histograms of one case from its ROOT file into out; returns false (with a message) if the file or a histogram is missing.
+// ----------------------------------------------------------------------------
 bool LoadCase(const std::string& case_id, const std::string& root_path, CaseSpectra& out)
 {
   TFile* f = TFile::Open(root_path.c_str(), "READ");
@@ -82,6 +101,10 @@ bool LoadCase(const std::string& case_id, const std::string& root_path, CaseSpec
   return true;
 }
 
+// ----------------------------------------------------------------------------
+// StyleHist
+//   Line colour, style and width 2, no markers, and the x-axis title of a histogram.
+// ----------------------------------------------------------------------------
 void StyleHist(TH1* h, int color, int style, const char* axis_title)
 {
   h->SetLineColor(color);
@@ -91,6 +114,10 @@ void StyleHist(TH1* h, int color, int style, const char* axis_title)
   h->GetXaxis()->SetTitle(axis_title);
 }
 
+// ----------------------------------------------------------------------------
+// IntegralWidth
+//   Sum of bin content times bin width (0 for a null histogram).
+// ----------------------------------------------------------------------------
 double IntegralWidth(TH1* h)
 {
   if (!h) return 0.0;
@@ -101,6 +128,10 @@ double IntegralWidth(TH1* h)
   return sum;
 }
 
+// ----------------------------------------------------------------------------
+// GapEvFromTag
+//   Band gap in eV from a tag such as "gap0p7" ('p' is the decimal point); -1 if the tag is malformed.
+// ----------------------------------------------------------------------------
 double GapEvFromTag(const std::string& gap_tag)
 {
   if (gap_tag == "gap1p2") return 1.2;
@@ -112,18 +143,30 @@ double GapEvFromTag(const std::string& gap_tag)
   return std::atof(s.c_str());
 }
 
+// ----------------------------------------------------------------------------
+// GapTagFromId
+//   Gap tag of a case id: the part before the first underscore.
+// ----------------------------------------------------------------------------
 std::string GapTagFromId(const std::string& case_id)
 {
   const auto us = case_id.find('_');
   return (us == std::string::npos) ? case_id : case_id.substr(0, us);
 }
 
+// ----------------------------------------------------------------------------
+// ScenarioFromId
+//   Scenario of a case id: the part after the first underscore (empty if none).
+// ----------------------------------------------------------------------------
 std::string ScenarioFromId(const std::string& case_id)
 {
   const auto us = case_id.find('_');
   return (us == std::string::npos) ? "" : case_id.substr(us + 1);
 }
 
+// ----------------------------------------------------------------------------
+// GapLabelEv
+//   Band gap as a label such as "0.7 eV" (one decimal, 1.2 eV kept as 1.2).
+// ----------------------------------------------------------------------------
 std::string GapLabelEv(double gap_eV)
 {
   char buf[32];
@@ -134,6 +177,10 @@ std::string GapLabelEv(double gap_eV)
   return std::string(buf) + " eV";
 }
 
+// ----------------------------------------------------------------------------
+// EhLabelEv
+//   Electron-hole pair energy as a label with one decimal.
+// ----------------------------------------------------------------------------
 std::string EhLabelEv(double eh_eV)
 {
   char buf[32];
@@ -157,6 +204,10 @@ constexpr double kEhBThreshEv = 3.8;
 constexpr double kNeZoomLo = 0.5;   // bin edges for n_e = 1
 constexpr double kNeZoomHi = 5.5;   // bin edges for n_e = 5
 
+// ----------------------------------------------------------------------------
+// EhPairEvForCase
+//   eps_h of a case: equal to the gap for D-equal, the fixed B-thresh value for B-thresh, -1 otherwise.
+// ----------------------------------------------------------------------------
 double EhPairEvForCase(const CaseSpectra& cs)
 {
   const std::string scen = ScenarioFromId(cs.id);
@@ -166,6 +217,10 @@ double EhPairEvForCase(const CaseSpectra& cs)
   return -1.0;
 }
 
+// ----------------------------------------------------------------------------
+// IonizationLegendLabel
+//   Legend label with the (E_gap, eps_h) pair of a case.
+// ----------------------------------------------------------------------------
 std::string IonizationLegendLabel(const CaseSpectra& cs)
 {
   const double gap = GapEvFromTag(GapTagFromId(cs.id));
@@ -173,6 +228,10 @@ std::string IonizationLegendLabel(const CaseSpectra& cs)
   return EgapEpsilonLegendLabel(gap, eh);
 }
 
+// ----------------------------------------------------------------------------
+// SetLogYRangeFromHists
+//   Set a logarithmic y range for a group of histograms from their largest and smallest positive values (optionally within a bin range); the top is ymax_scale times the maximum.
+// ----------------------------------------------------------------------------
 void SetLogYRangeFromHists(const std::vector<TH1*>& hists, double ymax_scale = 3.0,
                            int xbin_first = 0, int xbin_last = 0)
 {
@@ -198,6 +257,10 @@ void SetLogYRangeFromHists(const std::vector<TH1*>& hists, double ymax_scale = 3
 
 }  // namespace
 
+// ----------------------------------------------------------------------------
+// plot_band_gap_one_point_spectra_compare
+//   ROOT macro: read every case directory of the one-point spectra dump (default outputs/band_gap_one_point_spectra) and overlay dR/dE and S_true(n_e) of all cases in PDFs under outplots/band_gap_one_point_spectra/.
+// ----------------------------------------------------------------------------
 void plot_band_gap_one_point_spectra_compare(const char* results_dir_c = "")
 {
   gStyle->SetOptStat(0);

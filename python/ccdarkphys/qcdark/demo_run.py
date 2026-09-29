@@ -1,3 +1,17 @@
+# ============================================================================
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  File: demo_run.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  demo_run.py -- Runnable QCDark demo (standalone CCDarkSens; no
+#  collab_frameworks).
+# ============================================================================
+
 """
 Runnable QCDark demo (standalone CCDarkSens; no collab_frameworks).
 
@@ -30,6 +44,10 @@ from ccdarkphys.common import io as CIO
 from ccdarkphys.qcdark.entry import compute_dRdE, repo_qcdark_data_dir
 
 
+# ----------------------------------------------------------------------------
+# _demo_h5_path
+#   Default location of the synthetic demo crystal table: data/qcdark/demo_Si_f2_qcdark.h5.
+# ----------------------------------------------------------------------------
 def _demo_h5_path() -> Path:
     return repo_qcdark_data_dir() / "demo_Si_f2_qcdark.h5"
 
@@ -81,6 +99,10 @@ def write_demo_fixture(path: Path | str, *, seed: int = 0) -> None:
         res.create_dataset("f2", data=ff.astype(np.float64))
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Demo: create the synthetic HDF5 crystal table if it does not exist, compute one heavy-mediator rate (10 MeV, sigma_e = 1e-37 cm^2) with the QCDark entry, print a summary and optionally write the CSV.
+# ----------------------------------------------------------------------------
 def main() -> None:
     ap = argparse.ArgumentParser(description="CCDarkSens QCDark demo (synthetic HDF5 + one rate).")
     ap.add_argument(

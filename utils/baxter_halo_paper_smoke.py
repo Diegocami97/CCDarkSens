@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
 # ============================================================================
-#  CCDarkSens — baxter_halo_paper_smoke
-#  Smoke test comparing Baxter 2021 halo model at v_E=253.7 vs 263 km/s
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
 #
-#  Author: Diego Venegas-Vargas
+#  File: baxter_halo_paper_smoke.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  baxter_halo_paper_smoke.py -- Smoke test comparing Baxter 2021 halo model
+#  at v_E=253.7 vs 263 km/s
 # ============================================================================
 """Baxter 2021 halo smoke: paper-export masses at v_E=253.7 vs 263 km/s."""
 from __future__ import annotations
@@ -42,6 +49,10 @@ BASE_HALO = {"v0_kms": 238.0, "vE_kms": 263.0, "vesc_kms": 544.0}
 BAXTER_HALO = {"v0_kms": 238.0, "vE_kms": BAXTER_VE, "vesc_kms": 544.0}
 
 
+# ----------------------------------------------------------------------------
+# load_paper_export
+#   Read the paper-export limit curve (mass, sigma), converting masses above 1e4 from eV to MeV, sorted by mass.
+# ----------------------------------------------------------------------------
 def load_paper_export(path: Path):
     rows = []
     for ln in path.read_text().splitlines():
@@ -57,10 +68,18 @@ def load_paper_export(path: Path):
     return arr[np.argsort(arr[:, 0])]
 
 
+# ----------------------------------------------------------------------------
+# fmt_mchi
+#   Mass formatted with 6 decimals, matching the rate-file names.
+# ----------------------------------------------------------------------------
 def fmt_mchi(m: float) -> str:
     return f"{m:.6f}"
 
 
+# ----------------------------------------------------------------------------
+# integrated_rate
+#   Rate integrated over E >= 2 eV (events per gram per day) for a heavy-mediator silicon point at sigma_e = 1e-36 cm^2 with the given halo.
+# ----------------------------------------------------------------------------
 def integrated_rate(m_mev: float, halo: dict) -> float:
     from ccdarkphys.qedark.entry import compute_dRdE
 
@@ -72,10 +91,18 @@ def integrated_rate(m_mev: float, halo: dict) -> float:
     return float(np.trapz(out["dRdE_kg_year_eV"][mask], E[mask]) / 365.25 / 1000)
 
 
+# ----------------------------------------------------------------------------
+# rate_ratio
+#   Ratio of the integrated rates with the Baxter halo and with the baseline halo.
+# ----------------------------------------------------------------------------
 def rate_ratio(m_mev: float) -> float:
     return integrated_rate(m_mev, BAXTER_HALO) / integrated_rate(m_mev, BASE_HALO)
 
 
+# ----------------------------------------------------------------------------
+# scale_rates
+#   Recreate dst_dir with the rate CSVs of the source directory (nearest available mass) multiplied by the rate ratio of each mass.
+# ----------------------------------------------------------------------------
 def scale_rates(masses: list[float], ratios: dict[float, float], dst_dir: Path):
     pat = re.compile(r"(_m)([0-9.]+)(_s)")
     avail = sorted(
@@ -112,6 +139,10 @@ def scale_rates(masses: list[float], ratios: dict[float, float], dst_dir: Path):
     print(f"scaled {n} files → {dst_dir}")
 
 
+# ----------------------------------------------------------------------------
+# write_config
+#   Write a smoke-test scan config from the few-mass template: label, output directory, rates directory and mass list replaced.
+# ----------------------------------------------------------------------------
 def write_config(path: Path, label: str, outdir: str, rates_dir: str, masses: list[float]):
     base = json.loads(
         (ROOT / "configs/scan_dmelectron_pattern_data_qedark_fewmass_asis.json").read_text()
@@ -124,6 +155,10 @@ def write_config(path: Path, label: str, outdir: str, rates_dir: str, masses: li
     path.write_text(json.dumps(base, indent=2) + "\n")
 
 
+# ----------------------------------------------------------------------------
+# run_scan
+#   Run the scan binary on a config from the repository root and return its exit code.
+# ----------------------------------------------------------------------------
 def run_scan(config: Path) -> int:
     exe = ROOT / "build/ccdarksens_scan_dmelectron_pattern"
     cmd = [str(exe), str(config)]
@@ -131,6 +166,10 @@ def run_scan(config: Path) -> int:
     return subprocess.call(cmd, cwd=ROOT)
 
 
+# ----------------------------------------------------------------------------
+# load_ul_by_index
+#   Upper-limit histogram values of a scan file, keeping only the physical entries (positive and below 0.9e-26).
+# ----------------------------------------------------------------------------
 def load_ul_by_index(root_path: Path) -> np.ndarray:
     import uproot
 
@@ -139,6 +178,10 @@ def load_ul_by_index(root_path: Path) -> np.ndarray:
     return v[ok]
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Baxter-halo smoke test: print the halo parameters and the rate ratios, prepare the scaled rate tables and configs, optionally (--run-scan) run the two scans, and print the upper limits next to the paper export.
+# ----------------------------------------------------------------------------
 def main():
     import argparse
 

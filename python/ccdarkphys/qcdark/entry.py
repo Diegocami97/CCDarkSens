@@ -1,10 +1,24 @@
+# ============================================================================
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  File: entry.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  entry.py -- QCDark entry point for DM–electron scattering (Silicon crystal
+#  |F|^2 from HDF5).
+# ============================================================================
+
 """
 QCDark entry point for DM–electron scattering (Silicon crystal |F|^2 from HDF5).
 
 Uses an in-tree rate kernel compatible with the reference QCDark ``dark_matter_rates``
 normalization (no imports from ``collab_frameworks``).
 
-**Crystal table:** place your HDF5 under ``<repo>/data/qcdark/`` (e.g.
+**Crystal table:** place the HDF5 file under ``<repo>/data/qcdark/`` (e.g.
 ``Si_f2_qcdark.h5`` or ``Si_final.hdf5`` copied from standalone QCDark), or set
 ``CCDARK_SENS_QCDARK_FORM_FACTOR``, or pass ``form_factor_h5=`` to ``compute_dRdE``.
 
@@ -55,6 +69,12 @@ def repo_qcdark_data_dir() -> Path:
     return Path(__file__).resolve().parents[3] / "data" / "qcdark"
 
 
+# ----------------------------------------------------------------------------
+# _resolve_form_factor_path
+#   Find the crystal HDF5 file: the explicit argument first, then the CCDARK_SENS_QCDARK_FORM_FACTOR environment
+#   variable, then the usual names under data/qcdark/, then the package data directory. Raises FileNotFoundError
+#   with instructions if none exists.
+# ----------------------------------------------------------------------------
 def _resolve_form_factor_path(explicit: str | None) -> str:
     if explicit:
         return os.path.abspath(os.path.expanduser(explicit))
@@ -78,6 +98,10 @@ def _resolve_form_factor_path(explicit: str | None) -> str:
         ) from exc
 
 
+# ----------------------------------------------------------------------------
+# _halo_kms
+#   Halo velocities (v0, vE, vesc) in km/s from either the *_cm_s or the *_kms keys of the halo dict.
+# ----------------------------------------------------------------------------
 def _halo_kms(halo: dict) -> tuple[float, float, float]:
     if "v0_cm_s" in halo:
         return (
@@ -187,6 +211,10 @@ def compute_dRdE(
     }
 
 
+# ----------------------------------------------------------------------------
+# _cli
+#   Command-line front end: compute one rate table for the given mediator, mass and cross section and write it to --out_csv.
+# ----------------------------------------------------------------------------
 def _cli():
     ap = argparse.ArgumentParser()
     ap.add_argument("--material", default="Si")

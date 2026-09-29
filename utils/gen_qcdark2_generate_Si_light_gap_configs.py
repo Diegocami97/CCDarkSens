@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
 # ============================================================================
-#  CCDarkSens — gen_qcdark2_generate_Si_light_gap_configs
-#  Generate QCDark2 rate configs for Si with varying band gaps (light mediator)
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
 #
-#  Author: Diego Venegas-Vargas
+#  File: gen_qcdark2_generate_Si_light_gap_configs.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  gen_qcdark2_generate_Si_light_gap_configs.py -- Generate QCDark2 rate
+#  configs for Si with varying band gaps (light mediator)
 # ============================================================================
 """
 Generate QCDark2 dR/dE grid configs for Si with light mediator (Phase C input).
@@ -39,10 +46,18 @@ GAPS = {
 }
 
 
+# ----------------------------------------------------------------------------
+# gap_tag
+#   Tag "gap<short>" from a short gap string such as "0p7".
+# ----------------------------------------------------------------------------
 def gap_tag(short: str) -> str:
     return f"gap{short}"
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Write one QCDark2 rate-generation config per band gap (silicon, light mediator) from the template.
+# ----------------------------------------------------------------------------
 def main() -> int:
     base = json.loads(TEMPLATE.read_text(encoding="utf-8"))
 

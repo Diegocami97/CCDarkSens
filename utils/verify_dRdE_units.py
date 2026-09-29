@@ -1,9 +1,17 @@
 #!/usr/bin/env python3
 # ============================================================================
-#  CCDarkSens — verify_dRdE_units
-#  Self-consistency check that ccdarkphys QEDark outputs are in events/(kg·year·eV) and integrates correctly over energy bins.
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
 #
-#  Author: Diego Venegas-Vargas
+#  File: verify_dRdE_units.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  verify_dRdE_units.py -- Self-consistency check that ccdarkphys QEDark
+#  outputs are in events/(kg·year·eV) and integrates correctly over energy
+#  bins.
 # ============================================================================
 
 """
@@ -38,6 +46,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "python"))
 import numpy as np
 from ccdarkphys.qedark.entry import compute_dRdE
 
+# ----------------------------------------------------------------------------
+# main
+#   Check the units of the QEDark dR/dE for one point (0.5 MeV, sigma_e = 1e-36 cm^2): integrate dR/dE over the first 3.8 eV bin (1.2-5.0 eV) in two ways and print the values so they can be compared with the QEDark notebook.
+# ----------------------------------------------------------------------------
 def main():
     mchi_MeV = 0.5
     sigma_e_cm2 = 1e-36

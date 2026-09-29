@@ -1,3 +1,17 @@
+# ============================================================================
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  File: entry.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  entry.py -- DarkELF entry point for hidden-photon (dark photon)
+#  absorption.
+# ============================================================================
+
 """
 DarkELF entry point for hidden-photon (dark photon) absorption.
 
@@ -252,6 +266,10 @@ def _write_custom_darkelf_files(darkelf_dir: str, target: str,
     return dat_name
 
 
+# ----------------------------------------------------------------------------
+# _resolve_darkelf_dir
+#   Directory of the DarkELF source: the explicit argument, else the environment variable; raises FileNotFoundError if neither is given.
+# ----------------------------------------------------------------------------
 def _resolve_darkelf_dir(explicit: str | None) -> str:
     if explicit:
         return os.path.abspath(os.path.expanduser(explicit))
@@ -263,6 +281,10 @@ def _resolve_darkelf_dir(explicit: str | None) -> str:
     )
 
 
+# ----------------------------------------------------------------------------
+# _load_darkelf
+#   Put the DarkELF directory on sys.path and return the darkelf class; raises ImportError with instructions if it cannot be imported.
+# ----------------------------------------------------------------------------
 def _load_darkelf(darkelf_dir: str):
     if darkelf_dir not in sys.path:
         sys.path.insert(0, darkelf_dir)
@@ -409,6 +431,10 @@ def compute_dRdE(
     }
 
 
+# ----------------------------------------------------------------------------
+# _header_lines
+#   Comment header of a dark-photon rate CSV: material, mediator mass, epsilon, total absorption rate, line width, density and, when a custom dielectric CSV is used, its path and threshold.
+# ----------------------------------------------------------------------------
 def _header_lines(meta: dict) -> list:
     lines = [
         "# Differential Rates computed with CCDarkSens (DarkELF-Absorption entry)",
@@ -436,6 +462,10 @@ def _header_lines(meta: dict) -> list:
     return lines
 
 
+# ----------------------------------------------------------------------------
+# _cli
+#   Command-line front end: compute one dark-photon absorption rate table (optionally from a custom dielectric CSV) and write it to --out_csv.
+# ----------------------------------------------------------------------------
 def _cli():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--material", default="Si")

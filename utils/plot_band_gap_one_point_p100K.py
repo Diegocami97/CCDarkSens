@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
 # ============================================================================
-#  CCDarkSens — plot_band_gap_one_point_p100K
-#  Diagnostic spectra and limit plot for a single (E_gap, ε_h) point
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
 #
-#  Author: Diego Venegas-Vargas
+#  File: plot_band_gap_one_point_p100K.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  plot_band_gap_one_point_p100K.py -- Diagnostic spectra and limit plot for
+#  a single (E_gap, ε_h) point
 # ============================================================================
 """
 Compare P(n_e | E) ionization tables (scaled p100K CSVs) for band-gap one-point cases.
@@ -32,18 +39,34 @@ DEFAULT_MANIFEST = ROOT / "configs" / "band_gap_one_point_spectra_manifest.json"
 DEFAULT_OUT = ROOT / "outplots/band_gap_one_point_spectra/p100K_Pne"
 
 
+# ----------------------------------------------------------------------------
+# gap_tag
+#   File-name tag of a band gap, e.g. "gap0p7" (1.2 eV gives "gap1p2").
+# ----------------------------------------------------------------------------
 def gap_tag(g: float) -> str:
     return "gap1p2" if abs(g - 1.2) < 1e-9 else f"gap{g:.1f}".replace(".", "p")
 
 
+# ----------------------------------------------------------------------------
+# eh_tag
+#   Electron-hole pair energy formatted for file names with '.' replaced by 'p'.
+# ----------------------------------------------------------------------------
 def eh_tag(eh: float) -> str:
     return f"{eh:g}".replace(".", "p")
 
 
+# ----------------------------------------------------------------------------
+# ionization_csv_path
+#   Path of the scaled p100K ionization table of a (gap, eps_h) pair.
+# ----------------------------------------------------------------------------
 def ionization_csv_path(gap_eV: float, eh_eV: float) -> Path:
     return ROOT / "data" / f"p100K_{gap_tag(gap_eV)}_eh{eh_tag(eh_eV)}.csv"
 
 
+# ----------------------------------------------------------------------------
+# build_cases
+#   Cases to plot from the manifest: every gap in the D-equal scenario (eps_h = gap) and the B-thresh scenario (fixed eps_h).
+# ----------------------------------------------------------------------------
 def build_cases(manifest: dict) -> list[dict]:
     gaps = [float(g) for g in manifest.get("gaps_eV", [])]
     scenarios = manifest.get("scenarios", ["D-equal", "B-thresh"])
@@ -70,14 +93,26 @@ def build_cases(manifest: dict) -> list[dict]:
     return cases
 
 
+# ----------------------------------------------------------------------------
+# ion_legend
+#   Legend label of a case.
+# ----------------------------------------------------------------------------
 def ion_legend(c: dict) -> str:
     return pheno_param_label_mpl(c["band_gap_eV"], c["eh_pair_eV"])
 
 
+# ----------------------------------------------------------------------------
+# short_legend
+#   Short legend label of a case (same as ion_legend).
+# ----------------------------------------------------------------------------
 def short_legend(c: dict) -> str:
     return pheno_param_label_mpl(c["band_gap_eV"], c["eh_pair_eV"])
 
 
+# ----------------------------------------------------------------------------
+# load_table
+#   Load the ionization table of a case; raises FileNotFoundError if it is missing.
+# ----------------------------------------------------------------------------
 def load_table(c: dict) -> Tuple[np.ndarray, np.ndarray]:
     path = ROOT / c["ionization_csv"]
     if not path.is_file():
@@ -85,6 +120,10 @@ def load_table(c: dict) -> Tuple[np.ndarray, np.ndarray]:
     return load_p100k_csv(path)
 
 
+# ----------------------------------------------------------------------------
+# tab20
+#   n colours cycling through the matplotlib tab20 palette.
+# ----------------------------------------------------------------------------
 def tab20(n: int) -> List[tuple]:
     cmap = plt.get_cmap("tab20")
     return [cmap(i % 20) for i in range(n)]
@@ -186,6 +225,10 @@ def plot_heatmap(E: np.ndarray, P: np.ndarray, out: Path, title: str, Emax: floa
     print(f"[ok] {out}")
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Plot P(n_e | E) of every manifest case (subplots, versus n_e at fixed E, and heatmaps) into --outdir, up to --Emax and --ne-max.
+# ----------------------------------------------------------------------------
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)

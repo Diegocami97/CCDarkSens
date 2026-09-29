@@ -1,4 +1,18 @@
 #!/usr/bin/env python3
+# ============================================================================
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  File: run_paper25_qedark_scan.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  run_paper25_qedark_scan.py -- Prepare and run CCDarkSens QEdark scan on
+#  the 25 paper-export mass points.
+# ============================================================================
+
 """Prepare and run CCDarkSens QEdark scan on the 25 paper-export mass points."""
 from __future__ import annotations
 
@@ -32,6 +46,10 @@ ROOT_OUT = OUTDIR / "scan_dmelectron_pattern.root"
 FULLGRID_ROOT = ROOT / "outputs/scan_pattern_data_qedark_fullgrid/scan_dmelectron_pattern.root"
 
 
+# ----------------------------------------------------------------------------
+# load_paper_masses
+#   Masses (converted from eV to MeV) and limits of the paper-export curve.
+# ----------------------------------------------------------------------------
 def load_paper_masses(path: Path):
     masses, limits = [], []
     for ln in path.read_text().splitlines():
@@ -49,10 +67,18 @@ def load_paper_masses(path: Path):
     return arr[order, 0], arr[order, 1]
 
 
+# ----------------------------------------------------------------------------
+# fmt_mchi
+#   Mass formatted with 6 decimals, matching the rate-file names.
+# ----------------------------------------------------------------------------
 def fmt_mchi(m: float) -> str:
     return f"{m:.6f}"
 
 
+# ----------------------------------------------------------------------------
+# available_masses
+#   Sorted masses found in the heavy-mediator silicon rate-file names of a directory.
+# ----------------------------------------------------------------------------
 def available_masses(rates_dir: Path):
     pat = re.compile(r"_m([0-9.]+)_s")
     masses = set()
@@ -63,10 +89,18 @@ def available_masses(rates_dir: Path):
     return sorted(masses)
 
 
+# ----------------------------------------------------------------------------
+# nearest_mass
+#   The available mass closest to m.
+# ----------------------------------------------------------------------------
 def nearest_mass(m: float, avail: list[float]) -> float:
     return min(avail, key=lambda x: abs(x - m))
 
 
+# ----------------------------------------------------------------------------
+# prepare_rates
+#   Build the rate directory for the paper masses: for each mass I copy the files of the nearest available mass, renamed to the requested mass. An existing directory is kept unless force is set.
+# ----------------------------------------------------------------------------
 def prepare_rates(masses: np.ndarray, src_dir: Path, dst_dir: Path, force: bool = False):
     avail = available_masses(src_dir)
     if dst_dir.exists() and not force:
@@ -101,6 +135,10 @@ def prepare_rates(masses: np.ndarray, src_dir: Path, dst_dir: Path, force: bool 
     return mapping
 
 
+# ----------------------------------------------------------------------------
+# write_config
+#   Write the scan config for the paper mass points from the full-grid config, with the label, output directory, rates directory and mass list replaced.
+# ----------------------------------------------------------------------------
 def write_config(masses: list[float], path: Path):
     base = json.loads(
         (ROOT / "configs/scan_dmelectron_pattern_data_qedark_fullgrid.json").read_text()
@@ -114,6 +152,10 @@ def write_config(masses: list[float], path: Path):
     print(f"wrote {path}")
 
 
+# ----------------------------------------------------------------------------
+# run_scan
+#   Run the scan binary from the build directory on a config; returns 1 if the binary does not exist.
+# ----------------------------------------------------------------------------
 def run_scan(build_dir: Path, config: Path) -> int:
     exe = build_dir / "ccdarksens_scan_dmelectron_pattern"
     if not exe.exists():
@@ -135,6 +177,10 @@ def load_scan_by_index(root_path: Path):
     return v[ok]
 
 
+# ----------------------------------------------------------------------------
+# compare_and_plot
+#   Compare the scan limits at the paper masses (and the full grid, if given) with the paper curve, print the ratios and save the plots to outdir.
+# ----------------------------------------------------------------------------
 def compare_and_plot(
     paper_m: np.ndarray,
     paper_s: np.ndarray,
@@ -211,6 +257,10 @@ def compare_and_plot(
         print(f"wrote {p}")
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Command line: prepare the rate files and the config for the 25 paper mass points, optionally run the scan (--run-scan), and compare the result with the paper (--compare-only skips the rest).
+# ----------------------------------------------------------------------------
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--build-dir", default=str(ROOT / "build"))

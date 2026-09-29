@@ -1,0 +1,41 @@
+{
+  "_header": "Diego Venegas-Vargas | DAMIC-M collaboration | CCDarkSens Framework -- Example input for utils/migdal_generate_grid.py: generates the Migdal-effect dR/dE_e rates for a silicon target with a light (ultralight) mediator (F_DM ~ 1/q^2) through DarkELF.",
+  "_comment": "Migdal rate generation config: Si target, light mediator, reduced 150-mass demo grid used by migdal_light_projection_1kgyear.json (DarkELF has no caching, so a denser mass grid is impractically slow -- see Student_Examples_Migdal_Projection.md). Mass range 0.1-1000 MeV covers the 1-35 MeV band DAMIC-M's PRL reports as this channel's most stringent-limit region. Generates dR/dE_e CSVs via darkelf.dRdomega_migdal(). Run: python3 utils/migdal_generate_grid.py configs/examples/migdal_generate_si_light_demo150x200.json",
+  "material": "Si",
+  "mediator": "light",
+  "darkelf_dir": "/Users/diegovenegasvargas/Documents/Software/DarkELF",
+  "detector": {
+    "Emin_eV": 0.0,
+    "Emax_eV": 20.0,
+    "binsize_eV": 0.1
+  },
+  "rates_dir": "data/migdal_rates/Si/light_demo150x200",
+  "filename_template": "dRdE_{target_nucleus}_{mediator}_m{mchi_MeV}_s{sigma_n_cm2}.csv",
+  "grid": {
+    "mchi_MeV": {
+      "logspace": {
+        "start": 0.1,
+        "stop": 1000.0,
+        "num": 150,
+        "endpoint": true
+      }
+    },
+    "sigma_n_cm2": {
+      "logspace": {
+        "start_exp": -42,
+        "stop_exp": -30,
+        "num": 200,
+        "endpoint": true
+      }
+    }
+  },
+  "options": {
+    "skip_existing": true,
+    "overwrite": false,
+    "parallel": 8,
+    "format": {
+      "mchi": ".6f",
+      "sigma": ".1e"
+    }
+  }
+}

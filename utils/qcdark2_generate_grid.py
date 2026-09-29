@@ -1,9 +1,17 @@
 #!/usr/bin/env python3
 # ============================================================================
-#  CCDarkSens — qcdark2_generate_grid
-#  CLI wrapper that sets backend=qcdark2 and calls the shared grid driver to emit QCDark2 dR/dE CSV rate tables from JSON.
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
 #
-#  Author: Diego Venegas-Vargas
+#  File: qcdark2_generate_grid.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  qcdark2_generate_grid.py -- CLI wrapper that sets backend=qcdark2 and
+#  calls the shared grid driver to emit QCDark2 dR/dE CSV rate tables from
+#  JSON.
 # ============================================================================
 
 """
@@ -26,6 +34,10 @@ _REPO_ROOT = Path(__file__).resolve().parents[1]
 _UTILS_DIR = Path(__file__).resolve().parent
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Command line: python3 utils/qcdark2_generate_grid.py <config.json>. It sets the backend to qcdark2, resolves the dielectric-function HDF5 (config key or environment variable) to an absolute path and calls the shared grid generator.
+# ----------------------------------------------------------------------------
 def main() -> None:
     if len(sys.argv) != 2:
         print("usage: python3 utils/qcdark2_generate_grid.py <config.json>")

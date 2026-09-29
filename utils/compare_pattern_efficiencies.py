@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
 # ============================================================================
-#  CCDarkSens — compare_pattern_efficiencies
-#  Compare CCDarkSens pattern-efficiency tables against LBC reference data
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
 #
-#  Author: Diego Venegas-Vargas
+#  File: compare_pattern_efficiencies.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  compare_pattern_efficiencies.py -- Compare CCDarkSens pattern-efficiency
+#  tables against LBC reference data
 # ============================================================================
 """Compare pattern-efficiency tables and LBC data counts."""
 from __future__ import annotations
@@ -18,6 +25,10 @@ ROOT = Path(__file__).resolve().parents[1]
 ROI = [11, 21, 111, 31, 22, 211]
 
 
+# ----------------------------------------------------------------------------
+# load_eff
+#   Read a (pattern, ne, efficiency) CSV into a DataFrame with integer pattern and ne columns.
+# ----------------------------------------------------------------------------
 def load_eff(path: Path) -> pd.DataFrame:
     df = pd.read_csv(path, comment="#")
     df["pattern"] = df["pattern"].astype(int)
@@ -25,6 +36,10 @@ def load_eff(path: Path) -> pd.DataFrame:
     return df
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Compare the reference pattern-efficiency tables (Paolo's and the 1M-simulation DCTrue one) and print their metadata and differences.
+# ----------------------------------------------------------------------------
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--paolo", default=str(ROOT / "data/efficiencies_paolo.csv"))

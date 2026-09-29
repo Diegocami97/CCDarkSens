@@ -1,9 +1,11 @@
-// ============================================================================
-//  CCDarkSens — PCDBasedResponse
-//  Header for Monte Carlo construction of P(q|n_e) via ChargeTransport and PixelSimulator.
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  PCDBasedResponse.hh -- Header for Monte Carlo construction of P(q|n_e)
+//  via ChargeTransport and PixelSimulator.
+// ===========================================================================
 
 #pragma once
 
@@ -26,10 +28,10 @@ namespace ccdarksens {
  * mc_trials defines how many Monte Carlo events to run for each n_e.
  */
 struct PCDResponseConfig {
-  double q_min  = 0.0;
-  double q_max  = 20.0;
-  int    nbins  = 200;
-  int    mc_trials = 50000;
+  double q_min  = 0.0;  // lowest total charge [e-]
+  double q_max  = 20.0;  // highest total charge [e-]
+  int    nbins  = 200;  // charge bins
+  int    mc_trials = 50000;  // Monte Carlo events per n_e
 
   // Pixel simulator settings (geometry, noise, DC, etc.)
   PixelSimulatorConfig pix_cfg;
@@ -56,6 +58,7 @@ struct PCDResponseConfig {
  */
 class PCDBasedResponse {
 public:
+  // Constructor: settings and the charge-transport model (must not be null).
   PCDBasedResponse(const PCDResponseConfig& cfg,
                    std::shared_ptr<ChargeTransport> ct);
 
@@ -73,8 +76,8 @@ public:
   }
 
 private:
-  PCDResponseConfig cfg_;
-  std::shared_ptr<ChargeTransport> ct_;
+  PCDResponseConfig cfg_;  // settings
+  std::shared_ptr<ChargeTransport> ct_;  // charge-transport model
 
   /// pcd_table_[n_e] holds the normalized TH1D for that n_e.
   std::map<int, std::unique_ptr<TH1D>> pcd_table_;

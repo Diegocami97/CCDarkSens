@@ -1,0 +1,149 @@
+{
+  "run": {
+    "label": "damicm_1x1_floorscaled_1p3kgday",
+    "outdir": "outputs/wimp_nucleon_damicm_1x1_floorscaled_1p3kgday",
+    "cl": 0.9,
+    "rng_seed": 12345,
+    "verbosity": 1,
+    "use_profile_likelihood": true,
+    "background_source": "dc_flat_migration",
+    "background_model": "scale",
+    "profile_minimizer": "brent"
+  },
+  "detector": {
+    "rows": 4000,
+    "cols": 2000,
+    "pixel_size_um": 15.0,
+    "thickness_mm": 0.675,
+    "active_fraction": 1.0,
+    "target_element": "Si",
+    "density_g_cm3": 2.329,
+    "mass_kg": 1.0
+  },
+  "experiment": {
+    "mode": "asimov",
+    "livetime_days": 1.3,
+    "duty_cycle": 1.0,
+    "binning": {
+      "ne_min": 1,
+      "ne_max": 5
+    },
+    "roi_bins": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "observable_bins": "ne"
+  },
+  "backgrounds": {
+    "dark_current": {
+      "lambda_e_per_pix_per_year": 0.0,
+      "norm_scale": 1.0
+    },
+    "timing": {
+      "exposure_time_s": 1800
+    },
+    "flat_background": {
+      "norm_per_kg_year_keV": 5478.75,
+      "Emin_eV": 0,
+      "Emax_eV": 4000,
+      "nbins": 400
+    }
+  },
+  "response": {
+    "analysis_space": "cluster_energy",
+    "cluster_fit_mc": {
+      "window_nx": 11,
+      "window_ny": 11,
+      "pixel_size_um": 15.0,
+      "sigma_readout_e": 0.16,
+      "diffusion": {
+        "A_um2": 803.25,
+        "b_umInv": 0.00065,
+        "alpha": 1.0,
+        "beta_per_keV": 0.0,
+        "thickness_um": 670.0
+      },
+      "fit_method": "nelder_mead",
+      "sigma_xy_lo_px": 0.1,
+      "sigma_xy_hi_px": 2.0,
+      "n_toys": 5000,
+      "target_tail_prob": 0.001,
+      "calib_rng_seed": 20260825,
+      "ne_trials_per_point": 1500,
+      "sigma_xy_fid_min_px": 0.35,
+      "sigma_xy_fid_max_px": 1.22,
+      "eh_pair_eV": 3.77,
+      "fano_factor": 0.133,
+      "rng_seed": 24680,
+      "Etrue_min_eV": 5.0,
+      "Etrue_max_eV": 4000.0,
+      "Etrue_npoints": 30,
+      "Ereco_min_eV": 0.0,
+      "Ereco_max_eV": 4000.0,
+      "Ereco_nbins": 80
+    },
+    "background_efficiency_csv": "data/wimp_nucleon_damic2016_fig9_background_1x1.csv"
+  },
+  "model": {
+    "type": "wimp_nucleon",
+    "target_nucleus": "Si28",
+    "nuclear_A": 28,
+    "nuclear_Z": 14,
+    "mediator": "heavy",
+    "rates_dir": "data/wimp_nucleon_rates_ee/Si/heavy_damicm_halo",
+    "filename_template": "dRdE_ee_{target_nucleus}_{mediator}_m{mchi_MeV}_s{sigma_n_cm2}.csv",
+    "Emin_eV": 0,
+    "Emax_eV": 4000,
+    "nbins": 400,
+    "grid": {
+      "mchi_MeV": {
+        "values": [
+          500.0,
+          558.671222,
+          624.227068,
+          697.475397,
+          779.318864,
+          870.766044,
+          972.943859,
+          1087.111468,
+          1214.675784,
+          1357.208808,
+          1516.467006,
+          1694.412949,
+          1893.239505,
+          2115.396854,
+          2363.622689,
+          2640.97595,
+          2950.874521,
+          3297.137347,
+          3684.031499,
+          4116.324756,
+          4599.34436,
+          5139.042664,
+          5742.070486,
+          6415.859066,
+          7168.711644,
+          8009.905784,
+          8949.807698,
+          10000.0
+        ]
+      },
+      "sigma_n_cm2": {
+        "logspace": {
+          "start_exp": -45,
+          "stop_exp": -33,
+          "num": 50,
+          "endpoint": true
+        }
+      },
+      "format": {
+        "mchi": ".6f",
+        "sigma": ".1e"
+      }
+    }
+  },
+  "_comment": "WIMP-nucleon SI, DAMIC-M projection, 1x1 channel only, 1.3 kg-day exposure (mass_kg=1.0, livetime_days=1.3). Diffusion/noise/halo are DAMIC-M values sourced ONLY from pydme + this repo's own existing defaults (see configs/wimp_nucleon_generate_si_damicm_halo.json's _comment for exact provenance) -- NOT from the (excluded) DamicMSignal-main repo. Background model (flat rate 5478.75 events/(kg*yr*keV) + Fig.9-digitized 1x1 background efficiency curve) is REUSED AS-IS from the DAMIC 2016 SNOLAB reproduction (configs/wimp_nucleon_damic2016_limit_repro.json) per explicit instruction -- DAMIC-M has no background model of its own here yet; this is a placeholder, not a DAMIC-M measurement. Etrue_min_eV: Scaled from DAMIC 2016's 60 eV floor by the sigma_pix ratio (1.8 -> 0.16 e-, ~11.3x): 60/11.3 ~= 5.3 eV, rounded to 5.0 eV. NOT an independently validated DAMIC-M threshold -- a rough physically-motivated estimate only, per explicit user request to test this alongside the floor60 baseline. UPDATED: sigma grid extended to 1e-45 (50 pts) -- the original 1e-42 lower bound left the true crossing unresolved near the grid edge for this much more sensitive projection. UPDATED: Etrue_npoints raised from 16 to 30 -- 16 points spread over the wider 5-4000eV log-range (vs floor60s 60-4000eV) gave visibly coarser resolution and produced an artificially flat exclusion curve; 30 points resolves real mass-dependent structure (verified directly: a 16 vs 30 point test at 1kg-year changed values by ~20-25% and revealed a real V-shaped minimum around 2 GeV that 16 points washed out)."
+}

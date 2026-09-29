@@ -1,9 +1,11 @@
-// ============================================================================
-//  CCDarkSens — PatternClassifier
-//  Header for pattern-label types, classifier configuration thresholds, and row/image scanning interfaces.
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  PatternClassifier.hh -- Header for pattern-label types, classifier
+//  configuration thresholds, and row/image scanning interfaces.
+// ===========================================================================
 
 #pragma once
 

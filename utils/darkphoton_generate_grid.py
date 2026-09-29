@@ -1,10 +1,17 @@
 #!/usr/bin/env python3
 # ============================================================================
-#  CCDarkSens — darkphoton_generate_grid
-#  Grid driver that expands a (mA', epsilon) JSON grid and writes dR/dE CSV
-#  rate tables for hidden-photon absorption via darkelf.
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
 #
-#  Author: Diego Venegas-Vargas
+#  File: darkphoton_generate_grid.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  darkphoton_generate_grid.py -- Grid driver that expands a (mA', epsilon)
+#  JSON grid and writes dR/dE CSV rate tables for hidden-photon absorption
+#  via darkelf.
 # ============================================================================
 
 """
@@ -59,6 +66,10 @@ from ccdarkphys.common import io as CIO
 from ccdarkphys.darkphoton.entry import compute_dRdE, _header_lines
 
 
+# ----------------------------------------------------------------------------
+# _build_out_path
+#   Output file path for one (mass, epsilon) point from the filename template; creates the directory.
+# ----------------------------------------------------------------------------
 def _build_out_path(base_dir: Path, filename_template: str, material: str,
                     mA_str: str, eps_str: str) -> Path:
     fname = filename_template.format(material=material, mA_eV=mA_str, epsilon=eps_str)
@@ -66,6 +77,10 @@ def _build_out_path(base_dir: Path, filename_template: str, material: str,
     return base_dir / fname
 
 
+# ----------------------------------------------------------------------------
+# _exists_any
+#   True if the output file exists, either plain or gzip-compressed.
+# ----------------------------------------------------------------------------
 def _exists_any(out_path: Path) -> bool:
     return out_path.exists() or Path(str(out_path) + ".gz").exists()
 
@@ -151,6 +166,10 @@ def _one_mass_task(task: dict) -> tuple[bool, str]:
     return True, ""
 
 
+# ----------------------------------------------------------------------------
+# run_from_config
+#   Generate the dark-photon absorption rate grid described by the config: for every mass and epsilon compute the DarkELF rate and write the CSV, skipping existing files unless overwrite is requested.
+# ----------------------------------------------------------------------------
 def run_from_config(cfg: dict) -> None:
     material = cfg["material"]
     darkelf_dir = cfg.get("darkelf_dir") or os.environ.get("CCDARK_SENS_DARKELF_DIR")
@@ -229,6 +248,10 @@ def run_from_config(cfg: dict) -> None:
             print(msg, file=sys.stderr, flush=True)
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Command line: python3 utils/darkphoton_generate_grid.py <config.json>.
+# ----------------------------------------------------------------------------
 def main() -> None:
     if len(sys.argv) != 2:
         print("usage: python3 utils/darkphoton_generate_grid.py <config.json>")

@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
 # ============================================================================
-#  CCDarkSens — halo_smoke_test_qedark
-#  Halo sensitivity smoke test comparing v_E=253.7 km/s vs v_E=263 km/s baseline
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
 #
-#  Author: Diego Venegas-Vargas
+#  File: halo_smoke_test_qedark.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  halo_smoke_test_qedark.py -- Halo sensitivity smoke test comparing
+#  v_E=253.7 km/s vs v_E=263 km/s baseline
 # ============================================================================
 """Halo sensitivity smoke test: few-mass scan at v_E=253.7 km/s vs baseline v_E=263."""
 from typing import Optional
@@ -34,6 +41,10 @@ SMOKE_MASSES = [1.000194, 1.99987, 5.001944]
 EMIN_EV = 2.0
 
 
+# ----------------------------------------------------------------------------
+# load_paper_export
+#   Read the paper-export limit curve, converting masses above 1e4 from eV to MeV, sorted by mass.
+# ----------------------------------------------------------------------------
 def load_paper_export(path: Path):
     rows = []
     for ln in path.read_text().splitlines():
@@ -49,6 +60,10 @@ def load_paper_export(path: Path):
     return arr[np.argsort(arr[:, 0])]
 
 
+# ----------------------------------------------------------------------------
+# integrated_rate_mev
+#   Rate integrated over E >= EMIN_EV for a heavy-mediator silicon point with the given halo.
+# ----------------------------------------------------------------------------
 def integrated_rate_mev(m_mev: float, halo: dict, sigma: float = 1e-36) -> float:
     from ccdarkphys.qedark.entry import compute_dRdE
 
@@ -65,6 +80,10 @@ def integrated_rate_mev(m_mev: float, halo: dict, sigma: float = 1e-36) -> float
     return float(np.trapz(out["dRdE_kg_year_eV"][mask], E[mask]) / 365.25 / 1000)
 
 
+# ----------------------------------------------------------------------------
+# rate_ratio
+#   Ratio of the integrated rates with the alternative halo and with the baseline halo.
+# ----------------------------------------------------------------------------
 def rate_ratio(m_mev: float) -> float:
     r_base = integrated_rate_mev(m_mev, BASE_HALO)
     r_alt = integrated_rate_mev(m_mev, ALT_HALO)
@@ -106,6 +125,10 @@ def scale_rates_dir(src_dir: Path, dst_dir: Path, masses: list[float], ratios: d
     return n_copy
 
 
+# ----------------------------------------------------------------------------
+# ul_at_mass
+#   Limit at the tabulated mass nearest to m, or None if that mass is farther than tol.
+# ----------------------------------------------------------------------------
 def ul_at_mass(ulmap: dict, m: float, tol: float = 0.35) -> Optional[float]:
     if not ulmap:
         return None
@@ -115,6 +138,10 @@ def ul_at_mass(ulmap: dict, m: float, tol: float = 0.35) -> Optional[float]:
     return ulmap[nearest]
 
 
+# ----------------------------------------------------------------------------
+# load_scan_ul
+#   Upper-limit histogram of a scan ROOT file as (mass centres, limits), keeping the physical entries.
+# ----------------------------------------------------------------------------
 def load_scan_ul(root_path: Path):
     import uproot
 
@@ -127,6 +154,10 @@ def load_scan_ul(root_path: Path):
     return xc[ok], v[ok]
 
 
+# ----------------------------------------------------------------------------
+# make_config
+#   Write a few-mass smoke-test scan config from the template with the label, output directory and rates directory replaced.
+# ----------------------------------------------------------------------------
 def make_config(out_path: Path, rates_dir: str, label: str, outdir: str):
     base = json.loads(
         (ROOT / "configs/scan_dmelectron_pattern_data_qedark_fewmass_asis.json").read_text()
@@ -138,6 +169,10 @@ def make_config(out_path: Path, rates_dir: str, label: str, outdir: str):
     out_path.write_text(json.dumps(base, indent=2) + "\n")
 
 
+# ----------------------------------------------------------------------------
+# run_scan
+#   Run the scan binary from the build directory on a config; returns 1 if the binary does not exist.
+# ----------------------------------------------------------------------------
 def run_scan(config_path: Path, build_dir: Path) -> int:
     exe = build_dir / "ccdarksens_scan_dmelectron_pattern"
     if not exe.exists():
@@ -148,6 +183,10 @@ def run_scan(config_path: Path, build_dir: Path) -> int:
     return subprocess.call(cmd, cwd=ROOT)
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Halo smoke test for QEDark: print the rate ratios and the expected limit shift between the two halos, prepare the few-mass configs and rate copies, optionally (--run-scan) run the scans, and compare with the paper export.
+# ----------------------------------------------------------------------------
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--build-dir", default=str(ROOT / "build"))

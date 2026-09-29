@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
 # ============================================================================
-#  CCDarkSens — plot_band_gap_pheno_dRdE
-#  Overlay dR/dE spectra from QCDark2 rate CSVs for band-gap pheno Step 1
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
 #
-#  Author: Diego Venegas-Vargas
+#  File: plot_band_gap_pheno_dRdE.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  plot_band_gap_pheno_dRdE.py -- Overlay dR/dE spectra from QCDark2 rate
+#  CSVs for band-gap pheno Step 1
 # ============================================================================
 """Overlay dR/dE from QCDark2 rate CSVs for band-gap pheno Step 1."""
 
@@ -19,6 +26,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
+# ----------------------------------------------------------------------------
+# RateCsvMeta
+#   Metadata parsed from the comment header of a rate CSV: material, mediator, mass, cross section and the ionization table it was made with.
+# ----------------------------------------------------------------------------
 @dataclass(frozen=True)
 class RateCsvMeta:
     path: Path
@@ -28,6 +39,10 @@ class RateCsvMeta:
     sigma_e_cm2: float
     table_path: str
 
+    # ----------------------------------------------------------------------------
+    # RateCsvMeta.from_csv
+    #   Parse the '#' header lines of a rate CSV into a RateCsvMeta (missing entries stay empty or NaN).
+    # ----------------------------------------------------------------------------
     @classmethod
     def from_csv(cls, path: Path) -> RateCsvMeta:
         material = mediator = table_path = ""
@@ -66,6 +81,10 @@ class RateCsvMeta:
         )
 
 
+# ----------------------------------------------------------------------------
+# read_dRdE_csv
+#   Read the (E, dR/dE) columns of a rate CSV, skipping comments and unparsable rows.
+# ----------------------------------------------------------------------------
 def read_dRdE_csv(path: Path) -> tuple[np.ndarray, np.ndarray]:
     E, R = [], []
     with open(path, encoding="utf-8-sig") as f:
@@ -84,6 +103,10 @@ def read_dRdE_csv(path: Path) -> tuple[np.ndarray, np.ndarray]:
     return np.asarray(E), np.asarray(R)
 
 
+# ----------------------------------------------------------------------------
+# RateFileMatch
+#   A rate file found for the requested point: its path, mass and cross-section string.
+# ----------------------------------------------------------------------------
 @dataclass(frozen=True)
 class RateFileMatch:
     path: Path
@@ -94,6 +117,10 @@ class RateFileMatch:
 _RATE_RE = re.compile(r"_m([0-9.]+)_s(.+)\.csv$", re.IGNORECASE)
 
 
+# ----------------------------------------------------------------------------
+# _parse_rate_path
+#   Mass and cross-section string parsed from a rate file name, or None if the name does not match.
+# ----------------------------------------------------------------------------
 def _parse_rate_path(path: Path) -> tuple[float, str] | None:
     m = _RATE_RE.search(path.name)
     if not m:
@@ -147,20 +174,36 @@ def gap_ev_from_tag(tag: str) -> float:
     return float(tag.replace("gap", "").replace("p", "."))
 
 
+# ----------------------------------------------------------------------------
+# gap_legend_label
+#   Legend label with the band gap of a curve and the name of the table it used.
+# ----------------------------------------------------------------------------
 def gap_legend_label(tag: str, meta: RateCsvMeta) -> str:
     gap_ev = gap_ev_from_tag(tag)
     table = Path(meta.table_path).name if meta.table_path else tag
     return rf"$E_{{\mathrm{{gap}}}} = {gap_ev:g}$ eV; {table}"
 
 
+# ----------------------------------------------------------------------------
+# format_mchi_latex
+#   Mass as a matplotlib math-text string.
+# ----------------------------------------------------------------------------
 def format_mchi_latex(mchi_MeV: float) -> str:
     return rf"$m_\chi = {mchi_MeV:.9f}$ MeV"
 
 
+# ----------------------------------------------------------------------------
+# format_sigma_latex
+#   Cross section as a matplotlib math-text string.
+# ----------------------------------------------------------------------------
 def format_sigma_latex(sigma_cm2: float) -> str:
     return rf"$\sigma_e = {sigma_cm2:.16e}$ cm$^2$"
 
 
+# ----------------------------------------------------------------------------
+# format_run_title
+#   Plot title with the mass, cross section, material and mediator of a run.
+# ----------------------------------------------------------------------------
 def format_run_title(meta: RateCsvMeta) -> str:
     return (
         f"{format_mchi_latex(meta.mchi_MeV)}, "
@@ -169,6 +212,10 @@ def format_run_title(meta: RateCsvMeta) -> str:
     )
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Overlay dR/dE of several band-gap curves (--curve LABEL=RATES_DIR) at one mass and cross section and save the figure to --out.
+# ----------------------------------------------------------------------------
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--mchi-MeV", type=float, default=10.0)

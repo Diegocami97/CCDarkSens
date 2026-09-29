@@ -1,3 +1,12 @@
+# ============================================================================
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  io.py -- Diego Venegas-Vargas DAMIC-M collaboration CCDarkSens Framework
+#  io.py -- Small I/O helpers for data discovery and CSV writing.
+# ============================================================================
+
 """
 Small I/O helpers for data discovery and CSV writing.
 """
@@ -6,6 +15,10 @@ from __future__ import annotations
 import os
 import hashlib
 
+# ----------------------------------------------------------------------------
+# data_path
+#   Full path of a data file shipped inside the package; raises FileNotFoundError if it does not exist.
+# ----------------------------------------------------------------------------
 def data_path(pkg_file: str, subdir: str, filename: str) -> str:
     """
     Resolve a data file shipped inside the package.
@@ -17,6 +30,10 @@ def data_path(pkg_file: str, subdir: str, filename: str) -> str:
         raise FileNotFoundError(f"Data file not found: {cand}")
     return cand
 
+# ----------------------------------------------------------------------------
+# sha1sum
+#   SHA-1 hex digest of a file (read in 64 kB chunks); I record it in the CSV headers so a rate table can be traced to its input table.
+# ----------------------------------------------------------------------------
 def sha1sum(path: str) -> str:
     h = hashlib.sha1()
     with open(path, "rb") as f:
@@ -24,6 +41,10 @@ def sha1sum(path: str) -> str:
             h.update(chunk)
     return h.hexdigest()
 
+# ----------------------------------------------------------------------------
+# _csv_header_lines
+#   Template of the comment header of a DM-electron rate CSV (material, mediator, table hash, halo, mass, cross section, units).
+# ----------------------------------------------------------------------------
 def _csv_header_lines(entry: str) -> list:
     return [
         f"# Differential Rates computed with CCDarkSens ({entry} entry)",
@@ -37,8 +58,12 @@ def _csv_header_lines(entry: str) -> list:
     ]
 
 # Kept for callers that expect a static name; first line is the same as _csv_header_lines("QEDark")[0]
-CSV_HEADER = _csv_header_lines("QEDark")
+CSV_HEADER = _csv_header_lines("QEDark")  # static copy of the QEDark header for callers that expect this name
 
+# ----------------------------------------------------------------------------
+# write_csv
+#   Write a DM-electron rate table: the header template filled from meta, then the columns E [eV] and dRdE [events/kg/year/eV].
+# ----------------------------------------------------------------------------
 def write_csv(out_path: str, E, R, meta: dict, *, entry: str = "QEDark") -> None:
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     with open(out_path, "w") as f:

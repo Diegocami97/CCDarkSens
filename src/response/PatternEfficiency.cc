@@ -1,9 +1,11 @@
-// ============================================================================
-//  CCDarkSens — PatternEfficiency
-//  Stores and multiplies a per-bin ε(n_e) histogram into target n_e spectra.
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  PatternEfficiency.cc -- Stores and multiplies a per-bin ε(n_e) histogram
+//  into target n_e spectra.
+// ===========================================================================
 
 #include "ccdarksens/response/PatternEfficiency.hh"
 #include <TH1D.h>
@@ -12,10 +14,20 @@
 
 namespace ccdarksens {
 
+// ----------------------------------------------------------------------------
+// PatternEfficiency::SetEfficiencyHist
+//   Store a clone of the efficiency histogram.
+// ----------------------------------------------------------------------------
 void PatternEfficiency::SetEfficiencyHist(const TH1D& epsilon_ne) {
   eps_ = std::unique_ptr<TH1D>(static_cast<TH1D*>(epsilon_ne.Clone("eps_ne")));
 }
 
+// ----------------------------------------------------------------------------
+// PatternEfficiency::Apply
+//   Multiply every bin of target_ne by epsilon(n_e), clamped to [0,1].
+//   Does nothing if no efficiency was set. Throws std::invalid_argument if the
+//   two histograms have different bin counts.
+// ----------------------------------------------------------------------------
 void PatternEfficiency::Apply(TH1D& target_ne) const {
   if (!eps_) return;
   if (target_ne.GetNbinsX() != eps_->GetNbinsX())

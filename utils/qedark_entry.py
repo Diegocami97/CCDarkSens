@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
 # ============================================================================
-#  CCDarkSens — qedark_entry
-#  Standalone QEDark Python port (constants, halo, Si form factor) exposing compute_dRdE and a CLI to write rate CSVs.
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
 #
-#  Author: Diego Venegas-Vargas
+#  File: qedark_entry.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  qedark_entry.py -- Standalone QEDark Python port (constants, halo, Si form
+#  factor) exposing compute_dRdE and a CLI to write rate CSVs.
 # ============================================================================
 
 # -*- coding: utf-8 -*-
@@ -43,7 +50,7 @@ import sys
 import argparse
 import numpy as np
 
-# ---- QEDark source you provided ----
+# ---- QEDark source files ----
 try:
     import QEdark_constants as QEC
 except Exception as e:
@@ -139,6 +146,10 @@ def load_material_si_f2(filename: str = "Si_f2.txt") -> dict:
 # SHM halo helper(s)
 # -------------------------------
 
+# ----------------------------------------------------------------------------
+# _to_cms
+#   Convert a velocity from km/s to cm/s.
+# ----------------------------------------------------------------------------
 def _to_cms(x_kms: float) -> float:
     return float(x_kms) * 1.0e5
 
@@ -244,7 +255,7 @@ def compute_dRdE(material: str,
     else:
         v0_cm_s = _to_cms(halo["v0_kms"]); vE_cm_s = _to_cms(halo["vE_kms"]); vesc_cm_s = _to_cms(halo["vesc_kms"])
 
-    # --- Load material table (exact file you provided) ---
+    # --- Load material table (exact file from the QEDark source) ---
     mat = load_material_si_f2("Si_f2.txt")
     tab = mat["table"]    # (N x M) numeric
     # NOTE: The notebook defines what each column means (q-grid, energy bins, |f_crystal|^2, etc.)
@@ -342,6 +353,10 @@ CSV_HEADER = [
     "# Columns: E (eV), dRdE (events/g/day/eV)"
 ]
 
+# ----------------------------------------------------------------------------
+# _write_csv
+#   Write a rate table: the header template filled from meta, then the columns E and dRdE.
+# ----------------------------------------------------------------------------
 def _write_csv(path: str, E: np.ndarray, R: np.ndarray, meta: dict) -> None:
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w") as f:
@@ -351,6 +366,10 @@ def _write_csv(path: str, E: np.ndarray, R: np.ndarray, meta: dict) -> None:
         for e, r in zip(E, R):
             f.write(f"{e:.8g},{r:.10g}\n")
 
+# ----------------------------------------------------------------------------
+# main_cli
+#   Command-line front end: compute one QEDark rate table (default halo v0 = 220, vE = 232, vesc = 544 km/s) and write it to --out_csv.
+# ----------------------------------------------------------------------------
 def main_cli():
     ap = argparse.ArgumentParser()
     ap.add_argument("--material", default="Si")

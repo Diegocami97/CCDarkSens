@@ -1,9 +1,12 @@
-// ============================================================================
-//  CCDarkSens — plot_two_point_spectra_overlay
-//  ROOT macro that overlays dRdE and n_e/pattern spectra from a two-point dump ROOT file into comparison PDFs under outplots/.
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  plot_two_point_spectra_overlay.cc -- ROOT macro that overlays dRdE and
+//  n_e/pattern spectra from a two-point dump ROOT file into comparison PDFs
+//  under outplots/.
+// ===========================================================================
 
 #include <TFile.h>
 #include <TKey.h>

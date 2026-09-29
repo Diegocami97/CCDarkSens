@@ -1,10 +1,17 @@
 #!/usr/bin/env python3
 # ============================================================================
-#  CCDarkSens — plot_band_gap_klein_limits
-#  Overlay DM-e limit curves for the Klein-tier band-gap pheno scan.
-#  One curve per E_gap (Klein), plus Si reference (1.2, 3.8) eV.
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
 #
-#  Author: Diego Venegas-Vargas
+#  File: plot_band_gap_klein_limits.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  plot_band_gap_klein_limits.py -- Overlay DM-e limit curves for the Klein-
+#  tier band-gap pheno scan. One curve per E_gap (Klein), plus Si reference
+#  (1.2, 3.8) eV.
 # ============================================================================
 """
 Generate limit-overlay PDFs (heavy + light) for the Klein ladder + Si ref:
@@ -46,18 +53,34 @@ EXPOSURE_KG_YR = 0.5
 DAYS_PER_YEAR = 365.25
 
 
+# ----------------------------------------------------------------------------
+# ev_tag
+#   Energy formatted for file names: two decimals with '.' replaced by 'p'.
+# ----------------------------------------------------------------------------
 def ev_tag(x: float) -> str:
     return ("%.2f" % x).replace(".", "p")
 
 
+# ----------------------------------------------------------------------------
+# gap_tag
+#   Band gap formatted for file names: one decimal with '.' replaced by 'p'.
+# ----------------------------------------------------------------------------
 def gap_tag(g: float) -> str:
     return ("%.1f" % g).replace(".", "p")
 
 
+# ----------------------------------------------------------------------------
+# _dc_suffix
+#   Directory suffix of a dark-current tier (none for the baseline).
+# ----------------------------------------------------------------------------
 def _dc_suffix(dc_tier: str) -> str:
     return "" if dc_tier == "baseline" else f"_{dc_tier}"
 
 
+# ----------------------------------------------------------------------------
+# klein_scan_root
+#   Path of the scan ROOT file of the Klein-tier case for a mediator, gap and dark-current tier (eps_h from the Klein formula).
+# ----------------------------------------------------------------------------
 def klein_scan_root(mediator: str, g: float, dc_tier: str) -> Path:
     eh = KLEIN_EH[g]
     gtag = gap_tag(g)
@@ -72,6 +95,10 @@ def klein_scan_root(mediator: str, g: float, dc_tier: str) -> Path:
     )
 
 
+# ----------------------------------------------------------------------------
+# si_ref_scan_root
+#   Path of the silicon-reference scan ROOT file (gap 1.2 eV, eps_h 3.8 eV) for a mediator and tier.
+# ----------------------------------------------------------------------------
 def si_ref_scan_root(mediator: str, dc_tier: str) -> Path:
     suffix = _dc_suffix(dc_tier)
     if mediator == "light":
@@ -88,6 +115,10 @@ def klein_curve_label(g: float) -> str:
     return f"E_{{gap}} = {g:g} eV, #varepsilon_{{h}} = {eh_s} eV"
 
 
+# ----------------------------------------------------------------------------
+# format_dc_per_pix_per_day
+#   Dark-current rate converted from e-/pix/yr to e-/pix/day, in scientific notation below 0.01.
+# ----------------------------------------------------------------------------
 def format_dc_per_pix_per_day(lam_e_per_pix_per_year: float) -> str:
     lam_day = lam_e_per_pix_per_year / DAYS_PER_YEAR
     if lam_day < 0.01:
@@ -95,6 +126,10 @@ def format_dc_per_pix_per_day(lam_e_per_pix_per_year: float) -> str:
     return f"{lam_day:g}"
 
 
+# ----------------------------------------------------------------------------
+# plot_title
+#   ROOT title of the low-band-gap study figure with the exposure and the dark-current rate of the tier.
+# ----------------------------------------------------------------------------
 def plot_title(dc_tier: str) -> str:
     lam_day = format_dc_per_pix_per_day(DC_LAMBDA[dc_tier])
     return (
@@ -103,6 +138,10 @@ def plot_title(dc_tier: str) -> str:
     )
 
 
+# ----------------------------------------------------------------------------
+# plot_one
+#   Plot the silicon reference and the Klein-tier limit curves of one mediator and tier with ccdarksens_plot_dmelectron_limit (missing scans skipped); with dry_run only the command is printed.
+# ----------------------------------------------------------------------------
 def plot_one(mediator: str, dc_tier: str, dry_run: bool = False) -> int:
     paths: list[str] = []
     labels: list[str] = []
@@ -162,6 +201,10 @@ def plot_one(mediator: str, dc_tier: str, dry_run: bool = False) -> int:
     return subprocess.call(cmd, cwd=str(ROOT))
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Command line: choose the mediator(s) and the dark-current tier (baseline, dc10x, dc100x or all); --dry-run only prints the plot commands.
+# ----------------------------------------------------------------------------
 def main() -> int:
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter

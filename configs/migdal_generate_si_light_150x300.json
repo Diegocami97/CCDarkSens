@@ -1,0 +1,40 @@
+{
+  "_comment": "Migdal rate generation: Si, light mediator, 150 mass points x 30 sigma_n values. Faster end-to-end test grid. Run: python3 utils/migdal_generate_grid.py configs/migdal_generate_si_light_150x30.json",
+  "material": "Si",
+  "mediator": "light",
+  "darkelf_dir": "/Users/diegovenegasvargas/Documents/Software/DarkELF",
+  "detector": {
+    "Emin_eV": 0.0,
+    "Emax_eV": 20.0,
+    "binsize_eV": 0.1
+  },
+  "rates_dir": "data/migdal_rates/Si/light_150x300",
+  "filename_template": "dRdE_{target_nucleus}_{mediator}_m{mchi_MeV}_s{sigma_n_cm2}.csv",
+  "grid": {
+    "mchi_MeV": {
+      "logspace": {
+        "start": 0.1,
+        "stop": 1000.0,
+        "num": 150,
+        "endpoint": true
+      }
+    },
+    "sigma_n_cm2": {
+      "logspace": {
+        "start_exp": -45,
+        "stop_exp": -25,
+        "num": 300,
+        "endpoint": true
+      }
+    }
+  },
+  "options": {
+    "skip_existing": true,
+    "overwrite": false,
+    "parallel": 0,
+    "format": {
+      "mchi": ".6f",
+      "sigma": ".1e"
+    }
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "_comment": "Template: generate dark photon absorption rates from a custom digitized dielectric tensor CSV. Set eps_csv to your digitized file path; density_g_cm3 and detector.band_gap_eV must match your material. The material field is used as a label only. See python/ccdarkphys/darkphoton/entry.py for CSV format documentation.",
+  "darkelf_dir": "/Users/diegovenegasvargas/Documents/Software/DarkELF",
+  "material": "custom",
+  "eps_csv": "data/custom_eps/my_material_eps.csv",
+  "density_g_cm3": 6.77,
+  "detector": {
+    "band_gap_eV": 0.06,
+    "binsize_eV": 0.01
+  },
+  "rates_dir": "data/darkphoton_rates/custom_material",
+  "filename_template": "dRdE_{material}_absorption_m{mA_eV}_e{epsilon}.csv",
+  "grid": {
+    "mA_eV": {
+      "logspace": {
+        "start_exp": -2.0,
+        "stop_exp": 1.0,
+        "num": 80
+      }
+    },
+    "epsilon": {
+      "logspace": {
+        "start_exp": -20,
+        "stop_exp": -8,
+        "num": 30
+      }
+    }
+  },
+  "options": {
+    "skip_existing": true,
+    "overwrite": false,
+    "parallel": 1,
+    "progress": true,
+    "format": {
+      "mA": ".6f",
+      "epsilon": ".3e"
+    }
+  }
+}

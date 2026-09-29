@@ -1,0 +1,53 @@
+{
+  "_comment": "Sr2Cb2Sd phase 1: Si_fast epsilon, light mediator, gap 0.556 eV.",
+  "backend": "qcdark2",
+  "material": "Si",
+  "mediator": "light",
+  "halo": {
+    "v0_kms": 238.0,
+    "vE_kms": 263.0,
+    "vesc_kms": 544.0
+  },
+  "detector": {
+    "band_gap_eV": 0.556,
+    "eh_pair_eV": 3.8,
+    "binsize_eV": 0.1
+  },
+  "epsilon_h5": "data/qcdark2_epsilon/Si/Si_fast_gap0p556.h5",
+  "rates_dir": "data/Sr2Cb2Sd/rates/Si/light/Si_fast_gap0p556",
+  "filename_template": "dRdE_{material}_{mediator}_m{mchi_MeV}_s{sigma_e_cm2}.csv",
+  "grid": {
+    "mchi_MeV": {
+      "logspace": {
+        "start": 0.2,
+        "stop": 1000.0,
+        "num": 800,
+        "endpoint": true
+      }
+    },
+    "sigma_e_cm2": {
+      "logspace": {
+        "start_exp": -46,
+        "stop_exp": -26,
+        "num": 300,
+        "endpoint": true
+      }
+    },
+    "format": {
+      "mchi": ".6f",
+      "sigma": ".1e"
+    }
+  },
+  "options": {
+    "skip_existing": true,
+    "overwrite": false,
+    "parallel": 8,
+    "progress": true,
+    "use_sigma_scaling": true,
+    "sigma_ref": 1e-37,
+    "format": {
+      "mchi": ".6f",
+      "sigma": ".1e"
+    }
+  }
+}

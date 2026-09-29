@@ -1,4 +1,18 @@
 #!/usr/bin/env python3
+# ============================================================================
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  File: plot_qedark_all_references.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  plot_qedark_all_references.py -- Overlay CCDarkSens QEdark heavy pattern
+#  scan vs reference curves (paper export primary).
+# ============================================================================
+
 """Overlay CCDarkSens QEdark heavy pattern scan vs reference curves (paper export primary)."""
 from __future__ import annotations
 
@@ -53,6 +67,10 @@ def _load_ul_from_root(f):
     return xc, v
 
 
+# ----------------------------------------------------------------------------
+# load_scan_ul
+#   Upper-limit curve of a scan ROOT file, keeping the physical points: positive, below 0.9e-26 and at masses of at least 0.5 MeV.
+# ----------------------------------------------------------------------------
 def load_scan_ul(root_path: Path):
     import uproot
 
@@ -62,6 +80,10 @@ def load_scan_ul(root_path: Path):
     return xc[ok], v[ok]
 
 
+# ----------------------------------------------------------------------------
+# load_scan_qhist
+#   Limit curve extracted from the pattern q histogram at the masses mc (the histogram rows follow the full scan mass order, so I map them by mass); returns (None, None) if the histogram is missing.
+# ----------------------------------------------------------------------------
 def load_scan_qhist(root_path: Path, mc: np.ndarray):
     import uproot
 
@@ -78,11 +100,19 @@ def load_scan_qhist(root_path: Path, mc: np.ndarray):
     return mc, np.asarray(sig_q)
 
 
+# ----------------------------------------------------------------------------
+# load_this_work
+#   Read a two-column comma-separated limit curve (mass, sigma) as two arrays.
+# ----------------------------------------------------------------------------
 def load_this_work(path: Path):
     arr = np.loadtxt(path, delimiter=",")
     return arr[:, 0], arr[:, 1]
 
 
+# ----------------------------------------------------------------------------
+# load_mass_ev_txt
+#   Read a (mass, sigma) text file (tab or comma separated, comments and header skipped); masses above 1e4 are taken as eV and converted to MeV.
+# ----------------------------------------------------------------------------
 def load_mass_ev_txt(path: Path):
     rows = []
     for ln in path.read_text().splitlines():
@@ -104,6 +134,10 @@ def load_mass_ev_txt(path: Path):
     return arr[order, 0], arr[order, 1]
 
 
+# ----------------------------------------------------------------------------
+# load_pydme_daily_mod
+#   Read the pydme daily-modulation limit CSV (columns mass_MeV and upper_limit).
+# ----------------------------------------------------------------------------
 def load_pydme_daily_mod(path: Path):
     import pandas as pd
 
@@ -113,6 +147,10 @@ def load_pydme_daily_mod(path: Path):
     return m, s
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Overlay the CCDarkSens QEDark scan limit (from the stored limit and from the q histogram) on all reference curves and save the comparison figures to --outdir.
+# ----------------------------------------------------------------------------
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument(

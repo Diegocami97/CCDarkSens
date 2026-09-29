@@ -1,9 +1,12 @@
-// ============================================================================
-//  CCDarkSens — RateSource
-//  Header for synthetic dR/dE histogram factory helpers used in tests.
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  RateSource.hh -- I declare RateSource: helpers that create and fill
+//  synthetic dR/dE histograms (flat and mono-energetic lines) for tests and
+//  for placeholder spectra.
+// ===========================================================================
 
 #pragma once
 #include <memory>
@@ -12,6 +15,11 @@ class TH1D;
 
 namespace ccdarksens {
 
+// ----------------------------------------------------------------------------
+// RateSource
+//   Static helpers for synthetic spectra: a linear-energy histogram, a flat
+//   spectrum, and a single mono-energetic line.
+// ----------------------------------------------------------------------------
 class RateSource {
 public:
   static std::unique_ptr<TH1D> MakeLinearEnergyHist(double emin_eV, double emax_eV, int nbins,

@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
 # ============================================================================
-#  CCDarkSens — eval_p100K_scaling
-#  Evaluate and QA p100K table scaling across band-gap scenarios (Step 2)
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
 #
-#  Author: Diego Venegas-Vargas
+#  File: eval_p100K_scaling.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  eval_p100K_scaling.py -- Evaluate and QA p100K table scaling across band-
+#  gap scenarios (Step 2)
 # ============================================================================
 """Evaluate and compare p100K scaling scenarios (Step 2 QA).
 
@@ -41,15 +48,27 @@ def interp_at(E: np.ndarray, P: np.ndarray, E0: float) -> np.ndarray:
     return out
 
 
+# ----------------------------------------------------------------------------
+# mean_ne
+#   Mean number of electrons <n_e>(E) = sum_n n*P(n | E), with P[0] being n = 1.
+# ----------------------------------------------------------------------------
 def mean_ne(E: np.ndarray, P: np.ndarray) -> np.ndarray:
     ne = np.arange(1, P.shape[0] + 1, dtype=float)
     return (P * ne[:, None]).sum(axis=0)
 
 
+# ----------------------------------------------------------------------------
+# prob_ge1
+#   Probability of at least one electron, sum over n >= 1 of P(n | E).
+# ----------------------------------------------------------------------------
 def prob_ge1(P: np.ndarray) -> np.ndarray:
     return P.sum(axis=0)
 
 
+# ----------------------------------------------------------------------------
+# load_manifest
+#   Entries of the scenario manifest: the reference followed by all scenarios.
+# ----------------------------------------------------------------------------
 def load_manifest(path: Path) -> List[dict]:
     with open(path, encoding="utf-8") as f:
         man = json.load(f)
@@ -72,6 +91,10 @@ def anchor_check(
     return float(pref[0]), float(pnew[0])
 
 
+# ----------------------------------------------------------------------------
+# print_summary_table
+#   Print P(n=1), <n_e> and the total probability at selected energies for one scenario, together with the mapped reference energy E'(E).
+# ----------------------------------------------------------------------------
 def print_summary_table(
     label: str,
     scenario: str,
@@ -98,6 +121,10 @@ def print_summary_table(
         print(f"{E0:8.2f}  {ep_str}  {p1:8.4f}  {mn:8.3f}  {sp:8.4f}")
 
 
+# ----------------------------------------------------------------------------
+# plot_group
+#   Four-panel comparison (P(n=1), <n_e>, total probability, higher multiplicities) of a group of scaled tables against the reference, up to Emax.
+# ----------------------------------------------------------------------------
 def plot_group(
     E_ref: np.ndarray,
     P_ref: np.ndarray,
@@ -157,6 +184,10 @@ def plot_group(
     print(f"[ok] {out}")
 
 
+# ----------------------------------------------------------------------------
+# plot_all_overlay
+#   Overlay of P(n=1) and <n_e> for all scenarios and the reference in one two-panel figure.
+# ----------------------------------------------------------------------------
 def plot_all_overlay(
     E_ref: np.ndarray,
     P_ref: np.ndarray,
@@ -191,6 +222,10 @@ def plot_all_overlay(
     print(f"[ok] {out}")
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Evaluate every p100K scaling case of the manifest: print the summary tables and write the comparison figures to --outdir.
+# ----------------------------------------------------------------------------
 def main() -> None:
     ap = argparse.ArgumentParser(description="Evaluate p100K scaling cases.")
     ap.add_argument("--manifest", default="configs/band_gap_pheno_scenarios.json")

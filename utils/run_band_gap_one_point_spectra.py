@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
 # ============================================================================
-#  CCDarkSens — run_band_gap_one_point_spectra
-#  Generate and compare signal spectra at one (E_gap, ε_h) diagnostic point
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
 #
-#  Author: Diego Venegas-Vargas
+#  File: run_band_gap_one_point_spectra.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  run_band_gap_one_point_spectra.py -- Generate and compare signal spectra
+#  at one (E_gap, ε_h) diagnostic point
 # ============================================================================
 """
 Run one (m_chi, sigma_e) point per band-gap / ionization case and dump spectra.
@@ -37,18 +44,34 @@ TEMPLATE = ROOT / "configs" / "scan_dmelectron_band_gap_study_0p3.json"
 BUILD_P100K = ROOT / "utils" / "build_p100K_scaled.py"
 
 
+# ----------------------------------------------------------------------------
+# gap_tag
+#   File-name tag of a band gap, e.g. "gap0p7" (1.2 eV gives "gap1p2").
+# ----------------------------------------------------------------------------
 def gap_tag(g: float) -> str:
     return "gap1p2" if abs(g - 1.2) < 1e-9 else f"gap{g:.1f}".replace(".", "p")
 
 
+# ----------------------------------------------------------------------------
+# eh_tag
+#   Electron-hole pair energy formatted for file names with '.' replaced by 'p'.
+# ----------------------------------------------------------------------------
 def eh_tag(eh: float) -> str:
     return f"{eh:g}".replace(".", "p")
 
 
+# ----------------------------------------------------------------------------
+# ionization_csv_path
+#   Path of the scaled p100K ionization table of a (gap, eps_h) pair.
+# ----------------------------------------------------------------------------
 def ionization_csv_path(gap_eV: float, eh_eV: float) -> Path:
     return ROOT / "data" / f"p100K_{gap_tag(gap_eV)}_eh{eh_tag(eh_eV)}.csv"
 
 
+# ----------------------------------------------------------------------------
+# build_cases
+#   Cases to run from the manifest: every gap in the D-equal (eps_h = gap) and B-thresh (fixed eps_h) scenarios, with their rate directories and ionization tables.
+# ----------------------------------------------------------------------------
 def build_cases(manifest: dict) -> list[dict]:
     gaps = [float(g) for g in manifest.get("gaps_eV", [])]
     scenarios = manifest.get("scenarios", ["D-equal", "B-thresh"])
@@ -81,6 +104,10 @@ def build_cases(manifest: dict) -> list[dict]:
     return cases
 
 
+# ----------------------------------------------------------------------------
+# ensure_p100k_tables
+#   Build the p100K tables that are missing for the cases (only printed with dry_run); returns 0 on success.
+# ----------------------------------------------------------------------------
 def ensure_p100k_tables(cases: list[dict], dry_run: bool) -> int:
     missing = []
     for c in cases:
@@ -113,6 +140,10 @@ def ensure_p100k_tables(cases: list[dict], dry_run: bool) -> int:
     return 0
 
 
+# ----------------------------------------------------------------------------
+# make_config
+#   One-point scan config of a case: n_e-space dump of dR/dE and S_true(n_e) at a single (mass, cross-section) point, from the template.
+# ----------------------------------------------------------------------------
 def make_config(base: dict, case: dict, point: dict, manifest: dict, outdir: Path) -> dict:
     cfg = copy.deepcopy(base)
     cfg["_comment"] = (
@@ -155,6 +186,10 @@ def make_config(base: dict, case: dict, point: dict, manifest: dict, outdir: Pat
     return cfg
 
 
+# ----------------------------------------------------------------------------
+# run_case
+#   Run the scan binary on one config (only printed with dry_run) and return its exit code.
+# ----------------------------------------------------------------------------
 def run_case(cfg_path: Path, dry_run: bool) -> int:
     cmd = [str(SCAN_BIN), str(cfg_path.relative_to(ROOT))]
     print(f"[run] {' '.join(cmd)}")
@@ -163,6 +198,10 @@ def run_case(cfg_path: Path, dry_run: bool) -> int:
     return subprocess.call(cmd, cwd=ROOT)
 
 
+# ----------------------------------------------------------------------------
+# plot_results
+#   Run the ROOT comparison macro and then the p100K plotting script on the results directory.
+# ----------------------------------------------------------------------------
 def plot_results(results_dir: Path, dry_run: bool) -> int:
     macro = "utils/plot_band_gap_one_point_spectra_compare.cc"
     rel = results_dir.relative_to(ROOT).as_posix()
@@ -178,6 +217,10 @@ def plot_results(results_dir: Path, dry_run: bool) -> int:
     return subprocess.call(p100k, cwd=ROOT)
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Command line: prepare the p100K tables and the one-point configs, run the scans and plot the results; options select cases, skip steps (--plot-only, --no-plot, --skip-p100k-build) or only print (--dry-run).
+# ----------------------------------------------------------------------------
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--manifest", type=Path, default=MANIFEST)

@@ -1,9 +1,11 @@
-// ============================================================================
-//  CCDarkSens — ITestStatistic
-//  Abstract interface for binned negative log-likelihood and likelihood-ratio evaluation on count vectors.
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  ITestStatistic.hh -- Abstract interface for binned negative log-
+//  likelihood and likelihood-ratio evaluation on count vectors.
+// ===========================================================================
 
 #pragma once
 

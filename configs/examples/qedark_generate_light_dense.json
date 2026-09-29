@@ -1,4 +1,5 @@
 {
+  "_header": "Diego Venegas-Vargas | DAMIC-M collaboration | CCDarkSens Framework -- Example input: QEDark rate tables for the LBC ultra-light (massless) mediator example scan (800 x 300 grid).",
   "_comment": "Generate QEDark rate tables for the LBC ultra-light (massless) mediator example scan (800 x 300 grid).",
   "material": "Si",
   "mediator": "massless",

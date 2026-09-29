@@ -1,0 +1,39 @@
+{
+  "_comment": "Generate dark photon absorption rates using Eu5In2Sb6 digitized ELF (SPLENDOR arXiv:2507.17782v2, Fig. 23) as a proxy ELF for SrCd2Sb2. density_g_cm3 and band_gap_eV are SrCd2Sb2 values \u2014 only the ELF comes from Eu5In2Sb6. Prereq: data/custom_eps/eu5in2sb6_eps_digitized.csv must exist.",
+  "darkelf_dir": "/Users/diegovenegasvargas/Documents/Software/DarkELF",
+  "material": "Eu5In2Sb6",
+  "eps_csv": "data/custom_eps/eu5in2sb6_eps_digitized.csv",
+  "density_g_cm3": 5.76,
+  "detector": {
+    "band_gap_eV": 0.34,
+    "binsize_eV": 0.1
+  },
+  "rates_dir": "data/darkphoton_rates/Eu5In2Sb6",
+  "filename_template": "dRdE_{material}_absorption_m{mA_eV}_e{epsilon}.csv",
+  "grid": {
+    "mA_eV": {
+      "logspace": {
+        "start_exp": -1.3,
+        "stop_exp": 1.36,
+        "num": 82
+      }
+    },
+    "epsilon": {
+      "logspace": {
+        "start_exp": -20,
+        "stop_exp": -8,
+        "num": 30
+      }
+    }
+  },
+  "options": {
+    "skip_existing": true,
+    "overwrite": false,
+    "parallel": 1,
+    "progress": true,
+    "format": {
+      "mA": ".6f",
+      "epsilon": ".3e"
+    }
+  }
+}

@@ -1,10 +1,12 @@
-// ============================================================================
-//  CCDarkSens — DMNucleonConfig
-//  Shared configuration for DM-nucleon coupling models (Migdal effect today;
-//  a future elastic nuclear-recoil/WIMP model will consume the same struct).
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  DMNucleonConfig.hh -- I define DMNucleonConfig: the DM-nucleus coupling
+//  settings (target nucleus, mediator, rate-file location, grid point,
+//  output binning) shared by the Migdal and WIMP-nucleon models.
+// ===========================================================================
 
 #pragma once
 #include <string>
@@ -28,9 +30,9 @@ struct DMNucleonConfig {
   std::string sigma_n_cm2;        // DM-nucleon cross section, kept as string to match filename exactly
 
   // output spectrum binning (whatever energy observable the consuming model produces)
-  double Emin_eV = 0.0;
-  double Emax_eV = 20.0;
-  int    nbins   = 200;
+  double Emin_eV = 0.0;  // lower edge of the output spectrum [eV]
+  double Emax_eV = 20.0;  // upper edge of the output spectrum [eV]
+  int    nbins   = 200;  // number of output bins
 };
 
 } // namespace ccdarksens

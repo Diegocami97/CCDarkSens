@@ -1,9 +1,12 @@
-// ============================================================================
-//  CCDarkSens — PatternClassifier
-//  Identifies hit patterns in 1D rows or 2D images using Gaussian Pm/Pmn/Pmnl statistics matching the reference notebook logic.
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  PatternClassifier.cc -- Identifies hit patterns in 1D rows or 2D images
+//  using Gaussian Pm/Pmn/Pmnl statistics matching the reference notebook
+//  logic.
+// ===========================================================================
 
 #include "ccdarksens/response/PatternClassifier.hh"
 

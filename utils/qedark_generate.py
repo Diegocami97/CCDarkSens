@@ -1,9 +1,17 @@
 #!/usr/bin/env python3
 # ============================================================================
-#  CCDarkSens — qedark_generate
-#  Command-line script to generate a single QEDark dR/dE CSV through an importable bridge module with halo and detector metadata headers.
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
 #
-#  Author: Diego Venegas-Vargas
+#  File: qedark_generate.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  qedark_generate.py -- Command-line script to generate a single QEDark
+#  dR/dE CSV through an importable bridge module with halo and detector
+#  metadata headers.
 # ============================================================================
 
 # utils/qedark_generate.py
@@ -33,6 +41,10 @@ CSV_HEADER = [
     "# Columns: E (eV), dRdE (events/kg/year/eV)"
 ]
 
+# ----------------------------------------------------------------------------
+# main
+#   Command-line generator of one rate table: import the given --module/--function rate calculator, call it for the requested material, mediator, mass, cross section, halo and energy range, and write the CSV.
+# ----------------------------------------------------------------------------
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--module", required=True)

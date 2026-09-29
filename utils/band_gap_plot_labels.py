@@ -1,8 +1,15 @@
 # ============================================================================
-#  CCDarkSens — band_gap_plot_labels
-#  Axis-label and colour helpers for band-gap pheno plots
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
 #
-#  Author: Diego Venegas-Vargas
+#  File: band_gap_plot_labels.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  band_gap_plot_labels.py -- Axis-label and colour helpers for band-gap
+#  pheno plots
 # ============================================================================
 """
 Shared band-gap pheno plot labels (E_gap, epsilon_h).
@@ -16,6 +23,10 @@ from __future__ import annotations
 EH_B_THRESH_EV = 3.8
 
 
+# ----------------------------------------------------------------------------
+# eh_for_scenario
+#   epsilon_h of a scenario: "D-equal" uses eps_h = E_gap, "B-thresh" the fixed B-thresh value; anything else raises ValueError.
+# ----------------------------------------------------------------------------
 def eh_for_scenario(gap_eV: float, scenario: str) -> float:
     if scenario == "D-equal":
         return gap_eV
@@ -35,10 +46,18 @@ def pheno_param_label_root(gap_eV: float, eh_eV: float) -> str:
     return f"E_{{gap}} = {gap_eV:g} eV, #varepsilon_{{h}} = {eh_eV:g} eV"
 
 
+# ----------------------------------------------------------------------------
+# limit_curve_label
+#   Legend label of a limit curve for the given gap and scenario.
+# ----------------------------------------------------------------------------
 def limit_curve_label(gap_eV: float, scenario: str) -> str:
     return pheno_param_label_root(gap_eV, eh_for_scenario(gap_eV, scenario))
 
 
+# ----------------------------------------------------------------------------
+# limit_sweep_title
+#   Title of a Phase C limit-sweep plot for the heavy or light mediator, with the eps_h condition of the tier appended (ROOT or matplotlib syntax).
+# ----------------------------------------------------------------------------
 def limit_sweep_title(
     mediator: str = "heavy",
     *,
@@ -60,6 +79,10 @@ def limit_sweep_title(
     return title
 
 
+# ----------------------------------------------------------------------------
+# gap_title_root
+#   ROOT-syntax title fragment "E_gap = <gap> eV".
+# ----------------------------------------------------------------------------
 def gap_title_root(gap_eV: float) -> str:
     return f"E_{{gap}} = {gap_eV:g} eV"
 

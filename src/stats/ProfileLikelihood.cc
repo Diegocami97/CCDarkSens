@@ -1,9 +1,12 @@
-// ============================================================================
-//  CCDarkSens — ProfileLikelihood
-//  Implements pydme-compatible Poisson profile likelihood with Bp+θ·Br backgrounds, optional priors, and Brent/Minuit profiling over θ and (log σ, θ).
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  ProfileLikelihood.cc -- Implements pydme-compatible Poisson profile
+//  likelihood with Bp+θ·Br backgrounds, optional priors, and Brent/Minuit
+//  profiling over θ and (log σ, θ).
+// ===========================================================================
 
 #include "ccdarksens/stats/ProfileLikelihood.hh"
 #include "ccdarksens/stats/StatsUtils.hh"
@@ -22,16 +25,19 @@
 
 namespace ccdarksens::stats {
 
+// Set the observed counts per bin (use the background for an Asimov data set).
 void ProfileLikelihood::SetData(const std::vector<double>& data) {
   data_ = data;
 }
 
+// Switch to scale mode: B = scale * B_template (this clears any Bp/Br).
 void ProfileLikelihood::SetBTemplate(const std::vector<double>& B_template) {
   B_template_ = B_template;
   Bp_.clear();
   Br_.clear();
 }
 
+// Switch to theta mode: B = Bp + theta * Br. Throws std::invalid_argument if the sizes differ.
 void ProfileLikelihood::SetBpBr(const std::vector<double>& Bp, const std::vector<double>& Br) {
   if (Bp.size() != Br.size())
     throw std::invalid_argument("ProfileLikelihood::SetBpBr: Bp and Br size mismatch");
@@ -39,10 +45,20 @@ void ProfileLikelihood::SetBpBr(const std::vector<double>& Bp, const std::vector
   Br_ = Br;
 }
 
+// Set an extra constraint term added to the NLL (for example a Gaussian prior).
 void ProfileLikelihood::SetConstrain(std::function<double(double param)> constrain) {
   constrain_ = std::move(constrain);
 }
 
+// ----------------------------------------------------------------------------
+// ProfileLikelihood::NLL
+//   NLL = sum_i [ mu_i - n_i ln(mu_i) ] with mu_i = S_i + B_i(param), where B is
+//   scale*B_template (scale mode) or Bp + theta*Br (theta mode). A bin with
+//   mu <= 0 and data > 0 costs a 1e9 penalty. In theta mode the pydme constraint
+//   on theta is added (plain, Gamma-sign, tau-weighted or multi-bin form, as
+//   configured), then the optional user constraint. Throws
+//   std::invalid_argument if the vector sizes do not match.
+// ----------------------------------------------------------------------------
 double ProfileLikelihood::NLL(const std::vector<double>& S, double param) const {
   const std::size_t n = data_.size();
   if (n != S.size())
@@ -121,6 +137,11 @@ double ProfileLikelihood::NLL(const std::vector<double>& S, double param) const 
 }
 
 // Brent's method (1D minimization) for scale in [scale_lo, scale_hi]
+// ----------------------------------------------------------------------------
+// ProfileLikelihood::MinimizeOverScale
+//   Brent's 1D minimization of the NLL over the nuisance parameter in
+//   [scale_lo, scale_hi] (200 iterations at most). Returns {param_hat, nll_min}.
+// ----------------------------------------------------------------------------
 std::pair<double, double> ProfileLikelihood::MinimizeOverScale(
     const std::vector<double>& S,
     double scale_lo, double scale_hi, double tol) const {
@@ -169,6 +190,10 @@ std::pair<double, double> ProfileLikelihood::MinimizeOverScale(
   return {x, fx};
 }
 
+// ----------------------------------------------------------------------------
+// ProfileLikelihood::EvaluateRatio
+//   q = 2*(NLL_test - NLL_null), each profiled over the nuisance parameter; floored at 0.
+// ----------------------------------------------------------------------------
 double ProfileLikelihood::EvaluateRatio(const std::vector<double>& S_null,
                                        const std::vector<double>& S_test,
                                        double scale_lo, double scale_hi) const {
@@ -182,6 +207,7 @@ double ProfileLikelihood::EvaluateRatio(const std::vector<double>& S_null,
 
 #ifdef CCDARKSENS_USE_MINUIT2
 namespace {
+// Adapter exposing the 1D NLL(theta) at fixed signal to Minuit2.
 class NLLFunctor : public ROOT::Math::IBaseFunctionMultiDim {
 public:
   NLLFunctor(const ProfileLikelihood* pl, const std::vector<double>& S) : pl_(pl), S_(S) {}
@@ -194,6 +220,7 @@ private:
   std::vector<double> S_;
 };
 
+// Adapter exposing NLL(log10 sigma, theta) to Minuit2 (the signal is rebuilt at every call).
 class NLL2DFunctor : public ROOT::Math::IBaseFunctionMultiDim {
 public:
   NLL2DFunctor(const ProfileLikelihood* pl,
@@ -216,6 +243,14 @@ private:
 }  // namespace
 #endif
 
+// ----------------------------------------------------------------------------
+// ProfileLikelihood::MinimizeOverScaleMinuit
+//   Minuit2 (Simplex) version of MinimizeOverScale. Boundary solutions are
+//   re-done with Brent unless accept_boundary is set; with accept_boundary
+//   I also compare against both bounds explicitly and keep the lowest NLL, so
+//   the 1D and 2D fits treat boundaries identically. Falls back to Brent when
+//   Minuit2 is not compiled in or fails.
+// ----------------------------------------------------------------------------
 std::pair<double, double> ProfileLikelihood::MinimizeOverScaleMinuit(
     const std::vector<double>& S,
     double scale_lo, double scale_hi) const {
@@ -279,6 +314,10 @@ std::pair<double, double> ProfileLikelihood::MinimizeOverScaleMinuit(
 #endif
 }
 
+// ----------------------------------------------------------------------------
+// ProfileLikelihood::MinimizeOverSigmaAndTheta (default start)
+//   Joint minimization with the seed at the middle of the box; forwards to the version below.
+// ----------------------------------------------------------------------------
 ProfileLikelihood::Minimize2DResult ProfileLikelihood::MinimizeOverSigmaAndTheta(
     S_from_log10_sigma_t S_from_log10_sigma,
     double log10_sigma_lo, double log10_sigma_hi,
@@ -290,6 +329,13 @@ ProfileLikelihood::Minimize2DResult ProfileLikelihood::MinimizeOverSigmaAndTheta
                                    std::numeric_limits<double>::quiet_NaN());
 }
 
+// ----------------------------------------------------------------------------
+// ProfileLikelihood::MinimizeOverSigmaAndTheta
+//   Minuit2 (Simplex) minimization over (log10 sigma, theta) inside the given
+//   box, starting at the supplied point (NaN = box centre, clamped into the
+//   box). Unless accept_boundary is set, a minimum on the box edge is rejected
+//   as spurious. result.ok is false if Minuit2 is unavailable or fails.
+// ----------------------------------------------------------------------------
 ProfileLikelihood::Minimize2DResult ProfileLikelihood::MinimizeOverSigmaAndTheta(
     S_from_log10_sigma_t S_from_log10_sigma,
     double log10_sigma_lo, double log10_sigma_hi,

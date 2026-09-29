@@ -1,0 +1,37 @@
+{
+  "_comment": "Generate dark photon absorption rates for SrCd2Sb2 using QCDark2-informed ELF (Si measured optical dielectric, scissors-shifted direct gap = 2.1 eV). Intermediate model between Drude (hypmat_unscreened) and true SrCd2Sb2 ELF. Generate .dat file first: python3 utils/build_darkphoton_hypmat_qcdark2_elf.py --darkelf_dir <path>",
+  "darkelf_dir": "/Users/diegovenegasvargas/Documents/Software/DarkELF",
+  "material": "hypmat_qcdark2",
+  "detector": {
+    "band_gap_eV": 2.1,
+    "binsize_eV": 0.1
+  },
+  "rates_dir": "data/darkphoton_rates/HypMat_0p34_qcdark2",
+  "filename_template": "dRdE_{material}_absorption_m{mA_eV}_e{epsilon}.csv",
+  "grid": {
+    "mA_eV": {
+      "logspace": {
+        "start_exp": -1.0,
+        "stop_exp": 2.0,
+        "num": 300
+      }
+    },
+    "epsilon": {
+      "logspace": {
+        "start_exp": -20,
+        "stop_exp": -8,
+        "num": 40
+      }
+    }
+  },
+  "options": {
+    "skip_existing": true,
+    "overwrite": false,
+    "parallel": 1,
+    "progress": true,
+    "format": {
+      "mA": ".6f",
+      "epsilon": ".3e"
+    }
+  }
+}

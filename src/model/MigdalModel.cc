@@ -1,9 +1,12 @@
-// ============================================================================
-//  CCDarkSens — MigdalModel
-//  Resolves and loads Migdal-effect rate CSV paths for a given (target_nucleus, mediator, mχ, σn) and builds a binned dR/dE_e TH1D spectrum.
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  MigdalModel.cc -- I resolve and load the Migdal-effect ionization rate-
+//  table CSV for one (mass, coupling) grid point and turn it into a dR/dE
+//  histogram.
+// ===========================================================================
 
 #include "ccdarksens/model/MigdalModel.hh"
 
@@ -18,8 +21,10 @@ namespace fs = std::filesystem;
 
 namespace ccdarksens {
 
+// Out-of-line destructor so RateTable only has to be a complete type in this file.
 MigdalModel::~MigdalModel() = default;
 
+// Format a mass with exactly six decimals so it matches the rate-file names written by the grid generators.
 static std::string format_mchi_6f(double x) {
   std::ostringstream os;
   os.setf(std::ios::fmtflags(0), std::ios::floatfield);
@@ -27,6 +32,11 @@ static std::string format_mchi_6f(double x) {
   return os.str();
 }
 
+// ----------------------------------------------------------------------------
+// MigdalModel::ResolvePath_
+//   I substitute {target_nucleus}, {mediator}, {mchi_MeV} and {sigma_n_cm2} into the filename template and prepend rates_dir.
+//   Returns the full path of the CSV for this grid point.
+// ----------------------------------------------------------------------------
 std::string MigdalModel::ResolvePath_() const {
   // Simple token replacement for {target_nucleus},{mediator},{mchi_MeV},{sigma_n_cm2}
   std::string fname = cfg_.filename_template;
@@ -48,6 +58,11 @@ std::string MigdalModel::ResolvePath_() const {
   return p.string();
 }
 
+// ----------------------------------------------------------------------------
+// MigdalModel::Configure
+//   I store the config, resolve the CSV path and load the table.
+//   Returns false if the file could not be read.
+// ----------------------------------------------------------------------------
 bool MigdalModel::Configure(const DMNucleonConfig& c) {
   cfg_ = c;
   table_ = std::make_unique<RateTable>();
@@ -58,6 +73,12 @@ bool MigdalModel::Configure(const DMNucleonConfig& c) {
   return true;
 }
 
+// ----------------------------------------------------------------------------
+// MigdalModel::MakeSpectrum_E
+//   I return dR/dE_e [events/(kg*year*eV)] as a histogram of nbins between
+//   Emin_eV and Emax_eV, named dRdE__mchi_<m>__sigman_<s> (sanitized so it is a legal ROOT
+//   name). Returns nullptr if Configure() has not succeeded.
+// ----------------------------------------------------------------------------
 std::unique_ptr<TH1D> MigdalModel::MakeSpectrum_E() const {
   if (!table_) return nullptr;
   auto sanitize = [](std::string s) {

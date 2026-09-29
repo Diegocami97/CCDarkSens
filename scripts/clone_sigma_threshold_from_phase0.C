@@ -1,3 +1,13 @@
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
+//
+//  clone_sigma_threshold_from_phase0.C -- One-shot helper: I copy the
+//  Phase-0 upper-limit TGraph into sigma_threshold.root so that the
+//  threshold_toys mode can read it.
+// ===========================================================================
+
 // One-shot: copy Phase-0 UL TGraph into sigma_threshold.root for threshold_toys.
 void clone_sigma_threshold_from_phase0(
     const char* phase0_root =

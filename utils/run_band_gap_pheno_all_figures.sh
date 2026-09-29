@@ -1,4 +1,14 @@
 #!/usr/bin/env bash
+# ============================================================================
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  run_band_gap_pheno_all_figures.sh -- I regenerate all band-gap
+#  phenomenology validation figures under outplots/band_gap_pheno/ (dR/dE,
+#  P(n_e|E), S(n_e), scan diagnostics, limits and the 2D surface).
+# ============================================================================
+
 # Regenerate all band-gap pheno validation figures under outplots/band_gap_pheno/
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"

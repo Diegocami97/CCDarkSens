@@ -1,3 +1,17 @@
+# ============================================================================
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  File: kernel.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  kernel.py -- DM–electron differential rates for crystal scattering
+#  (QCDark-style kernel).
+# ============================================================================
+
 """
 DM–electron differential rates for crystal scattering (QCDark-style kernel).
 
@@ -7,7 +21,7 @@ does not depend on ``collab_frameworks`` or external checkout paths at import ti
 
 Halo **parameters** (``v0``, ``vEarth``, ``vEscape`` in km/s; ``rhoX`` in eV/cm³)
 are passed through ``astro_model`` from ``qcdark.entry`` — use the same numerical
-values as in your QEDark JSON if you want matched astrophysical inputs; the SHM
+values as in the QEDark JSON to match the astrophysical inputs; the SHM
 η factor here remains the reference QCDark ``eta_MB`` formulation (distinct from
 ``qedark.entry``'s ``eta_shm_numeric``).
 """
@@ -29,6 +43,10 @@ _CM2SEC = 1.0 / _LIGHT_SPEED_KM_S * 1e-5
 _SEC2YR = 1.0 / (60.0 * 60.0 * 24.0 * 365.25)
 
 
+# ----------------------------------------------------------------------------
+# _reduced_mass_mXe
+#   Reduced mass of the DM-electron system, m_X*m_e/(m_X + m_e), in eV.
+# ----------------------------------------------------------------------------
 def _reduced_mass_mXe(m_x_eV: float) -> float:
     me = float(QEC.me_eV)
     return (m_x_eV * me) / (m_x_eV + me)
@@ -102,6 +120,10 @@ def tf_screening(q_arr: np.ndarray, e_ev: float, screening: dict) -> np.ndarray:
     return 1.0 / (1.0 + 1.0 / val)
 
 
+# ----------------------------------------------------------------------------
+# _lindhard_f
+#   Lindhard function f(u, z) that enters the dielectric response of the electron gas.
+# ----------------------------------------------------------------------------
 def _lindhard_f(u: np.ndarray, z: np.ndarray) -> np.ndarray:
     return 0.5 + (1.0 / (8.0 * z)) * (
         (1.0 - (z - u) ** 2) * np.log((z - u + 1.0) / (z - u - 1.0))
@@ -128,6 +150,10 @@ def lindhard_screening(q_arr: np.ndarray, e_ev: float, _screening: dict) -> np.n
     return 1.0 / epsilon
 
 
+# ----------------------------------------------------------------------------
+# screening_factor
+#   Screening factor for each q: 1 if screening is off, otherwise the Lindhard or the Thomas-Fermi form according to screening['method'] (default ThomasFermi).
+# ----------------------------------------------------------------------------
 def screening_factor(q_arr: np.ndarray, e_ev: float, screening: dict) -> np.ndarray:
     if not screening.get("DoScreen", False):
         return np.ones_like(np.asarray(q_arr, dtype=float), dtype=float)
@@ -137,6 +163,11 @@ def screening_factor(q_arr: np.ndarray, e_ev: float, screening: dict) -> np.ndar
     return tf_screening(q_arr, e_ev, screening)
 
 
+# ----------------------------------------------------------------------------
+# _momentum_integrand
+#   Integrand of the momentum-transfer integral at one energy bin: E/q^2 * eta * |F_DM|^2 * |F_crystal|^2 *
+#   |screening|^2 for every q bin, with q = dq*(i + 1/2) and E = dE*(j + 1/2).
+# ----------------------------------------------------------------------------
 def _momentum_integrand(
     dq: float,
     d_e: float,
@@ -159,6 +190,11 @@ def _momentum_integrand(
     )
 
 
+# ----------------------------------------------------------------------------
+# _d_rate_fixed_e
+#   Rate at one energy bin: the prefactor (rho_X/m_X) * (5.609588e35/m_cell) * sigma_e * alpha * (m_e/mu)^2 times the
+#   Simpson integral over q of _momentum_integrand.
+# ----------------------------------------------------------------------------
 def _d_rate_fixed_e(
     dq: float,
     d_e: float,

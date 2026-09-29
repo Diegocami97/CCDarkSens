@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
 # ============================================================================
-#  CCDarkSens — make_qedark_pattern_fewmass_configs
-#  Generate few-mass pattern-scan configs for QEdark reproduction studies
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
 #
-#  Author: Diego Venegas-Vargas
+#  File: make_qedark_pattern_fewmass_configs.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  make_qedark_pattern_fewmass_configs.py -- Generate few-mass pattern-scan
+#  configs for QEdark reproduction studies
 # ============================================================================
 """Generate few-mass pattern-scan configs for qedark reproduction matrix."""
 from __future__ import annotations
@@ -60,6 +67,10 @@ VARIANTS = [
 ]
 
 
+# ----------------------------------------------------------------------------
+# make_config
+#   Scan config of one variant: the base config with the label, output directory, constraint options, exposure (mass and livetime), mediator and rate files replaced.
+# ----------------------------------------------------------------------------
 def make_config(base: dict, variant: dict, mediator: str, rates_dir: str, filename_template: str) -> dict:
     j = copy.deepcopy(base)
     j["_comment"] = variant["note"]
@@ -78,6 +89,10 @@ def make_config(base: dict, variant: dict, mediator: str, rates_dir: str, filena
     return j
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Write one few-mass QEDark reproduction config for every variant and a manifest listing them.
+# ----------------------------------------------------------------------------
 def main():
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     base = json.loads(BASE_HEAVY.read_text())

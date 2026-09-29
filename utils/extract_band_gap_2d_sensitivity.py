@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
 # ============================================================================
-#  CCDarkSens — extract_band_gap_2d_sensitivity
-#  Extract σ_UL on the 2D (E_gap, ε_h) grid for heatmap generation
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
 #
-#  Author: Diego Venegas-Vargas
+#  File: extract_band_gap_2d_sensitivity.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  extract_band_gap_2d_sensitivity.py -- Extract σ_UL on the 2D (E_gap, ε_h)
+#  grid for heatmap generation
 # ============================================================================
 """
 Extract sigma_UL at a chosen m_chi for the 2D (gap, eh) grid from scan ROOT outputs.
@@ -35,22 +42,38 @@ GAPS = [0.1, 0.3, 0.5, 0.7, 0.9, 1.2]
 Q_THRESHOLD = 2.71
 
 
+# ----------------------------------------------------------------------------
+# mchi_tag
+#   Mass formatted for file names: '<int>MeV' for integers, otherwise with '.' replaced by 'p'.
+# ----------------------------------------------------------------------------
 def mchi_tag(mev: float) -> str:
     if abs(mev - round(mev)) < 1e-9:
         return f"{int(round(mev))}MeV"
     return f"{mev:g}MeV".replace(".", "p")
 
 
+# ----------------------------------------------------------------------------
+# sensitivity_paths
+#   The .npy and .csv output paths of the 2D sensitivity map for a mediator and mass.
+# ----------------------------------------------------------------------------
 def sensitivity_paths(mediator: str, mchi_mev: float) -> tuple[Path, Path]:
     tag = mchi_tag(mchi_mev)
     base = OUTDIR / f"sensitivity_2d_{mediator}_mchi{tag}"
     return base.with_suffix(".npy"), base.with_suffix(".csv")
 
 
+# ----------------------------------------------------------------------------
+# is_valid
+#   A (gap, eh) cell is physical only if eps_h >= E_gap.
+# ----------------------------------------------------------------------------
 def is_valid(gap: float, eh: float) -> bool:
     return eh >= gap
 
 
+# ----------------------------------------------------------------------------
+# ul_from_qhist
+#   Upper limit at the requested mass read from the q(m_chi, sigma) histogram of a scan file; NaN if the histogram is missing.
+# ----------------------------------------------------------------------------
 def ul_from_qhist(root_path: Path, target_mchi_mev: float) -> float:
     with uproot.open(root_path) as f:
         h = None
@@ -92,6 +115,10 @@ def ul_from_qhist(root_path: Path, target_mchi_mev: float) -> float:
         return np.nan
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Fill the (eps_h, E_gap) grid with sigma_UL for one mediator and mass (NaN for unphysical cells) and save it as .npy and .csv.
+# ----------------------------------------------------------------------------
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--mediator", choices=["heavy", "light"], required=True)

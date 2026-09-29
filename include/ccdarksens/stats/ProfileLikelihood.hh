@@ -1,9 +1,11 @@
-// ============================================================================
-//  CCDarkSens — ProfileLikelihood
-//  Header declaring the pattern-space profile likelihood API (data/B templates, constraints, and 1D/2D minimizers).
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  ProfileLikelihood.hh -- Header declaring the pattern-space profile
+//  likelihood API (data/B templates, constraints, and 1D/2D minimizers).
+// ===========================================================================
 
 #pragma once
 
@@ -21,6 +23,13 @@ namespace ccdarksens::stats {
  * Use MinimizeOverScale (or over theta in Bp_Br mode) to get (param_hat, nll) for a given S.
  * Then q = 2*(nll_test - nll_null) with null = (S=0), test = (S=S_pat).
  */
+// ----------------------------------------------------------------------------
+// ProfileLikelihood
+//   My profile-likelihood machinery (the pydme equivalent) for one set of bins.
+//   Give it the data and either a background template (scale mode) or Bp/Br
+//   (theta mode); then minimize the NLL over the nuisance parameter for a given
+//   signal, and form q = 2*(NLL_test - NLL_null).
+// ----------------------------------------------------------------------------
 class ProfileLikelihood {
 public:
   ProfileLikelihood() = default;
@@ -71,6 +80,7 @@ public:
   /// S_from_log10_sigma(log10_sigma) returns signal vector for that cross-section (e.g. from interpolation).
   /// Returns (log10_sigma_hat, theta_hat, nll_min). ok is false if Minuit2 unavailable or minimization failed.
   using S_from_log10_sigma_t = std::function<std::vector<double>(double log10_sigma)>;
+  // Result of the joint (log10 sigma, theta) minimization.
   struct Minimize2DResult {
     double log10_sigma_hat = 0.0;
     double theta_hat = 0.0;
@@ -108,16 +118,16 @@ public:
   bool UseBpBr() const { return !Bp_.empty() && !Br_.empty(); }
 
 private:
-  std::vector<double> data_;
-  std::vector<double> B_template_;
-  std::vector<double> Bp_;
-  std::vector<double> Br_;
-  double constrain_prior_strength_ = 0.0;
+  std::vector<double> data_;  // observed (or Asimov) counts per bin
+  std::vector<double> B_template_;  // scale-mode background template
+  std::vector<double> Bp_;  // theta-mode fixed background part
+  std::vector<double> Br_;  // theta-mode scalable background part
+  double constrain_prior_strength_ = 0.0;  // pydme prior strength N (0 = no constraint)
   bool constrain_gamma_sign_ = false;  // false = pydme sign; true = Gamma prior sign (+tBr - N*ln(tBr))
   bool constrain_use_tau_weighted_ = false;  // true = tau-weighted form so prior mode at theta=1
   int constrain_n_bins_ = 1;  // pydme len(gamma); 1 = single-bin constraint form
   bool accept_boundary_ = false;  // if true, both 1D and 2D fits may return boundary solutions (pydme-style)
-  std::function<double(double)> constrain_{};
+  std::function<double(double)> constrain_{};  // optional extra constraint on the nuisance parameter
 };
 
 }  // namespace ccdarksens::stats

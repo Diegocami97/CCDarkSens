@@ -1,4 +1,19 @@
 #!/usr/bin/env python3
+# ============================================================================
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  File: build_darkphoton_hypmat_qcdark2_elf.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  build_darkphoton_hypmat_qcdark2_elf.py -- Build a DarkELF optical-limit
+#  data file for SrCd₂Sb₂ using the QCDark2-derived direct-gap onset combined
+#  with Si's measured optical dielectric function.
+# ============================================================================
+
 """
 Build a DarkELF optical-limit data file for SrCd₂Sb₂ using the QCDark2-derived
 direct-gap onset combined with Si's measured optical dielectric function.
@@ -74,6 +89,10 @@ DIRECT_GAP_EV = 2.1   # eV — scissors-shifted Si direct gap for E_gap_indirect
 RHO_T = 5.76  # g/cm³
 
 
+# ----------------------------------------------------------------------------
+# _resolve_darkelf_dir
+#   Directory of the DarkELF source: --darkelf_dir if given, else the environment variable; raises FileNotFoundError if neither is set.
+# ----------------------------------------------------------------------------
 def _resolve_darkelf_dir(explicit: str | None) -> str:
     if explicit:
         return os.path.abspath(os.path.expanduser(explicit))
@@ -110,6 +129,10 @@ def _read_si_optical_dat(darkelf_dir: str) -> tuple[np.ndarray, np.ndarray, np.n
     return np.array(omega), np.array(eps1), np.array(eps2)
 
 
+# ----------------------------------------------------------------------------
+# build
+#   Write the DarkELF data files of the QCDark2-based HypMat proxy into <darkelf_dir>/data/HypMat_0p34, checking the scissors-shifted direct-gap onset against the QCDark2 HDF5 when it is available.
+# ----------------------------------------------------------------------------
 def build(darkelf_dir: str, qcdark2_h5: str | None = None):
     darkelf_path = Path(darkelf_dir)
     out_dir = darkelf_path / "data" / "HypMat_0p34"
@@ -176,6 +199,10 @@ def build(darkelf_dir: str, qcdark2_h5: str | None = None):
     print(f"  This does NOT overwrite hypmat_unscreened or hypmat_screened (Drude).")
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Command line: --darkelf_dir and the optional QCDark2 HDF5 used to verify the onset; then build().
+# ----------------------------------------------------------------------------
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--darkelf_dir", default=None)

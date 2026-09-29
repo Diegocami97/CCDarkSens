@@ -1,9 +1,11 @@
-// ============================================================================
-//  CCDarkSens — Diffusion
-//  Header for parametric lateral-diffusion smearing of n_e histograms.
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  Diffusion.hh -- Header for parametric lateral-diffusion smearing of n_e
+//  histograms.
+// ===========================================================================
 
 #pragma once
 #include <cstddef>
@@ -20,8 +22,16 @@ namespace ccdarksens {
 //  - thickness_um: CCD thickness (for z-averaging sigma_xy)
 //  - kappa_e_per_um: maps lateral sigma_xy [um] -> sigma_e [electrons]
 //  - sigma_readout_e: extra Gaussian readout noise in electrons (quadrature)
+// ----------------------------------------------------------------------------
+// Diffusion
+//   I smear an n_e histogram with the lateral diffusion of the charge cloud:
+//   the z-averaged width sigma_xy is converted to electrons with kappa and
+//   added in quadrature to the readout noise, and each bin is redistributed
+//   with a Gaussian of that width.
+// ----------------------------------------------------------------------------
 class Diffusion {
 public:
+  // Constructor: diffusion constants, CCD thickness, the um -> electron conversion kappa and extra readout noise.
   Diffusion(double A_um2       = 803.25,
             double b_umInv     = 6.5e-4,
             double alpha       = 1.0,
@@ -43,6 +53,7 @@ public:
   void Apply(TH1D& h_ne, double Ee_eV) const;
 
   // Accessors
+  // Setters and getters of the individual parameters.
   void set_kappa_e_per_um(double k)     { kappa_e_per_um_ = k; }
   void set_sigma_readout_e(double s)    { sigma_readout_e_ = s; }
   void set_thickness_um(double t)       { thickness_um_ = t; }
@@ -59,13 +70,13 @@ private:
   static double normal_cdf_(double x); // Phi(x)
   static double interval_prob_(double mu, double sigma, double a, double b);
 
-  double A_um2_;
-  double b_umInv_;
-  double alpha_;
-  double beta_per_keV_;
-  double thickness_um_;
-  double kappa_e_per_um_;
-  double sigma_readout_e_;
+  double A_um2_;  // diffusion constant A [um^2]
+  double b_umInv_;  // diffusion constant b [1/um]
+  double alpha_;  // energy-dependence offset
+  double beta_per_keV_;  // energy-dependence slope [1/keV]
+  double thickness_um_;  // CCD thickness [um]
+  double kappa_e_per_um_;  // lateral width [um] -> electrons
+  double sigma_readout_e_;  // extra Gaussian readout noise [e-]
 };
 
 } // namespace ccdarksens

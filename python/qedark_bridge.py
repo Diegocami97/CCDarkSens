@@ -27,7 +27,7 @@ Halo dict must contain v0_cm_s, vE_cm_s, vesc_cm_s (all in cm/s).
 import numpy as np
 
 # Use the canonical class used by the collaboration.
-# If your code exposes QEDark4DM instead, just swap the import.
+# If the code exposes QEDark4DM instead, just swap the import.
 from QEDark4DAMIC import QEDark4DAMIC
 
 _MEDIATOR_TO_nFDM = {

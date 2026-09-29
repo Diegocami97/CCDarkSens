@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
 # ============================================================================
-#  CCDarkSens — verify_p100K_scaled
-#  Sanity checks for scaled p100K tables vs original reference (Si band-gap QA)
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
 #
-#  Author: Diego Venegas-Vargas
+#  File: verify_p100K_scaled.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  verify_p100K_scaled.py -- Sanity checks for scaled p100K tables vs
+#  original reference (Si band-gap QA)
 # ============================================================================
 """Sanity checks for scaled p100K tables vs original reference."""
 
@@ -29,6 +36,10 @@ REF = Path("data/p100K_table.csv")
 MANIFEST = Path("configs/band_gap_pheno_scenarios.json")
 
 
+# ----------------------------------------------------------------------------
+# row_at
+#   P(n | E = e0) for every n by linear interpolation (zero outside the grid).
+# ----------------------------------------------------------------------------
 def row_at(E: np.ndarray, P: np.ndarray, e0: float) -> np.ndarray:
     out = np.zeros(P.shape[0])
     for n in range(P.shape[0]):
@@ -36,6 +47,10 @@ def row_at(E: np.ndarray, P: np.ndarray, e0: float) -> np.ndarray:
     return out
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Verify the p100K tables: an identity rebuild of the reference must reproduce it, and every scaled table of the manifest must have the right grid, be zero below its gap and have consistent probabilities above it; prints OK or FAIL for each check.
+# ----------------------------------------------------------------------------
 def main() -> None:
     E_raw, P_raw = load_p100k_csv(REF)
     print("=" * 70)

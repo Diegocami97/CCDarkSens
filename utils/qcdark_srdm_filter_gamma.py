@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
 # ============================================================================
-#  CCDarkSens — qcdark_srdm_filter_gamma
-#  Filters QCDark SRDM pattern-signal CSV rows to a target γ value and can emit matching sigma-grid JSON snippets.
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
 #
-#  Author: Diego Venegas-Vargas
+#  File: qcdark_srdm_filter_gamma.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  qcdark_srdm_filter_gamma.py -- Filters QCDark SRDM pattern-signal CSV rows
+#  to a target γ value and can emit matching sigma-grid JSON snippets.
 # ============================================================================
 
 """
@@ -30,6 +37,10 @@ import glob
 from typing import List, Optional
 
 
+# ----------------------------------------------------------------------------
+# _parse_mX_from_filename
+#   DM mass parsed from a file name containing "mX<value>", or None.
+# ----------------------------------------------------------------------------
 def _parse_mX_from_filename(path: str) -> Optional[float]:
     # Matches e.g. .../pattern_signal_summed_mX0.010000_full_QCD.csv
     m = re.search(r"mX([0-9]+(?:\.[0-9]+)?)", os.path.basename(path))
@@ -41,6 +52,10 @@ def _parse_mX_from_filename(path: str) -> Optional[float]:
         return None
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Filter the SRDM pattern-signal CSVs to a target gamma value (within --gamma-tol), for a single file (--in-csv/--out-csv) or a batch (--in-glob/--out-dir).
+# ----------------------------------------------------------------------------
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--in-csv", default="", help="Input CSV path (single-file mode)")

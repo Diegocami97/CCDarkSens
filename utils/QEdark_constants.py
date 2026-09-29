@@ -1,8 +1,10 @@
 # ============================================================================
-#  CCDarkSens — QEdark_constants
-#  Fundamental physical constants and unit conversions shared by the QEDark Python rate code.
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
 #
-#  Author: Diego Venegas-Vargas
+#  QEdark_constants.py -- Fundamental physical constants and unit conversions
+#  shared by the QEDark Python rate code.
 # ============================================================================
 
 ## define constants

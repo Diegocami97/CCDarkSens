@@ -1,9 +1,17 @@
 #!/usr/bin/env python3
 # ============================================================================
-#  CCDarkSens — qcdark_generate_grid
-#  CLI wrapper that sets backend=qcdark and invokes qedark_generate_grid.py with resolved crystal form-factor HDF5 paths.
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
 #
-#  Author: Diego Venegas-Vargas
+#  File: qcdark_generate_grid.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  qcdark_generate_grid.py -- CLI wrapper that sets backend=qcdark and
+#  invokes qedark_generate_grid.py with resolved crystal form-factor HDF5
+#  paths.
 # ============================================================================
 
 """
@@ -34,6 +42,10 @@ _REPO_ROOT = Path(__file__).resolve().parents[1]
 _UTILS_DIR = Path(__file__).resolve().parent
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Command line: python3 utils/qcdark_generate_grid.py <config.json>. It sets the backend to qcdark, resolves the form-factor HDF5 (config key or environment variable) to an absolute path and calls the shared grid generator.
+# ----------------------------------------------------------------------------
 def main() -> None:
     if len(sys.argv) != 2:
         print("usage: python3 utils/qcdark_generate_grid.py <config.json>")

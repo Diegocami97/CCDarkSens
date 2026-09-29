@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
 # ============================================================================
-#  CCDarkSens — plot_ne_vs_Er_v2
-#  Figure 1: mean charge yield <n_e>(E_r) under two gap/eh conventions
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
 #
-#  Author: Diego Venegas-Vargas
+#  File: plot_ne_vs_Er_v2.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  plot_ne_vs_Er_v2.py -- Figure 1: mean charge yield <n_e>(E_r) under two
+#  gap/eh conventions
 # ============================================================================
 """
 Mean number of electron-hole pairs <n_e> vs recoil energy E_r for the band-gap
@@ -49,6 +56,10 @@ N_E_THRESHOLD = 1.0
 ER_DAMIC_THRESHOLD_EV = 4.0
 
 
+# ----------------------------------------------------------------------------
+# build_scenarios
+#   Curves to draw: the silicon reference (solid) and one Klein-formula case per gap (dashed), as (label, E_gap, eps_h, colour, line style).
+# ----------------------------------------------------------------------------
 def build_scenarios(klein_gaps: list[float]) -> list[tuple[str, float, float, str, str]]:
     scenarios: list[tuple[str, float, float, str, str]] = [
         (r"Si ref  $(1.2,\ 3.8)$", SI_EGAP_EV, SI_EH_EV, COLOR_SI_REF, "-"),
@@ -59,6 +70,10 @@ def build_scenarios(klein_gaps: list[float]) -> list[tuple[str, float, float, st
     return scenarios
 
 
+# ----------------------------------------------------------------------------
+# y_max_for_scenarios
+#   Largest n_e reached at x_max by any scenario with either convention, used to set the y-axis range.
+# ----------------------------------------------------------------------------
 def y_max_for_scenarios(
     scenarios: list[tuple[str, float, float, str, str]], x_max: float
 ) -> float:
@@ -75,6 +90,10 @@ def y_max_for_scenarios(
     return float(np.ceil(peak * 1.15 + 0.5))
 
 
+# ----------------------------------------------------------------------------
+# mean_ne
+#   Mean n_e versus recoil energy: convention 1 is (E - E_gap)/eps_h, convention 2 is E/eps_h; zero below the gap. Raises ValueError for any other convention.
+# ----------------------------------------------------------------------------
 def mean_ne(E_r: np.ndarray, E_gap: float, eps_h: float, convention: int) -> np.ndarray:
     if convention == 1:
         ne = (E_r - E_gap) / eps_h
@@ -86,6 +105,10 @@ def mean_ne(E_r: np.ndarray, E_gap: float, eps_h: float, convention: int) -> np.
     return np.clip(ne, 0.0, None)
 
 
+# ----------------------------------------------------------------------------
+# draw_panel
+#   Draw one panel (one convention): the n_e(E) curves of all scenarios over shaded single-carrier and few-carrier bands.
+# ----------------------------------------------------------------------------
 def draw_panel(
     ax,
     convention: int,
@@ -158,6 +181,10 @@ def draw_panel(
     ax.grid(True, which="both", ls=":", alpha=0.3)
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Command line: make the two-convention n_e versus E_r figure for the chosen Klein gaps and save it to --out.
+# ----------------------------------------------------------------------------
 def main() -> int:
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter

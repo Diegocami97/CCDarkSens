@@ -1,0 +1,36 @@
+{
+  "_comment": "Generate QCDark2 DM-e rates for hypothetical material: E_gap=0.34 eV, E_eh=1.6 eV, heavy mediator. Uses Si DFT wavefunctions with scissors correction to gap=0.34 eV. Output: data/qcdark2_rates/hypmat/heavy/Si_fast_gap0p34/",
+  "backend": "qcdark2",
+  "model_type": "dm_electron",
+  "material": "Si",
+  "mediator": "heavy",
+  "halo_type": "SHM",
+  "halo": { "v0_kms": 238.0, "vE_kms": 263.0, "vesc_kms": 544.0 },
+  "detector": {
+    "band_gap_eV": 0.34,
+    "eh_pair_eV": 1.7778,
+    "binsize_eV": 0.1
+  },
+  "epsilon_h5": "data/qcdark2_epsilon/Si/Si_fast_gap0p34.h5",
+  "rates_dir": "data/qcdark2_rates/hypmat/heavy/Si_fast_gap0p34",
+  "filename_template": "dRdE_{material}_{mediator}_m{mchi_MeV}_s{sigma_e_cm2}.csv",
+  "grid": {
+    "mchi_MeV": {
+      "logspace": { "start": 0.2, "stop": 1000.0, "num": 80, "endpoint": true }
+    },
+    "sigma_e_cm2": {
+      "logspace": { "start_exp": -46, "stop_exp": -26, "num": 30, "endpoint": true }
+    },
+    "format": { "mchi": ".6f", "sigma": ".1e" }
+  },
+  "options": {
+    "skip_existing": true,
+    "overwrite": false,
+    "compress": false,
+    "parallel": 1,
+    "progress": true,
+    "use_sigma_scaling": true,
+    "sigma_ref": 1e-37,
+    "format": { "mchi": ".6f", "sigma": ".1e" }
+  }
+}

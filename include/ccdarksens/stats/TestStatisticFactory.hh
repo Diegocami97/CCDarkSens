@@ -1,9 +1,11 @@
-// ============================================================================
-//  CCDarkSens — TestStatisticFactory
-//  Header declaring MakeTestStatistic for constructing likelihood-ratio implementations from config.
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  TestStatisticFactory.hh -- Header declaring MakeTestStatistic for
+//  constructing likelihood-ratio implementations from config.
+// ===========================================================================
 
 #pragma once
 

@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
 # ============================================================================
-#  CCDarkSens — compare_qedark_repro_matrix
-#  Compare QEdark reproduction matrix few-mass scans vs DAMIC-M reference
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
 #
-#  Author: Diego Venegas-Vargas
+#  File: compare_qedark_repro_matrix.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  compare_qedark_repro_matrix.py -- Compare QEdark reproduction matrix few-
+#  mass scans vs DAMIC-M reference
 # ============================================================================
 """Compare qedark repro matrix few-mass scans vs DAMIC-M reference curves."""
 from __future__ import annotations
@@ -32,10 +39,18 @@ REFS = {
 }
 
 
+# ----------------------------------------------------------------------------
+# load_ref
+#   Read a reference limit curve (two comma-separated columns) as an array.
+# ----------------------------------------------------------------------------
 def load_ref(path: Path):
     return np.genfromtxt(path, delimiter=",")
 
 
+# ----------------------------------------------------------------------------
+# load_ul
+#   Upper-limit histogram of a scan ROOT file as (mass centres, limits), keeping the physical entries (positive and below 0.9e-26).
+# ----------------------------------------------------------------------------
 def load_ul(root_path: Path):
     import uproot
 
@@ -48,6 +63,10 @@ def load_ul(root_path: Path):
     return xc[m], v[m]
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Plot the heavy- and light-mediator QEDark reproduction limits together with the reference curves, print the comparison and save the figure and table to --outdir.
+# ----------------------------------------------------------------------------
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--outdir", default=str(ROOT / "outplots/qedark_repro"))

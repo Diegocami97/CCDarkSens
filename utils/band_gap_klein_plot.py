@@ -1,3 +1,17 @@
+# ============================================================================
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  File: band_gap_klein_plot.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  band_gap_klein_plot.py -- Shared Klein-tier helpers for band-gap
+#  ne_imaging figure scripts.
+# ============================================================================
+
 """Shared Klein-tier helpers for band-gap ne_imaging figure scripts."""
 from __future__ import annotations
 
@@ -16,10 +30,18 @@ KLEIN_GAP_PALETTE = [
 ]
 
 
+# ----------------------------------------------------------------------------
+# klein_eh
+#   Klein-formula electron-hole pair energy for a band gap: eps_h = 2.8*E_gap + 0.5 eV, rounded to 2 decimals.
+# ----------------------------------------------------------------------------
 def klein_eh(gap_ev: float) -> float:
     return round(2.8 * gap_ev + 0.5, 2)
 
 
+# ----------------------------------------------------------------------------
+# parse_float_list
+#   Parse a comma-separated string into floats (blank items skipped).
+# ----------------------------------------------------------------------------
 def parse_float_list(csv: str) -> list[float]:
     return [float(tok.strip()) for tok in csv.split(",") if tok.strip()]
 
@@ -35,14 +57,26 @@ def filter_klein_gaps(gaps: list[float]) -> list[float]:
     return out
 
 
+# ----------------------------------------------------------------------------
+# gap_color
+#   Colour for the index-th band gap, cycling through the palette.
+# ----------------------------------------------------------------------------
 def gap_color(index: int) -> str:
     return KLEIN_GAP_PALETTE[index % len(KLEIN_GAP_PALETTE)]
 
 
+# ----------------------------------------------------------------------------
+# eh_label
+#   epsilon_h formatted for a label: two decimals with trailing zeros and a trailing dot removed.
+# ----------------------------------------------------------------------------
 def eh_label(eh: float) -> str:
     return f"{eh:.2f}".rstrip("0").rstrip(".")
 
 
+# ----------------------------------------------------------------------------
+# klein_mathtext_label
+#   Matplotlib math-text label "(E_gap, eps_h) = (gap, eh)"; eh defaults to the Klein value for that gap.
+# ----------------------------------------------------------------------------
 def klein_mathtext_label(gap_ev: float, eh: float | None = None) -> str:
     eh_v = klein_eh(gap_ev) if eh is None else eh
     return rf"$(E_{{\mathrm{{gap}}}},\ \varepsilon_h)=({gap_ev:g},\ {eh_label(eh_v)})$"

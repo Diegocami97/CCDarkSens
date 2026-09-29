@@ -1,9 +1,11 @@
-// ============================================================================
-//  CCDarkSens — PatternImageGenerator
-//  Header for 2D binned image generation config and ChargeTransport-backed image simulation.
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  PatternImageGenerator.hh -- Header for 2D binned image generation config
+//  and ChargeTransport-backed image simulation.
+// ===========================================================================
 
 #pragma once
 
@@ -19,20 +21,24 @@ class ChargeTransport;
 
 /// Config for 2D binned image (notebook-style generate_image_E).
 /// Image size: either from detector (raw_rows, raw_cols) or from binned dimensions (nrows_binned, ncols).
+// ----------------------------------------------------------------------------
+// PatternImageConfig
+//   Geometry, noise and randomization settings of the 2D image generator (see the comment above).
+// ----------------------------------------------------------------------------
 struct PatternImageConfig {
   /// When both > 0: raw image size from detector (rows, cols). Binned size = raw/row_binning, raw/col_binning.
-  int raw_rows = 0;
-  int raw_cols = 0;
+  int raw_rows = 0;  // raw image height from the detector [pixels] (0 = not set)
+  int raw_cols = 0;  // raw image width from the detector [pixels] (0 = not set)
   /// When raw_rows/raw_cols not set: binned dimensions (raw then = nrows_binned*row_binning, ncols*col_binning).
   int nrows_binned  = 3;     ///< rows after row binning (ignored if raw_rows > 0)
   int ncols         = 50;    ///< columns after column binning (ignored if raw_cols > 0)
   int row_binning   = 100;   ///< raw rows per binned row
   int col_binning   = 1;     ///< raw columns per binned column (1 = no col bin)
-  double pixel_size_um   = 15.0;
-  double sigma_readout_e = 0.21;
+  double pixel_size_um   = 15.0;  // pixel pitch [um]
+  double sigma_readout_e = 0.21;  // readout noise per binned pixel [e-]
   double lambda_dc      = 0.0;   ///< dark current (0 = off)
-  uint64_t rng_seed     = 987654321ULL;
-  bool include_dark_current = false;
+  uint64_t rng_seed     = 987654321ULL;  // RNG seed
+  bool include_dark_current = false;  // add Poisson dark current (needs lambda_dc > 0)
 
   /// If true, the cloud center (cx, cy) is sampled from a uniform distribution
   /// within the image interior on each GenerateImage() call, matching the Python
@@ -50,6 +56,7 @@ struct PatternImageConfig {
  */
 class PatternImageGenerator {
 public:
+  // Constructor: settings and the charge-transport model.
   PatternImageGenerator(const PatternImageConfig& cfg,
                         std::shared_ptr<ChargeTransport> ct);
 
@@ -70,10 +77,10 @@ public:
   int ColBinning() const { return cfg_.col_binning; }
 
 private:
-  PatternImageConfig cfg_;
-  std::shared_ptr<ChargeTransport> ct_;
-  std::mt19937_64 rng_;
-  std::normal_distribution<double> gaus_{0.0, 1.0};
+  PatternImageConfig cfg_;  // settings
+  std::shared_ptr<ChargeTransport> ct_;  // depth / diffusion sampler
+  std::mt19937_64 rng_;  // random-number generator
+  std::normal_distribution<double> gaus_{0.0, 1.0};  // unit Gaussian for the readout noise
 };
 
 } // namespace ccdarksens

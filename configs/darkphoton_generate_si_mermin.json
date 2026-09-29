@@ -1,0 +1,26 @@
+{
+  "_comment": "Generate Si dark photon absorption rates using the mermin k-grid ELF (featureless Drude model, extrapolated below k=37 eV/c). Use for comparison against si_optical. Run: python3 utils/darkphoton_generate_grid.py configs/darkphoton_generate_si_mermin.json",
+  "material": "Si",
+  "darkelf_dir": "/Users/diegovenegasvargas/Documents/Software/DarkELF",
+
+  "detector": {
+    "band_gap_eV": null,
+    "binsize_eV": 0.1
+  },
+
+  "rates_dir": "data/darkphoton_rates/Si_mermin",
+  "filename_template": "dRdE_{material}_absorption_m{mA_eV}_e{epsilon}.csv",
+
+  "grid": {
+    "mA_eV": { "logspace": {"start_exp": -1.0, "stop_exp": 2.0, "num": 300} },
+    "epsilon": { "logspace": {"start_exp": -20, "stop_exp": -10, "num": 40} }
+  },
+
+  "options": {
+    "skip_existing": true,
+    "overwrite": false,
+    "parallel": 1,
+    "progress": true,
+    "format": { "mA": ".6f", "epsilon": ".3e" }
+  }
+}

@@ -1,9 +1,13 @@
-// ============================================================================
-//  CCDarkSens — BackgroundBuilder
-//  Builds Asimov background n_e spectra from per-pixel Poisson dark current scaled to active pixels and number of exposures.
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  BackgroundBuilder.cc -- I build the Asimov background n_e spectrum from a
+//  per-pixel Poisson dark current, scaled by the number of active pixels and
+//  the number of exposures, with an optional pattern-efficiency applied on
+//  top.
+// ===========================================================================
 
 #include "ccdarksens/backgrounds/BackgroundBuilder.hh"
 #include "ccdarksens/backgrounds/PoissonDarkCurrent.hh"
@@ -26,6 +30,13 @@
 
 namespace ccdarksens {
 
+// ----------------------------------------------------------------------------
+// BackgroundBuilder::BackgroundBuilder
+//   I validate the geometry (rows, cols > 0; active_fraction in (0,1];
+//   ne_max >= ne_min) and compute the number of active pixels
+//   = round(rows * cols * active_fraction).
+//   Throws std::invalid_argument on bad input.
+// ----------------------------------------------------------------------------
 BackgroundBuilder::BackgroundBuilder(int rows, int cols, double active_fraction,
                                      int ne_min, int ne_max)
 : rows_(rows), cols_(cols), ne_min_(ne_min), ne_max_(ne_max), active_fraction_(active_fraction)
@@ -39,6 +50,14 @@ BackgroundBuilder::BackgroundBuilder(int rows, int cols, double active_fraction,
   n_active_pixels_ = static_cast<long long>(std::llround(npix));
 }
 
+// ----------------------------------------------------------------------------
+// BackgroundBuilder::SetTiming
+//   I store the livetime [days], the duty cycle and the exposure timing.
+//   Either n_exposures_override or a positive exposure_time_s is required so
+//   that I can derive the number of exposures later on.
+//   Throws std::invalid_argument if livetime <= 0, duty_cycle is outside
+//   (0,1], or neither timing source is available.
+// ----------------------------------------------------------------------------
 void BackgroundBuilder::SetTiming(double livetime_days, double duty_cycle, const TimingConfig& tcfg) {
   if (livetime_days <= 0.0) throw std::invalid_argument("livetime_days must be > 0");
   if (!(duty_cycle > 0.0 && duty_cycle <= 1.0))
@@ -52,12 +71,27 @@ void BackgroundBuilder::SetTiming(double livetime_days, double duty_cycle, const
   tcfg_          = tcfg;
 }
 
+// ----------------------------------------------------------------------------
+// BackgroundBuilder::SetDarkCurrent
+//   I store the dark-current settings. lambda_e_per_pix_per_year must be >= 0.
+// ----------------------------------------------------------------------------
 void BackgroundBuilder::SetDarkCurrent(const DarkCurrentConfig& dccfg) {
   if (dccfg.lambda_e_per_pix_per_year < 0.0)
     throw std::invalid_argument("lambda_e_per_pix_per_year must be >= 0");
   dccfg_ = dccfg;
 }
 
+// ----------------------------------------------------------------------------
+// BackgroundBuilder::BuildBkgAsimov
+//   I build the Asimov background histogram B_obs(n_e):
+//     1) number of exposures = override, or floor(livetime*86400*duty/t_exp);
+//     2) lambda per exposure = lambda_year * t_exp / (365.25 d in seconds);
+//     3) unit-normalized single-pixel Poisson spectrum on [ne_min, ne_max];
+//     4) scale by (active pixels) * (exposures) * norm_scale;
+//     5) apply the pattern efficiency, if one was set.
+//   Returns a new histogram owned by the caller.
+//   Throws std::runtime_error if the derived number of exposures is <= 0.
+// ----------------------------------------------------------------------------
 std::unique_ptr<TH1D> BackgroundBuilder::BuildBkgAsimov() {
   // decide number of exposures
   long long n_exposures = 0;
@@ -98,6 +132,13 @@ std::unique_ptr<TH1D> BackgroundBuilder::BuildBkgAsimov() {
 }
 
 std::unique_ptr<TH1D>
+// ----------------------------------------------------------------------------
+// BackgroundBuilder::BuildBkgAsimov_EDependent
+//   Energy-dependent entry point. The dark-current background has no true
+//   energy, so I ignore the energy-dependent efficiency grid here (the signal
+//   already carries the full E-dependent efficiency) and just return
+//   BuildBkgAsimov().
+// ----------------------------------------------------------------------------
 BackgroundBuilder::BuildBkgAsimov_EDependent(
     const std::vector<double>& /*E_grid_eV*/,
     const std::vector<std::vector<double>>& /*eps_Ene*/) 

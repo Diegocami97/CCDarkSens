@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
 # ============================================================================
-#  CCDarkSens — build_baxter_halo_rates_fullgrid
-#  Build full-grid Baxter halo dR/dE library by per-mass scaling
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
 #
-#  Author: Diego Venegas-Vargas
+#  File: build_baxter_halo_rates_fullgrid.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  build_baxter_halo_rates_fullgrid.py -- Build full-grid Baxter halo dR/dE
+#  library by per-mass scaling
 # ============================================================================
 """Build full-grid Baxter halo rate library by per-mass scaling of long_scan."""
 from __future__ import annotations
@@ -34,6 +41,10 @@ BASE = {"v0_kms": 238.0, "vE_kms": 263.0, "vesc_kms": 544.0}
 BAXTER = {"v0_kms": 238.0, "vE_kms": BAXTER_VE, "vesc_kms": 544.0}
 
 
+# ----------------------------------------------------------------------------
+# integrated_rate
+#   Rate integrated over E >= 2 eV (events per gram per day) for a heavy-mediator silicon point at sigma_e = 1e-36 cm^2 with the given halo.
+# ----------------------------------------------------------------------------
 def integrated_rate(m_mev: float, halo: dict) -> float:
     from ccdarkphys.qedark.entry import compute_dRdE
 
@@ -43,6 +54,10 @@ def integrated_rate(m_mev: float, halo: dict) -> float:
     return float(np.trapz(out["dRdE_kg_year_eV"][mask], E[mask]) / 365.25 / 1000)
 
 
+# ----------------------------------------------------------------------------
+# mass_ratios
+#   For every mass, the ratio of the integrated rate with the Baxter halo to that with the baseline halo (1 if the baseline rate is zero), keyed by the 6-decimal mass string.
+# ----------------------------------------------------------------------------
 def mass_ratios(masses: list[float]) -> dict[str, float]:
     out = {}
     for m in masses:
@@ -52,11 +67,19 @@ def mass_ratios(masses: list[float]) -> dict[str, float]:
     return out
 
 
+# ----------------------------------------------------------------------------
+# list_masses
+#   Sorted masses found in the rate-file names of a directory.
+# ----------------------------------------------------------------------------
 def list_masses(src: Path) -> list[float]:
     pat = re.compile(r"_m([0-9.]+)_s")
     return sorted({float(pat.search(p.name).group(1)) for p in src.glob("dRdE_Si_heavy_m*_s*.csv") if pat.search(p.name)})
 
 
+# ----------------------------------------------------------------------------
+# scale_one
+#   Copy one rate CSV with its dR/dE column multiplied by scale (comments and blank lines are kept).
+# ----------------------------------------------------------------------------
 def scale_one(src: Path, dst: Path, scale: float) -> None:
     lines = []
     for ln in src.read_text().splitlines():
@@ -75,6 +98,10 @@ def scale_one(src: Path, dst: Path, scale: float) -> None:
     dst.write_text("\n".join(lines) + "\n")
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Scale every heavy-mediator rate CSV of the baseline grid by its mass-dependent Baxter/baseline rate ratio (ratios cached in a JSON file), in parallel; skips the build if the destination is already full unless --force.
+# ----------------------------------------------------------------------------
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--force", action="store_true")

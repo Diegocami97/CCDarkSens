@@ -1,4 +1,5 @@
 {
+  "_header": "Diego Venegas-Vargas | DAMIC-M collaboration | CCDarkSens Framework -- Example input, step 1: QCDark2 rate tables for the heavy mediator on the dense grid. Guide: docs/QCDark2_Pattern_Counts_Guide.md.",
   "_comment": "Step 1 — QCDark2 rate tables, heavy mediator, dense grid. See docs/QCDark2_Pattern_Counts_Guide.md",
   "backend": "qcdark2",
   "material": "Si",

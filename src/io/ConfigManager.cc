@@ -1,9 +1,13 @@
-// ============================================================================
-//  CCDarkSens — ConfigManager
-//  Parses the framework JSON config into typed run, detector, experiment, background, response, and model structures.
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  ConfigManager.cc -- I parse the framework JSON config into the typed run,
+//  detector, experiment, background, timing, response and model structs
+//  declared in ConfigManager.hh. Missing optional keys fall back to the
+//  defaults declared in those structs.
+// ===========================================================================
 
 #include "ccdarksens/io/ConfigManager.hh"
 #include <fstream>
@@ -18,8 +22,69 @@ namespace ccdarksens {
 
 // using nlohmann::json;
 
+namespace {
+
+// Fills a ClusterFitMCJSON from a "cluster_fit_mc" JSON block. Shared by the
+// single-channel response.cluster_fit_mc path and each entry of
+// response.channels[] (joint-likelihood channels), so both stay in sync.
+void ParseClusterFitMCJSON_(const nlohmann::json& jp, ClusterFitMCJSON& p) {
+  p.window_nx       = jp.value("window_nx",       p.window_nx);
+  p.window_ny       = jp.value("window_ny",       p.window_ny);
+  p.pixel_size_um   = jp.value("pixel_size_um",   p.pixel_size_um);
+  p.sigma_readout_e = jp.value("sigma_readout_e", p.sigma_readout_e);
+  p.lambda_dc_per_pixel = jp.value("lambda_dc_per_pixel", p.lambda_dc_per_pixel);  // diagnostic dark-current knob (0 = off)
+  p.lambda_dc_calib_per_pixel = jp.value("lambda_dc_calib_per_pixel", p.lambda_dc_calib_per_pixel);  // diagnostic: DC used for the calibration toys only (<0 = same as above)
+  p.one_dimensional = jp.value("one_dimensional", p.one_dimensional);
+  if (jp.contains("diffusion")) {
+    const auto& jd = jp.at("diffusion");
+    p.A_um2        = jd.value("A_um2",        p.A_um2);
+    p.b_umInv      = jd.value("b_umInv",      p.b_umInv);
+    p.alpha        = jd.value("alpha",        p.alpha);
+    p.beta_per_keV = jd.value("beta_per_keV", p.beta_per_keV);
+    p.thickness_um = jd.value("thickness_um", p.thickness_um);
+  } else {
+    p.A_um2        = jp.value("A_um2",        p.A_um2);
+    p.b_umInv      = jp.value("b_umInv",      p.b_umInv);
+    p.alpha        = jp.value("alpha",        p.alpha);
+    p.beta_per_keV = jp.value("beta_per_keV", p.beta_per_keV);
+    p.thickness_um = jp.value("thickness_um", p.thickness_um);
+  }
+  p.fit_method       = jp.value("fit_method",       p.fit_method);
+  p.sigma_xy_lo_px   = jp.value("sigma_xy_lo_px",   p.sigma_xy_lo_px);
+  p.sigma_xy_hi_px   = jp.value("sigma_xy_hi_px",   p.sigma_xy_hi_px);
+  p.n_toys           = jp.value("n_toys",           p.n_toys);
+  p.target_tail_prob = jp.value("target_tail_prob", p.target_tail_prob);
+  p.calib_rng_seed   = jp.value("calib_rng_seed",   p.calib_rng_seed);
+  p.ne_trials_per_point = jp.value("ne_trials_per_point", p.ne_trials_per_point);
+  p.sigma_xy_fid_min_px = jp.value("sigma_xy_fid_min_px", p.sigma_xy_fid_min_px);
+  p.sigma_xy_fid_max_px = jp.value("sigma_xy_fid_max_px", p.sigma_xy_fid_max_px);
+  p.eh_pair_eV       = jp.value("eh_pair_eV",       p.eh_pair_eV);
+  p.fano_factor      = jp.value("fano_factor",      p.fano_factor);
+  p.rng_seed         = jp.value("rng_seed",         p.rng_seed);
+  p.Etrue_min_eV     = jp.value("Etrue_min_eV",     p.Etrue_min_eV);
+  p.Etrue_max_eV     = jp.value("Etrue_max_eV",     p.Etrue_max_eV);
+  p.Etrue_npoints    = jp.value("Etrue_npoints",    p.Etrue_npoints);
+  p.Ereco_min_eV     = jp.value("Ereco_min_eV",     p.Ereco_min_eV);
+  p.Ereco_max_eV     = jp.value("Ereco_max_eV",     p.Ereco_max_eV);
+  p.Ereco_nbins      = jp.value("Ereco_nbins",      p.Ereco_nbins);
+}
+
+}  // namespace
+
+// ----------------------------------------------------------------------------
+// ConfigManager::ConfigManager
+//   I only remember the path; the file is read in parse().
+// ----------------------------------------------------------------------------
 ConfigManager::ConfigManager(std::string path) : path_(std::move(path)) {}
 
+// ----------------------------------------------------------------------------
+// ConfigManager::parse
+//   I read the JSON file and hand each top-level block to its parser.
+//   Only "run" is mandatory; detector, experiment, backgrounds, response and
+//   model are parsed if present (parse_backgrounds_ also fills the timing
+//   settings). Throws std::runtime_error if the file cannot be opened, and
+//   nlohmann::json exceptions on malformed JSON or a missing required key.
+// ----------------------------------------------------------------------------
 void ConfigManager::parse() {
   std::ifstream in(path_);
   if (!in) throw std::runtime_error("Cannot open config: " + path_);
@@ -34,6 +99,15 @@ void ConfigManager::parse() {
   if (j.contains("model"))      parse_model_(j.at("model"));
 }
 
+// ----------------------------------------------------------------------------
+// ConfigManager::parse_run_
+//   I fill the RunHeader from the "run" block: label/output, confidence level,
+//   the likelihood options (profile likelihood, minimizer, constraints,
+//   background_source / background_model with their Bp/Br vectors), the
+//   pydme-matching switches, and the band-tool "mode" with its
+//   threshold_toys sub-block. The Gaussian scale prior is only enabled when
+//   both its mean and its sigma are given.
+// ----------------------------------------------------------------------------
 void ConfigManager::parse_run_(const nlohmann::json& j) {
   run_.label     = j.value("label", std::string{});
   run_.outdir    = j.value("outdir", std::string{});
@@ -71,8 +145,25 @@ void ConfigManager::parse_run_(const nlohmann::json& j) {
   run_.profile_minimizer = j.value("profile_minimizer", std::string("brent"));
   run_.pydme_style_ul = j.value("pydme_style_ul", false);
   run_.smooth_ul_envelope = j.value("smooth_ul_envelope", false);
+  run_.mode = j.value("mode", std::string("scan"));
+  run_.q_target_lookup_path = j.value("q_target_lookup_path", std::string{});
+  if (j.contains("threshold_toys")) {
+    const auto& jt = j.at("threshold_toys");
+    run_.threshold_toys.sigma_threshold_graph_path =
+        jt.value("sigma_threshold_graph_path", std::string{});
+    run_.threshold_toys.n_threshold_toys = jt.value("n_threshold_toys", static_cast<long long>(10000));
+    run_.threshold_toys.percentile = jt.value("percentile", 0.90);
+    run_.threshold_toys.rng_seed = jt.value("rng_seed", static_cast<uint64_t>(23456ULL));
+  }
 }
 
+// ----------------------------------------------------------------------------
+// ConfigManager::parse_detector_
+//   I build the Detector from the "detector" block. rows, cols, pixel_size_um,
+//   thickness_mm, target_element and density_g_cm3 are required; active_fraction
+//   (default 1), Z, A and a mass_kg override (null/absent = compute the mass
+//   from the geometry) are optional.
+// ----------------------------------------------------------------------------
 void ConfigManager::parse_detector_(const nlohmann::json& j) {
   DetectorGeometry g;
   g.rows = j.at("rows").get<int>();
@@ -94,6 +185,7 @@ void ConfigManager::parse_detector_(const nlohmann::json& j) {
   detector_ = std::make_unique<Detector>(g, m, mass_override);
 }
 
+// Convert experiment.mode ("observed" | "asimov" | "toys") into the enum; anything else throws std::invalid_argument.
 static ExperimentMode parse_mode(const std::string& s) {
   if (s == "observed") return ExperimentMode::Observed;
   if (s == "asimov")   return ExperimentMode::Asimov;
@@ -101,6 +193,12 @@ static ExperimentMode parse_mode(const std::string& s) {
   throw std::invalid_argument("experiment.mode must be observed/asimov/toys");
 }
 
+// ----------------------------------------------------------------------------
+// ConfigManager::parse_experiment_
+//   I fill the ExperimentConfig from the "experiment" block. mode, livetime_days
+//   and binning{ne_min, ne_max} are required; duty_cycle, roi_bins, pattern_roi
+//   and observable_bins are optional.
+// ----------------------------------------------------------------------------
 void ConfigManager::parse_experiment_(const nlohmann::json& j) {
   exp_cfg_.mode = parse_mode(j.at("mode").get<std::string>());
   exp_cfg_.livetime_days = j.at("livetime_days").get<double>();
@@ -120,6 +218,20 @@ void ConfigManager::parse_experiment_(const nlohmann::json& j) {
     exp_cfg_.observable_bins = j.at("observable_bins").get<std::string>();
 }
 
+// ----------------------------------------------------------------------------
+// ConfigManager::parse_response_
+//   I fill the ResponseJSON from the "response" block:
+//     - mode and analysis_space (the space defaults to "pcd" for mode "pcd",
+//       otherwise "pattern"; "cluster_energy" is set explicitly for the WIMP channel);
+//     - the pcd block, and the legacy cluster_mc block (kept only for old configs);
+//     - efficiency_mc (the old key pattern_mc is still accepted);
+//     - cluster_fit_mc, the background-efficiency CSV and the optional joint
+//       "channels" list of the WIMP-nucleon channel;
+//     - pattern_classifier, whose shared values default to those of efficiency_mc;
+//     - charge_ionization and pattern_image.
+//   If there is no efficiency_mc/pattern_mc block, I copy the legacy cluster_mc
+//   values into emc so that old configs keep working.
+// ----------------------------------------------------------------------------
 void ConfigManager::parse_response_(const nlohmann::json& jr) {
   // Read detector-response backend mode
   response_.mode = jr.value("mode", std::string("fast"));
@@ -193,23 +305,36 @@ void ConfigManager::parse_response_(const nlohmann::json& jr) {
       p.alpha        = jp.value("alpha",        p.alpha);
       p.beta_per_keV = jp.value("beta_per_keV", p.beta_per_keV);
     }
-    if (jp.contains("binning")) {
-      const auto& jb = jp.at("binning");
-      p.rows_bin = jb.value("rows_bin", p.rows_bin);
-      p.cols_bin = jb.value("cols_bin", p.cols_bin);
-    } else {
-      p.rows_bin = jp.value("rows_bin", p.rows_bin);
-      p.cols_bin = jp.value("cols_bin", p.cols_bin);
-    }
-    p.half_window_pix = jp.value("half_window_pix", p.half_window_pix);
-    p.pileup_with_dc  = jp.value("pileup_with_dc",  p.pileup_with_dc);
     p.enable_MN       = jp.value("enable_MN",       p.enable_MN);
     p.enable_MNL      = jp.value("enable_MNL",      p.enable_MNL);
     p.rng_seed        = jp.value("rng_seed",        p.rng_seed);
     p.row_length = jp.value("row_length", p.row_length);
     p.use_2d_image_efficiency = jp.value("use_2d_image_efficiency", p.use_2d_image_efficiency);
+    p.efficiency_csv           = jp.value("efficiency_csv",           p.efficiency_csv);
+    p.efficiency_csv_reference = jp.value("efficiency_csv_reference", p.efficiency_csv_reference);
     // accepted_labels are derived from experiment.pattern_roi in the apps
   }
+  // --- ClusterFitMC block (WIMP-nucleus SI channel Phase 3/4) ---
+  if (jr.contains("cluster_fit_mc")) {
+    ParseClusterFitMCJSON_(jr.at("cluster_fit_mc"), response_.cluster_fit_mc);
+  }
+  response_.background_efficiency_csv =
+      jr.value("background_efficiency_csv", response_.background_efficiency_csv);
+  // --- Joint-likelihood channels (e.g. 1x1 + 1x100); empty by default ---
+  if (jr.contains("channels")) {
+    for (const auto& jc : jr.at("channels")) {
+      ResponseChannelJSON ch;
+      ch.label = jc.value("label", std::string());
+      ch.flat_background_norm_per_kg_year_keV =
+          jc.value("flat_background_norm_per_kg_year_keV", 0.0);
+      ch.background_efficiency_csv = jc.value("background_efficiency_csv", std::string());
+      if (jc.contains("cluster_fit_mc")) {
+        ParseClusterFitMCJSON_(jc.at("cluster_fit_mc"), ch.cluster_fit_mc);
+      }
+      response_.channels.push_back(std::move(ch));
+    }
+  }
+
   // --- Pattern Classifier: inherit shared params from efficiency_mc when not set ---
   if (jr.contains("pattern_classifier")) {
     const auto& jc = jr.at("pattern_classifier");
@@ -263,9 +388,6 @@ void ConfigManager::parse_response_(const nlohmann::json& jr) {
     response_.emc.b_umInv         = response_.cmc.b_umInv;
     response_.emc.alpha           = response_.cmc.alpha;
     response_.emc.beta_per_keV    = response_.cmc.beta_per_keV;
-    response_.emc.rows_bin        = response_.cmc.rows_bin;
-    response_.emc.cols_bin        = response_.cmc.cols_bin;
-    response_.emc.pileup_with_dc  = response_.cmc.pileup_with_dc;
     response_.emc.rng_seed        = response_.cmc.rng_seed;
   }
   
@@ -276,6 +398,7 @@ void ConfigManager::parse_response_(const nlohmann::json& jr) {
 }
 
 
+// Earlier version of parse_backgrounds_ (per-exposure dark-current key). I keep it commented out only for reference; the active version is below.
 // void ConfigManager::parse_backgrounds_(const nlohmann::json& jb) {
 //   if (jb.contains("dark_current")) {
 //     const auto& jd = jb.at("dark_current");
@@ -296,7 +419,7 @@ void ConfigManager::parse_response_(const nlohmann::json& jr) {
 //   // (we still have j in this scope? If not, read from jb's parent; simplest: require backgrounds to also include timing)
 //   // For clarity now, we’ll pull from a sibling "experiment" via the stored exp_cfg_ — but we need exposure_time_s & n_exposures.
 //   // Easiest: require they sit under "experiment" and re-open here:
-//   // (If you want, we can move this logic to parse_experiment_ later.)
+//   // (I could move this logic to parse_experiment_ later.)
 
 //   // Try parent: we can't access parent here; instead, read from a convenience duplication in backgrounds if present:
 //   if (jb.contains("timing")) {
@@ -307,6 +430,20 @@ void ConfigManager::parse_response_(const nlohmann::json& jr) {
 //   }
 // }
 
+// ----------------------------------------------------------------------------
+// ConfigManager::parse_backgrounds_
+//   I fill the background and timing settings from the "backgrounds" block:
+//     - dark_current: lambda_e_per_pix_per_year (preferred) or the older
+//       lambda_e_per_pix_per_exposure, which I convert to a yearly rate with
+//       the exposure time; plus norm_scale;
+//     - pattern_efficiency (flat type only);
+//     - timing (exposure_time_s and an optional n_exposures override);
+//     - flat_background (dR/dE in events/(kg*year*keV) between Emin and Emax);
+//     - background_efficiency_csv;
+//     - lee: the low-energy excess used by the WIMP-nucleon channel, with two
+//       published presets (damic_snolab_2020, damic_snolab_2023_skipper) that
+//       explicit rate/decay-energy keys override.
+// ----------------------------------------------------------------------------
 void ConfigManager::parse_backgrounds_(const nlohmann::json& jb) {
   if (jb.contains("dark_current")) {
     const auto& jd = jb.at("dark_current");
@@ -383,6 +520,40 @@ void ConfigManager::parse_backgrounds_(const nlohmann::json& jb) {
   } else {
     bkg_.background_efficiency_csv.clear();
   }
+
+  // ---- low-energy excess (LEE) background ----
+  //
+  // JSON block:
+  //   "lee": {
+  //     "enabled": true,
+  //     "preset": "damic_snolab_2023_skipper",   // or "damic_snolab_2020"
+  //     "rate_per_kg_day": 10.0,                  // overrides preset
+  //     "decay_energy_eV": 89.0                   // overrides preset
+  //   }
+  //
+  // Presets carry the published fits (see docs/LowEnergyExcess_Design.md):
+  // damic_snolab_2020 = arXiv:2007.15622 (5.1 events/kg/day, eps=67 eV);
+  // damic_snolab_2023_skipper = arXiv:2306.01717 (10.0, eps=89 eV), default.
+  // Rate is per kg-day of DAMIC's own silicon detector with unconfirmed
+  // physical origin -- using this for a non-DAMIC target material borrows
+  // the shape, it is not a derived scaling.
+  if (jb.contains("lee")) {
+    const auto& jl = jb.at("lee");
+    bkg_.has_lee_bkg = jl.value("enabled", false);
+
+    const std::string preset = jl.value("preset", std::string("damic_snolab_2023_skipper"));
+    double preset_rate = 10.0, preset_eps = 89.0;  // damic_snolab_2023_skipper
+    if (preset == "damic_snolab_2020") {
+      preset_rate = 5.1;
+      preset_eps  = 67.0;
+    }
+    bkg_.lee_rate_per_kg_day = jl.value("rate_per_kg_day", preset_rate);
+    bkg_.lee_decay_energy_eV = jl.value("decay_energy_eV", preset_eps);
+  } else {
+    bkg_.has_lee_bkg = false;
+    bkg_.lee_rate_per_kg_day = 0.0;
+    bkg_.lee_decay_energy_eV = 0.0;
+  }
 }
 
 
@@ -394,6 +565,15 @@ void ConfigManager::parse_backgrounds_(const nlohmann::json& jb) {
 //   - {"linspace": { "start": ..., "stop": ..., "num": N, "endpoint": true/false }}
 //   - {"logspace": { "start_exp": ..., "stop_exp": ..., "num": N, "endpoint": true/false }}
 //
+// ----------------------------------------------------------------------------
+// expand_axis_
+//   I expand one grid-axis spec into an explicit list of numbers. Accepted
+//   forms are a plain array, {"values": [...]}, {"linspace": {...}} and
+//   {"logspace": {...}} (log10 exponents start_exp/stop_exp, or literal
+//   start/stop > 0). Values keep the order in which they were appended (no sorting
+//   or de-duplication). Throws std::runtime_error for a non-positive literal
+//   logspace bound.
+// ----------------------------------------------------------------------------
 static void expand_axis_(const nlohmann::json& jaxis,
                          std::vector<double>& out_values)
 {
@@ -477,6 +657,15 @@ static void expand_axis_(const nlohmann::json& jaxis,
 
 
 
+// ----------------------------------------------------------------------------
+// ConfigManager::parse_model_
+//   I fill the ModelJSON from the "model" block; every key has a default so
+//   I never throw here. I read the DM-electron / dark-photon fields, the DM-nucleon
+//   fields (target nucleus, A, Z, sigma_n_cm2) and epsilon_ref, plus the optional
+//   grid: the mchi_MeV and sigma_e_cm2 axes and the "options.format" hints.
+//   NOTE: the sigma_n_cm2 and epsilon axes are not expanded here; the scan apps
+//   read those directly from the raw JSON (ExpandAxisFromGrid).
+// ----------------------------------------------------------------------------
 void ConfigManager::parse_model_(const nlohmann::json& jm) {
   // Use .value(...) with defaults so we never throw if keys are missing.
   model_.type              = jm.value("type", "dm_electron");

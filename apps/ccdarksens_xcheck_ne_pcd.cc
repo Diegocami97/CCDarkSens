@@ -1,9 +1,12 @@
-// ============================================================================
-//  CCDarkSens — ccdarksens_xcheck_ne_pcd
-//  Cross-check executable that validates PCD→n_e→pattern folding by writing S_true, kernels, S_rec, and S_obs histograms to a debug ROOT file.
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  ccdarksens_xcheck_ne_pcd.cc -- Cross-check executable that validates
+//  PCD→n_e→pattern folding by writing S_true, kernels, S_rec, and S_obs
+//  histograms to a debug ROOT file.
+// ===========================================================================
 
 #include <algorithm>
 #include <cmath>
@@ -42,6 +45,11 @@ using nlohmann::json;
 using namespace ccdarksens;
 
 // Simple helper to get first value from grid spec
+// ----------------------------------------------------------------------------
+// first_grid_value
+//   First value of a grid-axis spec: the first entry of "values" or of a plain array, the start of a
+//   "linspace", or 10^start_exp of a "logspace". Throws std::runtime_error for an empty or invalid spec.
+// ----------------------------------------------------------------------------
 static double first_grid_value(const json& spec)
 {
   if (spec.is_object()) {
@@ -65,6 +73,12 @@ static double first_grid_value(const json& spec)
 // -----------------------------------------------------------------------------
 // Main
 // -----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// main
+//   Cross-check of the PCD -> n_e -> pattern folding. Usage: <program> config.json. For the first
+//   grid point of the config I build the response chain, then write S_true, the reconstruction
+//   kernel, S_rec and S_obs to a debug ROOT file so the folding steps can be inspected.
+// ----------------------------------------------------------------------------
 int main(int argc, char** argv)
 {
   if (argc < 2) {
@@ -115,7 +129,7 @@ int main(int argc, char** argv)
     // -------------------------------------------------------------------------
     auto ion = std::make_shared<ChargeIonization>("data/p100K_table.csv");
 
-    // Dark current per exposure (as in your main app)
+    // Dark current per exposure (as in the main app)
     const double lambda_per_year = cfg.backgrounds().lambda_e_per_pix_per_year;
     const double year_s = 365.25 * 86400.0;
     const double exp_time_s = cfg.timing().exposure_time_s;
@@ -399,7 +413,7 @@ int main(int argc, char** argv)
     eps_mc->SetName("pattern_efficiency");
     eps_mc->Write();
 
-    // Also store P(q|n_true) as a TH2 if you like (optional)
+    // Also store P(q|n_true) as a TH2 (optional)
     TH2D h_pq("Pq_ne_true", ";n_{e}^{true};q [e^{-}];P(q|n_{e}^{true})",
               ne_max - ne_min + 1, ne_min - 0.5, ne_max + 0.5,
               cfg.response().pcd.nbins,

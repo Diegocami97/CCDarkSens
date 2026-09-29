@@ -1,3 +1,14 @@
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
+//
+//  AppUtils.hh -- I collect small helpers shared by the apps so that they
+//  are not copy-pasted from app to app: MakeFlatEfficiency (a flat
+//  epsilon(n_e) histogram), SumROI (sum a histogram over the ROI n_e bins)
+//  and ExpandAxis (turn a JSON grid-axis spec into a sorted list of values).
+// ===========================================================================
+
 #pragma once
 
 #include <algorithm>

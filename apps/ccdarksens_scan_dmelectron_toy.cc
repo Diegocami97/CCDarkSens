@@ -1,9 +1,12 @@
-// ============================================================================
-//  CCDarkSens — ccdarksens_scan_dmelectron_toy
-//  Minimal background-free DM-e toy scan in charge space using flat efficiency and a fixed “3 events” discovery criterion over a hardcoded mass grid.
+// ===========================================================================
+//  Diego Venegas-Vargas
+//  DAMIC-M collaboration
+//  CCDarkSens Framework
 //
-//  Author: Diego Venegas-Vargas
-// ============================================================================
+//  ccdarksens_scan_dmelectron_toy.cc -- Minimal background-free DM-e toy
+//  scan in charge space using flat efficiency and a fixed “3 events”
+//  discovery criterion over a hardcoded mass grid.
+// ===========================================================================
 
 #include <cmath>
 #include <iostream>
@@ -32,7 +35,7 @@ static DMElectronConfig MakeDMConfig(double mchi_MeV, const std::string& sigma_s
   mc.rates_dir         = "data/qedark_rates/Si/heavy/after_eta_fix";
   mc.filename_template = "dRdE_{material}_{mediator}_m{mchi_MeV}_s{sigma_e_cm2}.csv";
 
-  // Energy grid: match your pattern config (0–20 eV, 200 bins) :contentReference[oaicite:1]{index=1}
+  // Energy grid: match the pattern config (0–20 eV, 200 bins)
   mc.Emin_eV           = 0.0;
   mc.Emax_eV           = 20.0;
   mc.nbins             = 200;
@@ -62,7 +65,7 @@ int main(int argc, char** argv)
   // Simple, flat detection efficiency (Mike-like toy)
   const double eps_flat = 0.95;
 
-  // DM mass grid [MeV] — you can adjust as needed
+  // DM mass grid [MeV] — adjust as needed
   std::vector<double> mchi_list = {0.53, 1.0, 3.0, 10.0, 100.0, 1000.0};
 
   std::cout << "=== CCDarkSens DM-e Toy Scan (Charge Space, Bkg-Free) ===\n";
@@ -76,7 +79,7 @@ int main(int argc, char** argv)
 
   // --------------------------------------------------------------------------
   // Charge Ionization model: P(n_e | E)
-  // Uses your existing table path (same as pattern app) :contentReference[oaicite:2]{index=2}
+  // Uses the existing table path (same as pattern app)
   // --------------------------------------------------------------------------
   auto ion = std::make_shared<ChargeIonization>("data/p100K_table.csv");
 

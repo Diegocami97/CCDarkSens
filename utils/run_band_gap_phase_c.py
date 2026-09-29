@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
 # ============================================================================
-#  CCDarkSens — run_band_gap_phase_c
-#  Orchestrate Phase C band-gap pheno limit scans (6 gaps × D-equal + B-thresh)
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
 #
-#  Author: Diego Venegas-Vargas
+#  File: run_band_gap_phase_c.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  run_band_gap_phase_c.py -- Orchestrate Phase C band-gap pheno limit scans
+#  (6 gaps × D-equal + B-thresh)
 # ============================================================================
 """
 Phase C: band-gap pheno limit scans (6 gaps x D-equal + B-thresh).
@@ -43,14 +50,26 @@ MEDIATORS = ("heavy", "light")
 PLOT_TIERS = ("B-thresh", "D-equal")
 
 
+# ----------------------------------------------------------------------------
+# gap_tag
+#   File-name tag of a band gap, e.g. "gap0p7" (1.2 eV gives "gap1p2").
+# ----------------------------------------------------------------------------
 def gap_tag(g: float) -> str:
     return "gap1p2" if abs(g - 1.2) < 1e-9 else f"gap{g:.1f}".replace(".", "p")
 
 
+# ----------------------------------------------------------------------------
+# eh_tag
+#   Electron-hole pair energy formatted for file names with '.' replaced by 'p'.
+# ----------------------------------------------------------------------------
 def eh_tag(eh: float) -> str:
     return f"{eh:g}".replace(".", "p")
 
 
+# ----------------------------------------------------------------------------
+# case_id
+#   Case identifier "<gap>_eh<eps_h>" of a gap and scenario (eps_h = gap for D-equal, the fixed value for B-thresh).
+# ----------------------------------------------------------------------------
 def case_id(gap: float, scenario: str) -> str:
     eh = gap if scenario == "D-equal" else EH_B
     gt = gap_tag(gap)
@@ -58,12 +77,20 @@ def case_id(gap: float, scenario: str) -> str:
     return f"{gap_short}_eh{eh_tag(eh)}"
 
 
+# ----------------------------------------------------------------------------
+# config_path
+#   Path of the Phase C scan config of a gap and scenario.
+# ----------------------------------------------------------------------------
 def config_path(gap: float, scenario: str) -> Path:
     eh = gap if scenario == "D-equal" else EH_B
     gs = gap_tag(gap)[3:]
     return ROOT / "configs" / f"scan_band_gap_pheno_{gs}_eh{eh_tag(eh)}.json"
 
 
+# ----------------------------------------------------------------------------
+# list_cases
+#   All (gap, scenario) cases, or only those of one tier.
+# ----------------------------------------------------------------------------
 def list_cases(tier: str | None = None) -> list[tuple[float, str]]:
     out: list[tuple[float, str]] = []
     scenarios = ["B-thresh", "D-equal"] if tier is None else [tier.replace("_", "-")]
@@ -74,6 +101,10 @@ def list_cases(tier: str | None = None) -> list[tuple[float, str]]:
     return out
 
 
+# ----------------------------------------------------------------------------
+# run_cmd
+#   Print a command and, unless dry_run, run it from the repository root; returns its exit code.
+# ----------------------------------------------------------------------------
 def run_cmd(cmd: list[str], dry_run: bool = False) -> int:
     print("[run]", " ".join(cmd))
     if dry_run:
@@ -81,10 +112,18 @@ def run_cmd(cmd: list[str], dry_run: bool = False) -> int:
     return subprocess.call(cmd, cwd=ROOT)
 
 
+# ----------------------------------------------------------------------------
+# cmd_gen_configs
+#   Sub-command gen-configs: write all Phase C scan configs.
+# ----------------------------------------------------------------------------
 def cmd_gen_configs(_: argparse.Namespace) -> int:
     return subprocess.call([sys.executable, "utils/gen_band_gap_pheno_scan_configs.py"], cwd=ROOT)
 
 
+# ----------------------------------------------------------------------------
+# cmd_smoke
+#   Sub-command smoke: a 3x3 grid of the gap 0.1 eV B-thresh config as a quick check, with an optional limit plot.
+# ----------------------------------------------------------------------------
 def cmd_smoke(args: argparse.Namespace) -> int:
     tpl = json.loads(config_path(0.1, "B-thresh").read_text(encoding="utf-8"))
     cfg = copy.deepcopy(tpl)
@@ -157,6 +196,10 @@ def cmd_smoke(args: argparse.Namespace) -> int:
     return 0
 
 
+# ----------------------------------------------------------------------------
+# cmd_scan
+#   Sub-command scan: run the full-grid scan of one case (--case) or of a whole tier.
+# ----------------------------------------------------------------------------
 def cmd_scan(args: argparse.Namespace) -> int:
     if args.case:
         # gap0p1_B-thresh
@@ -193,6 +236,10 @@ def cmd_scan(args: argparse.Namespace) -> int:
     return 0
 
 
+# ----------------------------------------------------------------------------
+# scan_root_path
+#   Path of the scan ROOT file of a case for the heavy or the light mediator.
+# ----------------------------------------------------------------------------
 def scan_root_path(gap: float, scenario: str, mediator: str) -> Path:
     cid = case_id(gap, scenario)
     prefix = "scan_band_gap_light" if mediator == "light" else "scan_band_gap"
@@ -246,6 +293,10 @@ def plot_limits_combo(
     return run_cmd(cmd, dry_run)
 
 
+# ----------------------------------------------------------------------------
+# cmd_plot_limits
+#   Sub-command plot-limits: build the plotter if needed and draw the limit curves of a tier (or all), optionally with the silicon reference.
+# ----------------------------------------------------------------------------
 def cmd_plot_limits(args: argparse.Namespace) -> int:
     if not BUILD_PLOT.is_file() and not args.dry_run:
         rc = run_cmd(["cmake", "--build", "build", "-j", "--target", "ccdarksens_plot_dmelectron_limit"])
@@ -269,6 +320,10 @@ def cmd_plot_limits(args: argparse.Namespace) -> int:
     return rc
 
 
+# ----------------------------------------------------------------------------
+# main
+#   Command line with the sub-commands gen-configs, smoke, scan and plot-limits; --dry-run only prints the commands.
+# ----------------------------------------------------------------------------
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--dry-run", action="store_true")

@@ -65,7 +65,6 @@
       "b_umInv": 0.00065,
       "alpha": 1.0,
       "beta_per_keV": 0.0,
-      "pileup_with_dc": true,
       "enable_MN": true,
       "enable_MNL": true,
       "use_2d_image_efficiency": false,

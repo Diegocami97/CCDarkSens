@@ -1,3 +1,18 @@
+# ============================================================================
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  File: entry.py
+#  Diego Venegas-Vargas
+#  DAMIC-M collaboration
+#  CCDarkSens Framework
+#
+#  entry.py -- QEDark entry point for DM-electron scattering (silicon). It is
+#  built only from the QEDark source files: the constants, the SHM halo and
+#  Si_f2.txt.
+# ============================================================================
+
 """
 QEDark entry point for DM–electron scattering (Silicon).
 Built ONLY from your provided source: constants, SHM halo, Si_f2.txt.
@@ -81,7 +96,7 @@ def compute_dRdE(material: str,
     Eprefactor  = 2.0
     Egap_Si     = band_gap_eV
     epsilon_Si  = eh_pair_eV
-    fcrys_Si    = (wk / 4.0) * fcrys_Si  # NOTEBOOK: remove wk/4 only if you regenerated fcrys yourself
+    fcrys_Si    = (wk / 4.0) * fcrys_Si  # NOTEBOOK: remove wk/4 only if fcrys was regenerated locally
 
     materials = {
         "Si": [Mcell_Si, Eprefactor, Egap_Si, epsilon_Si, fcrys_Si],
@@ -171,6 +186,10 @@ def compute_dRdE(material: str,
         "mchi_eV": float(mchi_eV), "sigma_e_cm2": float(sigma_e_cm2)
     }}
 
+# ----------------------------------------------------------------------------
+# _cli
+#   Command-line front end: compute one QEDark rate table for the given mediator, mass and cross section (default halo v0 = 220, vE = 232, vesc = 544 km/s) and write it to --out_csv.
+# ----------------------------------------------------------------------------
 def _cli():
     ap = argparse.ArgumentParser()
     ap.add_argument("--material", default="Si")
