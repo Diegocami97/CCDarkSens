@@ -323,7 +323,11 @@ build/ccdarksens_validate_pattern_efficiency data/efficiencies_paolo.csv \
     (31, 5): ref 0.4893  new 0.52471  pull +15.84
 ```
 
-Read this honestly. The sums over the six search patterns, which are what the PRL quotes ((38, 65, 79, 86)%), agree. The n_e = 2 and 3 rows agree entry by entry. The n_e = 5 row does not: `{111}` is 0.016 against 0.028 and `{31}` is 0.525 against 0.489, with the sums still equal, so charge is distributed differently among patterns. The exact published rules beyond the note are not known. The row `P({11} | 1 e⁻)` is exactly 0 in the published file and 0.0003 here.
+Read this in two parts, the statistical one and the physical one.
+
+**Statistically** the n_e = 5 row is inconsistent: the pull test says so with large numbers, because the reference has 10⁵ trials and an entry near 0.5 has an error of only about 0.0016. The sums over the six search patterns, which are what the PRL quotes ((38, 65, 79, 86)%), agree: at n_e = 5, 0.8632 against 0.8630. The n_e = 2 and 3 rows agree entry by entry. At n_e = 5 the charge is distributed differently among the patterns: `{111}` is 0.016 against 0.028, `{31}` is 0.525 against 0.489, `{211}` 0.261 against 0.277, `{11}` 0.011 against 0.015. The row `P({11} | 1 e⁻)` is exactly 0 in the published file and 0.0003 here. The exact published rules beyond the note are not known.
+
+**Physically** the difference is small. The largest entry difference is 0.036 in absolute terms (`{31}`). Running the same five-bin scan on 25 masses from 1 to 1000 MeV with the published table instead of the chain table, with the published Bp, Br and counts, moves the limit by **0.7% at the median and 1.2% at most** (the chain-table limit is 0.7% lower at the high masses and 1% lower below 3 MeV). For comparison, using the pydme tree table instead moves it by up to +7.6% at high mass, and a 0.25 dex cross-section grid by up to 7%. So the validator's FAIL is a statement about statistical consistency of a simulation with a published table, not about the size of the effect on the result.
 
 **What the validator does with the flags.**
 
@@ -697,7 +701,7 @@ The commands of stages 0–6 and R, in order, as one copy-paste block. Nothing i
 build/ccdarksens_classify_pair 3.17 1.85 --bound 0.64
 
 # 1. signal table (tree = pydme reference selection, chain = published selection)
-#    expected: the tree check PASSES; the chain check prints FAIL because of the n_e = 5 row (see Stage 1)
+#    expected: the tree check PASSES; the chain check prints FAIL (statistically different at n_e = 5; its effect on the limit is at most 1.2%, see Stage 1)
 mkdir -p outputs/walkthrough/signal_tree outputs/walkthrough/signal_chain
 build/ccdarksens_pattern_signal_eff configs/examples/pattern_signal_eff_tree_pydme.json 100000 outputs/walkthrough/signal_tree
 build/ccdarksens_pattern_signal_eff configs/examples/pattern_signal_eff_chain.json      100000 outputs/walkthrough/signal_chain
