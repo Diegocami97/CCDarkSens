@@ -10,11 +10,14 @@
 //  This is my fork of ccdarksens_plot_dmelectron_limit.cc. It adds the --wimp
 //  mode (WIMP-nucleon spin-independent literature overlay); the original file
 //  stays as the reference for the DM-electron plots (see
-//  docs/GenericScanApp_Design.md).
+//  docs/GenericScanApp_Design.md). Literature files are found relative to the
+//  repository root, not only the working directory; --ratio-to prints the ratio
+//  of every curve to a reference curve per mass window.
 // ===========================================================================
 
 #include <cmath>
 #include <cctype>
+#include <cstdlib>
 #include <iomanip>
 #include <iostream>
 #include <string>
@@ -33,6 +36,7 @@
 #include <TError.h>
 #include <TCanvas.h>
 #include <TStyle.h>
+#include <TMath.h>
 #include <TLegend.h>
 #include <TAxis.h>
 #include <TApplication.h>
@@ -867,6 +871,52 @@ void EnforceMonotonicEnvelope(TGraph* g)
 }
 
 // ----------------------------------------------------------------------------
+// Repository root
+//   The literature curves are read from paths such as data/previous_limits/...
+//   that are relative to the repository root. g_repo_root is the root derived from
+//   the location of this executable (<root>/build/<program>) or the environment
+//   variable CCDARKSENS_ROOT, so the program works from any working directory.
+// ----------------------------------------------------------------------------
+static std::string g_repo_root;
+
+// ----------------------------------------------------------------------------
+// InitRepoRoot
+//   Set g_repo_root from CCDARKSENS_ROOT or from argv[0] when it is
+//   <root>/build/<program>; leave it empty otherwise (paths then stay relative to
+//   the working directory).
+// ----------------------------------------------------------------------------
+static void InitRepoRoot(const char* argv0) {
+  if (const char* env = std::getenv("CCDARKSENS_ROOT")) {
+    g_repo_root = env;
+    return;
+  }
+  if (!argv0 || std::string(argv0).find('/') == std::string::npos) return;
+  char buf[4096];
+  if (!realpath(argv0, buf)) return;
+  const std::string exe(buf);
+  const std::size_t slash = exe.find_last_of('/');
+  if (slash == std::string::npos) return;
+  const std::string dir = exe.substr(0, slash);
+  const std::size_t slash2 = dir.find_last_of('/');
+  if (slash2 != std::string::npos && dir.substr(slash2 + 1) == "build") g_repo_root = dir.substr(0, slash2);
+}
+
+// ----------------------------------------------------------------------------
+// ResolveRepoPath
+//   The path itself when it is absolute or exists from the working directory,
+//   otherwise <repo root>/<path> when that exists, otherwise the path unchanged.
+// ----------------------------------------------------------------------------
+static std::string ResolveRepoPath(const std::string& path) {
+  if (path.empty() || path[0] == '/') return path;
+  if (!gSystem->AccessPathName(path.c_str())) return path;
+  if (!g_repo_root.empty()) {
+    const std::string alt = g_repo_root + "/" + path;
+    if (!gSystem->AccessPathName(alt.c_str())) return alt;
+  }
+  return path;
+}
+
+// ----------------------------------------------------------------------------
 // LoadExclusionCSV
 //   Read an exclusion curve from a two-column text file ("x, y", "x y", ";" or tab separated; comment
 //   and header lines are skipped), scale the columns and style the line. Returns nullptr if the file
@@ -879,7 +929,7 @@ TGraph* LoadExclusionCSV(const std::string& csv_path,
                         double scale_x = 1.0,
                         double scale_y = 1.0)
 {
-  std::ifstream in(csv_path);
+  std::ifstream in(ResolveRepoPath(csv_path));
   if (!in.is_open()) {
     std::cerr << "[exclusion] ERROR: cannot open CSV file " << csv_path << "\n";
     return nullptr;
@@ -972,7 +1022,7 @@ TGraph* LoadDarkPhotonLimitCSV(const std::string& csv_path,
                              Width_t line_width = 2,
                              double y_scale = 1.0)
 {
-  std::ifstream in(csv_path);
+  std::ifstream in(ResolveRepoPath(csv_path));
   if (!in.is_open()) {
     std::cerr << "[exclusion] ERROR: cannot open CSV file " << csv_path << "\n";
     return nullptr;
@@ -1039,7 +1089,7 @@ static DarkPhotonXenonNtBracket LoadDarkPhotonXenonNtHPBracket(
     Width_t line_width = 3)
 {
   DarkPhotonXenonNtBracket out;
-  std::ifstream in(csv_path);
+  std::ifstream in(ResolveRepoPath(csv_path));
   if (!in.is_open()) {
     std::cerr << "[exclusion] ERROR: cannot open CSV file " << csv_path << "\n";
     return out;
@@ -1104,7 +1154,7 @@ TGraph* LoadMassLimitDAT(const std::string& filename,
                          Style_t  lstyle = 1,
                          Width_t  lwidth = 2)
 {
-  std::ifstream in(filename);
+  std::ifstream in(ResolveRepoPath(filename));
   if (!in.is_open()) {
     Error("LoadMassLimitDAT", "Cannot open file '%s'", filename.c_str());
     return nullptr;
@@ -1162,7 +1212,7 @@ TGraph* LoadTxtToTGraph(const std::string& filename,
                         Style_t  lstyle = 1,
                         Width_t  lwidth = 2)
 {
-  std::ifstream in(filename);
+  std::ifstream in(ResolveRepoPath(filename));
   if (!in.is_open()) {
     Error("LoadTxtToTGraph", "Cannot open file '%s'", filename.c_str());
     return nullptr;
@@ -1577,6 +1627,8 @@ TGraph* MakeDcBandPolygon(TGraph* g_lo, TGraph* g_hi, TGraph* g_cen,
 // ----------------------------------------------------------------------------
 int main(int argc, char** argv)
 {
+  InitRepoRoot(argc > 0 ? argv[0] : nullptr);
+
   // ---------------------------------------------------------------------------
   // CLI notes (latest update):
   //   - Supports multiple input ROOT files, each optionally followed by a label:
@@ -1620,6 +1672,13 @@ int main(int argc, char** argv)
               << "    --plain-legend  Use CLI labels in the legend without (q-map) / (UL, q-grid) suffixes.\n"
               << "    --legend-left   Place legend on the left (compact, two-line labels).\n"
               << "    --legend-right  Place legend on the right (compact, two-line labels).\n"
+              << "    --ratio-to <n|label>  Print, per mass window, the median (16-84%) ratio of every other\n"
+              << "                    curve to input n (1-based) or the input with this label. Use with --draw-both\n"
+              << "                    so the continuous bisection limit is compared.\n"
+              << "    --sigma-floor <x>  Lowest cross section of the scan grid (default 1e-46); points at this value\n"
+              << "                    are reported as 'no crossing' in the ratio table.\n"
+              << "    --legacy-migdal-canvas  Also write the legacy Migdal / WIMP projection canvas\n"
+              << "                    (dme_migdal_limit_curve.pdf/.root in the working directory); off by default.\n"
               << "    --batch         Non-interactive: save immediately, no GUI (no axis editing).\n"
               << "  Without --batch: PDF/ROOT are written before the GUI opens; close the window to\n"
               << "  overwrite with final axis ranges (or use --batch for a one-shot save).\n"
@@ -1658,6 +1717,9 @@ int main(int argc, char** argv)
   bool legend_left = false;
   bool legend_right = false;
   bool smooth_curves = false;
+  bool legacy_migdal_canvas = false;  // --legacy-migdal-canvas
+  std::string ratio_to;               // --ratio-to
+  double sigma_floor = 1e-46;         // --sigma-floor
   std::string dc_band_lo_path;  // --dc-band-lo: best DC scan (band lower edge)
   std::string dc_band_hi_path;  // --dc-band-hi: worst DC scan (band upper edge)
 
@@ -1723,6 +1785,12 @@ int main(int argc, char** argv)
       force_from_qhist = true;
       continue;
     }
+    if (tok_lc == "--legacy-migdal-canvas") {
+      legacy_migdal_canvas = true;
+      continue;
+    }
+    if (tok_lc == "--ratio-to" && i + 1 < argc) { ratio_to = argv[++i]; continue; }
+    if (tok_lc == "--sigma-floor" && i + 1 < argc) { sigma_floor = std::stod(argv[++i]); continue; }
     if (tok_lc == "--draw-both") {
       draw_both = true;
       continue;
@@ -1948,7 +2016,7 @@ int main(int argc, char** argv)
       return a_lc == "--band" || a_lc == "--band-mode" ||
              a_lc == "--band-per-toy-which" || a_lc == "--title" ||
              a_lc == "--out-pdf" || a_lc == "--out-root" || a_lc == "--out-csv" ||
-             a_lc == "--reference-scan";
+             a_lc == "--reference-scan" || a_lc == "--ratio-to" || a_lc == "--sigma-floor";
     };
     int dst = 1;
     for (int src = 1; src < argc; ++src) {
@@ -1963,7 +2031,7 @@ int main(int argc, char** argv)
           a_lc == "--plain-legend" || a_lc == "--legend-left" ||
           a_lc == "--legend-right" || a_lc == "--dark-photon" ||
           a_lc == "--migdal" || a_lc == "--wimp" || a_lc == "--wimp-minimal" ||
-          a_lc == "--intermediate") {
+          a_lc == "--intermediate" || a_lc == "--legacy-migdal-canvas") {
         continue;
       }
       if (skip_value_flag(a_lc)) {
@@ -1990,6 +2058,7 @@ int main(int argc, char** argv)
   TGraph* glimit = nullptr; // first curve (used by legacy plotting code below)
   TH2D* hq = nullptr;       // first histogram (used for saving below)
   std::vector<std::string> legend_entries_per_graph;
+  std::vector<int> graph_file_index;  // input file each graph in glimits comes from
 
   for (size_t idx_file = 0; idx_file < in_paths.size(); ++idx_file) {
     const std::string in_path = in_paths[idx_file];
@@ -2078,6 +2147,7 @@ int main(int argc, char** argv)
         g_ul->SetPoint(i, mchi_vals_local[i], sigma_lim_vals_local[i]);
       }
       glimits.push_back(g_ul);
+      graph_file_index.push_back(static_cast<int>(idx_file));
       legend_entries_per_graph.push_back(legend_with_suffix(" (UL, q-grid)"));
       mchi_vals.insert(mchi_vals.end(), mchi_vals_local.begin(), mchi_vals_local.end());
       sigma_lim_vals.insert(sigma_lim_vals.end(), sigma_lim_vals_local.begin(), sigma_lim_vals_local.end());
@@ -2107,6 +2177,7 @@ int main(int argc, char** argv)
       for (int i = 0; i < Npoints; ++i)
         g_pb->SetPoint(i, mchi_vals_local[i], sigma_lim_vals_local[i]);
       glimits.push_back(g_pb);
+      graph_file_index.push_back(static_cast<int>(idx_file));
       legend_entries_per_graph.push_back(legend_with_suffix(" (pydme bisection)"));
       mchi_vals.insert(mchi_vals.end(), mchi_vals_local.begin(), mchi_vals_local.end());
       sigma_lim_vals.insert(sigma_lim_vals.end(), sigma_lim_vals_local.begin(), sigma_lim_vals_local.end());
@@ -2174,6 +2245,7 @@ int main(int argc, char** argv)
         g_q->SetPoint(i, mchi_vals_local[i], sigma_lim_vals_local[i]);
       }
       glimits.push_back(g_q);
+      graph_file_index.push_back(static_cast<int>(idx_file));
       legend_entries_per_graph.push_back(legend_with_suffix(" (q-map)"));
       mchi_vals.insert(mchi_vals.end(), mchi_vals_local.begin(), mchi_vals_local.end());
       sigma_lim_vals.insert(sigma_lim_vals.end(), sigma_lim_vals_local.begin(), sigma_lim_vals_local.end());
@@ -2230,6 +2302,71 @@ int main(int argc, char** argv)
     if (!SaveLimitContoursCsv(out_csv_cli, glimits, legend_entries_per_graph,
                               q_thr)) {
       return 1;
+    }
+  }
+
+  // --ratio-to: ratio of every input's curve to the reference input's curve, per mass window.
+  // For each input I use its bisection curve when it was built (--draw-both), otherwise its first curve.
+  if (!ratio_to.empty()) {
+    int ref_file = -1;
+    try {
+      const int n = std::stoi(ratio_to);
+      if (n >= 1 && n <= static_cast<int>(in_paths.size())) ref_file = n - 1;
+    } catch (...) {}
+    if (ref_file < 0) {
+      for (size_t k = 0; k < legend_labels.size(); ++k)
+        if (legend_labels[k] == ratio_to) { ref_file = static_cast<int>(k); break; }
+    }
+    if (ref_file < 0) {
+      std::cerr << "[limit] WARNING: --ratio-to \"" << ratio_to << "\" matches no input; skipping the ratio table.\n";
+    } else {
+      std::map<int, TGraph*> pick;
+      for (std::size_t g = 0; g < glimits.size(); ++g) {
+        if (!glimits[g]) continue;
+        const int f = graph_file_index[g];
+        const bool is_pydme = std::string(glimits[g]->GetName()).find("_pydme") != std::string::npos;
+        if (!pick.count(f) || is_pydme) pick[f] = glimits[g];
+      }
+      TGraph* g_ref = pick.count(ref_file) ? pick[ref_file] : nullptr;
+      if (!g_ref) {
+        std::cerr << "[limit] WARNING: no curve for the reference input; skipping the ratio table.\n";
+      } else {
+        const double xr_lo = TMath::MinElement(g_ref->GetN(), g_ref->GetX());
+        const double xr_hi = TMath::MaxElement(g_ref->GetN(), g_ref->GetX());
+        const double win[][2] = {{0.7, 3.0}, {3.0, 10.0}, {10.0, 30.0}, {30.0, 100.0}, {100.0, 1000.0}};
+        std::cout << "[limit] ratio of each curve to input " << (ref_file + 1) << " (\"" << legend_labels[ref_file]
+                  << "\"); median and 16-84% range per mass window, bigger = weaker limit\n";
+        for (const auto& kv : pick) {
+          const int f = kv.first;
+          if (f == ref_file) continue;
+          TGraph* g = kv.second;
+          int n_floor = 0;
+          for (int i = 0; i < g->GetN(); ++i)
+            if (g->GetY()[i] <= sigma_floor * (1.0 + 1e-6)) ++n_floor;
+          std::cout << "  \"" << legend_labels[f] << "\" (" << g->GetName() << ", " << n_floor
+                    << " of " << g->GetN() << " points on the sigma floor)\n";
+          for (const auto& w : win) {
+            std::vector<double> r;
+            for (int i = 0; i < g->GetN(); ++i) {
+              const double x = g->GetX()[i], y = g->GetY()[i];
+              if (x < w[0] || x >= w[1] || x < xr_lo || x > xr_hi || y <= 0.0) continue;
+              const double yr = g_ref->Eval(x);
+              if (yr > 0.0) r.push_back(y / yr);
+            }
+            if (r.empty()) continue;
+            std::sort(r.begin(), r.end());
+            auto quant = [&](double frac) {  // linear interpolation between order statistics
+              const double pos = frac * static_cast<double>(r.size() - 1);
+              const std::size_t lo = static_cast<std::size_t>(std::floor(pos));
+              const std::size_t hi = std::min(lo + 1, r.size() - 1);
+              return r[lo] + (pos - static_cast<double>(lo)) * (r[hi] - r[lo]);
+            };
+            std::cout << "    " << std::setw(6) << w[0] << " - " << std::setw(6) << w[1] << " MeV  n=" << std::setw(4)
+                      << r.size() << "   " << std::fixed << std::setprecision(2) << quant(0.5) << " ("
+                      << quant(0.16) << " - " << quant(0.84) << ")" << std::defaultfloat << "\n";
+          }
+        }
+      }
     }
   }
 
@@ -2465,10 +2602,21 @@ int main(int argc, char** argv)
           (mediator == "heavy") ? damic_paper_export_heavy
           : (mediator == "light") ? damic_paper_export_light
                                   : (limits_base + damic_file);
-      g_damic_2025 = LoadTxtToTGraph(damic_path, kBlack, 1, 3);
-      if (!g_damic_2025) {
-        std::cerr << "[limit] WARNING: cannot load paper-export reference from "
-                  << damic_path << "\n";
+      // Only call the loader when the file exists, so a plain clone does not print a ROOT error.
+      if (!gSystem->AccessPathName(ResolveRepoPath(damic_path).c_str()))
+        g_damic_2025 = LoadTxtToTGraph(damic_path, kBlack, 1, 3);
+      if (!g_damic_2025 && mediator != "intermediate") {
+        // The paper-export file lives in collab_frameworks/, which is not part of a plain clone:
+        // fall back to the copy of the curve kept with the other literature files.
+        const std::string fallback = limits_base + damic_file;
+        g_damic_2025 = LoadTxtToTGraph(fallback, kBlack, 1, 3);
+        if (g_damic_2025) {
+          std::cerr << "[limit] note: paper-export reference not found at " << damic_path
+                    << "; using " << fallback << "\n";
+        } else {
+          std::cerr << "[limit] WARNING: cannot load the DAMIC-M reference from " << damic_path
+                    << " or " << fallback << "\n";
+        }
       }
     }
     g_sensei       = LoadExclusionCSV(limits_base + "SENSEI.csv", c_xenonnt, 1, 2);
@@ -3208,68 +3356,70 @@ if (!dark_photon && !migdal_mode && !wimp_mode && mediator != "intermediate") {
 
 
 
-  // Legacy Migdal comparison canvas (batch DM-e only — skip for dark photon, migdal, and wimp mode).
+  // Legacy Migdal comparison canvas: only with --legacy-migdal-canvas (batch DM-e only; skipped for
+  // dark photon, migdal and wimp mode). It always writes dme_migdal_limit_curve.{pdf,root} in the
+  // working directory, so it is off by default.
   TCanvas* c_migdal_limit = nullptr;
-  if (batch && !dark_photon && !migdal_mode && !wimp_mode && mediator != "intermediate") {
+  if (batch && legacy_migdal_canvas && !dark_photon && !migdal_mode && !wimp_mode && mediator != "intermediate") {
   // Now we make a new plot for the migdal case
   // ------------------------------------------------------------------
 
-  TGraph* g_damic_2025_migdal   = LoadTxtToTGraph("/Users/diegovenegasvargas/Documents/CCDarkSens/data/previous_limits/Migdal/DAMIC-M_2025_DMn-Migdal_heavymediator.txt",
+  TGraph* g_damic_2025_migdal   = LoadTxtToTGraph("data/previous_limits/Migdal_heavy/DAMIC-M_2025_DMn-Migdal_heavymediator.txt",
                                             kBlack, 1, 3);
 
-  TGraph* g_damic_wimp = LoadExclusionCSV("/Users/diegovenegasvargas/Documents/CCDarkSens/data/previous_limits/WIMP/damicm_fit.csv",
+  TGraph* g_damic_wimp = LoadExclusionCSV("data/previous_limits/WIMP/damicm_fit.csv",
                                             kBlack, 2, 3,1000,1);
 
-  TGraph* g_xenonnt_migdal    = LoadMassLimitDAT("/Users/diegovenegasvargas/Documents/CCDarkSens/data/previous_limits/Migdal/XENON1T-Migdal.dat",
+  TGraph* g_xenonnt_migdal    = LoadMassLimitDAT("data/previous_limits/Migdal_heavy/XENON1T-Migdal.dat",
                                             1e-39, c_xenonnt, 1, 2);
 
-  TGraph* g_xenonnt_wimp    = LoadExclusionCSV("/Users/diegovenegasvargas/Documents/CCDarkSens/data/previous_limits/WIMP/XENONnT_2025.csv",
+  TGraph* g_xenonnt_wimp    = LoadExclusionCSV("data/previous_limits/WIMP/XENONnT_2025.csv",
                                             c_xenonnt, 1, 2,1000,1);
 
-  // TGraph* g_panda4T_migdal    = LoadMassLimitDAT("/Users/diegovenegasvargas/Documents/CCDarkSens/data/previous_limits/Migdal/PANDA4T-Migdal.dat",
+  // TGraph* g_panda4T_migdal    = LoadMassLimitDAT("data/previous_limits/Migdal_heavy/PANDA4T-Migdal.dat",
   //                                           1e-39, c_xenonnt, 1, 2);
 
-  TGraph* g_panda4T_migdal    = LoadExclusionCSV("/Users/diegovenegasvargas/Documents/CCDarkSens/data/previous_limits/Migdal/Pandax_Migdal_2023.csv",
+  TGraph* g_panda4T_migdal    = LoadExclusionCSV("data/previous_limits/Migdal_heavy/Pandax_Migdal_2023.csv",
                                             c_xenonnt, 1, 2,1000,1);
 
-  TGraph* g_panda4T_wimp    = LoadExclusionCSV("/Users/diegovenegasvargas/Documents/CCDarkSens/data/previous_limits/WIMP/PandaX4T_2025.csv",
+  TGraph* g_panda4T_wimp    = LoadExclusionCSV("data/previous_limits/WIMP/PandaX4T_2025.csv",
                                             c_xenonnt, 1, 2, 1000,1);
 
-  TGraph* g_LZ_wimp    = LoadExclusionCSV("/Users/diegovenegasvargas/Documents/CCDarkSens/data/previous_limits/WIMP/LZ_2025.csv",
+  TGraph* g_LZ_wimp    = LoadExclusionCSV("data/previous_limits/WIMP/LZ_2025.csv",
                                             c_xenonnt, 1, 2, 1000,1);
 
-  TGraph* g_darkside50_wimp   = LoadExclusionCSV("/Users/diegovenegasvargas/Documents/CCDarkSens/data/previous_limits/WIMP/DarkSide50_2025.csv",
+  TGraph* g_darkside50_wimp   = LoadExclusionCSV("data/previous_limits/WIMP/DarkSide50_2025.csv",
                                             c_xenonnt, 1, 2, 1000,1);
 
-  TGraph* g_darkside50_migdal   = LoadMassLimitDAT("/Users/diegovenegasvargas/Documents/CCDarkSens/data/previous_limits/Migdal/Darkside-Migdal.dat",
+  TGraph* g_darkside50_migdal   = LoadMassLimitDAT("data/previous_limits/Migdal_heavy/Darkside-Migdal.dat",
                                             1e-39, c_xenonnt, 1, 2);
 
-   TGraph* g_sensei_migdal   = LoadMassLimitDAT("/Users/diegovenegasvargas/Documents/CCDarkSens/data/previous_limits/Migdal/SENSEI-Migdal.dat",
+   TGraph* g_sensei_migdal   = LoadMassLimitDAT("data/previous_limits/Migdal_heavy/SENSEI-Migdal.dat",
                                             1e-35, c_xenonnt, 1, 2);
 
-  TGraph* g_pandax_2022_wimp   = LoadExclusionCSV("/Users/diegovenegasvargas/Documents/CCDarkSens/data/previous_limits/WIMP/PandaX_4T_Wimp_2022.csv",
+  TGraph* g_pandax_2022_wimp   = LoadExclusionCSV("data/previous_limits/WIMP/PandaX_4T_Wimp_2022.csv",
                                             c_xenonnt, 1, 2, 1000,1);
 
-   TGraph* g_xenon1t_2020_wimp   = LoadExclusionCSV("/Users/diegovenegasvargas/Documents/CCDarkSens/data/previous_limits/WIMP/Xenon_1T_Wimp_2020.csv",
+   TGraph* g_xenon1t_2020_wimp   = LoadExclusionCSV("data/previous_limits/WIMP/Xenon_1T_Wimp_2020.csv",
                                             c_xenonnt, 1, 2, 1000,1);
 
                                 
 
   
 
-  // TGraph* g_sensei_migdal  = LoadExclusionCSV("/Users/diegovenegasvargas/Documents/CCDarkSens/data/previous_limits/light_mediator/SENSEI.csv",
+  // TGraph* g_sensei_migdal  = LoadExclusionCSV("data/previous_limits/light_mediator/SENSEI.csv",
   //                                           c_xenonnt, 2, 3);
 
-  // TGraph* g_supercdms_migdal    = LoadExclusionCSV("/Users/diegovenegasvargas/Documents/CCDarkSens/data/previous_limits/light_mediator/SuperCDMS.csv",
+  // TGraph* g_supercdms_migdal    = LoadExclusionCSV("data/previous_limits/light_mediator/SuperCDMS.csv",
   //                                           c_xenonnt, 2, 3);
 
-  // TGraph* g_darkside50_migdal   = LoadExclusionCSV("/Users/diegovenegasvargas/Documents/CCDarkSens/data/previous_limits/light_mediator/DarkSide50.csv",
+  // TGraph* g_darkside50_migdal   = LoadExclusionCSV("data/previous_limits/light_mediator/DarkSide50.csv",
   //                                           c_xenonnt, 2, 3);
 
-  // TGraph* g_panda4T_migdal      = LoadExclusionCSV("/Users/diegovenegasvargas/Documents/CCDarkSens/data/previous_limits/light_mediator/Panda4T.csv",
+  // TGraph* g_panda4T_migdal      = LoadExclusionCSV("data/previous_limits/light_mediator/Panda4T.csv",
   //                                           c_xenonnt, 2, 3);
 
-  // TGraph* g_xenonnT_migdal    = LoadExclusionCSV("/Users/diegovenegasvargas/Documents/CCDarkSens/data/previous_limits/light_mediator/Xenon.csv",
+  // TGraph* g_xenonnT_migdal    = LoadExclusionCSV("data/previous_limits/light_mediator/Xenon.csv",
   //                                           c_xenonnt, 2, 3);
 
   
