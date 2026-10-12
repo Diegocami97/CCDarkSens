@@ -14,6 +14,26 @@ The example that needs it is [`Student_Examples_Row_Cut_Recovered_Events.md`](St
 
 ---
 
+## Start here: the order
+
+Do the sections in this order. The times are what the commands took on the checkout this was written on; the reading is the long part.
+
+| # | Section | What you do | Time |
+|---|---|---|---|
+| 1 | §0–§1 | read the map and the two points in it that are easy to miss | 15 min |
+| 2 | §2 | build the programs; check the files that must be present | 5 min |
+| 3 | §3 (Stage 0) | classify Salma's pair by hand: `{3,1}` for the chain, `{3,2}` for the tree | 1 min |
+| 4 | §4 (Stage 1) | generate the signal tables and check them against the references | 15 s of running |
+| 5 | §5 (Stage 2) | generate the background matrices and check them | 1 min |
+| 6 | §6 (Stage 3) | compute Bp from the rates | instant |
+| 7 | §7 (Stage R) | generate the rate files (605 files). **They are needed from the next step on.** | 1 s |
+| 8 | §8–§10 (Stages 4–6) | read the three scan configs, run the three scans, compare them | 2 min |
+| 9 | §11 | run the whole sequence in one block and compare with the CHECK values | 1 min |
+
+After step 8 every tool has been run and every number read. The next document is [`Student_Examples_Row_Cut_Recovered_Events.md`](Student_Examples_Row_Cut_Recovered_Events.md), which uses these tools on Salma's event.
+
+---
+
 ## 0. How to read this document
 
 Each stage has the same parts: what the program does inside, the usage line with every argument, what the input and output files look like, the check, and what goes wrong. Boxes mark the things worth stopping at.

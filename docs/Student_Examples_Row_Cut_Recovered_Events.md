@@ -14,6 +14,17 @@ Companions: [`Student_Examples_Background_Pattern_Counts.md`](Student_Examples_B
 
 ---
 
+## Start here: the order
+
+1. Read §0 and §1 of this document (the vocabulary and the three questions).
+2. Do [`Student_Examples_Pattern_Pipeline_Walkthrough.md`](Student_Examples_Pattern_Pipeline_Walkthrough.md) from "Start here" to the end of Stage 6 (about 30 minutes of running). It teaches every tool used below.
+3. Come back here for Steps 2–8, which apply those tools to the event on the slides.
+4. Step 9 lists what has to be sent back; steps 4, 5 and 6 are where it is needed.
+
+Steps 7 onward use the full rate grid of the published scan (240,000 files, not in the repository). The walkthrough's Stage R explains how it is generated; the five-mass grid of the walkthrough is enough for everything before Step 7.
+
+---
+
 ## 0. How to read this document
 
 Four labelled boxes appear in every step. They are the point of the document.
