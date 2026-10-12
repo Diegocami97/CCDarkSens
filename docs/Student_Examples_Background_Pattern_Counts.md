@@ -32,6 +32,8 @@ The output has two columns that matter: the **diagonal** term (q = p, the ideal 
 
 ## 2. Check
 
+`utils/background_pattern_counts.py` is an independent Python implementation of the same sum and returns the same numbers from the same config (`python3 utils/background_pattern_counts.py configs/examples/background_pattern_rates.json`); it is kept as a cross-check, see §14.3 of the walkthrough.
+
 For theta = (3, 2, 2) the six values are `156.94, 0.023512, 0.047022, 1.5683e-6, 1.0073e-6, 1.1137e-5`, identical to the numbers `DataSimulator.ipynb` of pydme prints. For theta = (2.9, 2, 2) the `{11}` diagonal term is 141.46, the published 141.4.
 
 ## 3. Can this reproduce the published Bp?

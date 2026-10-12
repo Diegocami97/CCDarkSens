@@ -29,6 +29,7 @@ Do the sections in this order. The times are what the commands took on the check
 | 7 | §7 (Stage R) | generate the rate files (605 files). **They are needed from the next step on.** | 1 s |
 | 8 | §8–§10 (Stages 4–6) | read the three scan configs, run the three scans, compare them | 2 min |
 | 9 | §11 | run the whole sequence in one block and compare with the CHECK values | 1 min |
+| 10 | §14 (optional) | confirm four of the results with independent Python implementations | 2 min |
 
 After step 8 every tool has been run and every number read. The next document is [`Student_Examples_Row_Cut_Recovered_Events.md`](Student_Examples_Row_Cut_Recovered_Events.md), which uses these tools on Salma's event.
 
@@ -233,6 +234,8 @@ gives `{1,1,1}` for both selections.
 
 > **INPUT NEEDED FROM SALMA (S8).** The image ID, CCD names, calibrated charges and the σ (or 1 e⁻ bound) of the CCD for the event. The bound of 0.64 e⁻ was read off her plot.
 
+> **CROSS-CHECK.** `utils/pattern_pvalues.py` re-implements the formulas of the note independently of the C++ classifier (§14.1).
+
 ---
 
 ## 4. Stage 1 — The signal efficiency table P(pattern | n_e)
@@ -340,6 +343,8 @@ Read this honestly. The sums over the six search patterns, which are what the PR
 > **WATCH OUT.** (1) The statistical error of an entry shrinks as 1/√N. At 10⁵ trials a 0.003 entry has a ±0.0002 error; do not read differences below that. (2) A table is only valid with the selection that made it. (3) The `Efficiency` values are not normalised to 1: they are the number of times a pattern was found per image.
 
 > **ASSUMPTION (A3).** The chain implementation follows the data-selection note and the PRL. The n_e = 5 differences show it is not identical to the collaboration's code.
+
+> **CROSS-CHECK.** `utils/compare_tables.py` repeats the table comparison independently (§14.2).
 
 ---
 
@@ -466,6 +471,8 @@ The `{11}` diagonal is 141.5 to 141.7 in all three (this is the published 141.4)
 > **WATCH OUT.** Use the matrix of the same selection as the signal table. With the chain signal table the Bp must come from the chain matrix (rows 32, 41, 311, 221 are empty there and their mass goes to `{31}` and `{211}`); with the pydme tree table, from the tree matrix.
 
 > **WATCH OUT.** The published Bp is (141.4, 0.111, 0.042, 0.019, 2.5e-5, 5.8e-5). This app does not return it: `{11}` matches the diagonal term only, and the other five bins depend on per-band populations and non-Poisson 2 e⁻ and 3 e⁻ pixel counts (184 and 17 in D2) that a uniform rate cannot represent. Use the published numbers for any result meant to reproduce the paper, and this app to understand and vary the background.
+
+> **CROSS-CHECK.** `utils/background_pattern_counts.py` computes the same sum independently (§14.3).
 
 > **INPUT NEEDED FROM SALMA (S4, S6).** `N_pix` after her modified cut (S4), and the isolated 1, 2, 3 e⁻ counts per image and per 10-column group, for the original and the modified cut (S6). Without them, scale Bp by (1 + f) as in the row-cut example.
 
@@ -675,6 +682,8 @@ build/ccdarksens_plot_limit --batch --heavy --ratio-to reference \
 
 > **WATCH OUT.** Add `--draw-both` when a scan has an excess in the data. Without it the plot uses the stored limit, which sits on the sigma floor where q₀ is above threshold, and the ratio is meaningless. The table prints how many points of each curve are on the floor.
 
+> **CROSS-CHECK.** `utils/compare_limit_curves.py` prints the same ratios from the ROOT files without the plot app (§14.4).
+
 > **WATCH OUT.** With `--show-damic` or the literature overlays the program needs the files in `data/previous_limits/`; it finds them from the repository root, so the working directory no longer matters, but a file that is missing from the repository is reported as `ERROR: cannot open CSV file`. The DAMIC-M reference curve is first looked for in `collab_frameworks/` (not part of a plain clone); if it is not there the program prints a `note:` and uses the copy in `data/previous_limits/<mediator>_mediator/`.
 
 ---
@@ -760,6 +769,105 @@ The recipe is in `Pipeline_Raw_Data_to_Limit.md` §15. In terms of the stages ab
 5. Add the code to `experiment.pattern_roi`, a number to `run.background_Bp` and `run.background_Br`, and a count to `run.observed_counts` (stage 4).
 
 > **NEEDED FROM THE COLLABORATION (C2).** `Br` for a new bin comes from the Geant4 simulation (τ_p), which is not in the repository. Until it is supplied the limit has to be given with `Br_new = 0` and with an upper bound, and both stated.
+
+---
+
+## 14. Independent cross-checks in Python
+
+Four small Python scripts in `utils/` repeat one part of the pipeline with a separate implementation. They are not part of the workflow above; they exist so that a number from an app can be confirmed by code written separately. If an app and its script disagree, one of them has a bug, and finding which is the point.
+
+| Script | Cross-checks | Stage | Needs |
+|---|---|---|---|
+| `utils/pattern_pvalues.py` | `ccdarksens_classify_pair` | 0 | standard library |
+| `utils/compare_tables.py` | `ccdarksens_validate_*` with `--new` | 1, 2 | `pandas` |
+| `utils/background_pattern_counts.py` | `ccdarksens_compute_brc --config` | 3 | standard library |
+| `utils/compare_limit_curves.py` | `ccdarksens_plot_limit --draw-both --ratio-to` | 6 | `numpy`, `uproot` (`matplotlib` for `--plot`) |
+
+Run them from the repository root after the §11 block has produced its outputs. In each case the numbers below are the ones that must agree with the stage.
+
+### 14.1 `pattern_pvalues.py` against `ccdarksens_classify_pair`
+
+```bash
+python3 utils/pattern_pvalues.py 3.17 1.85 --bound 0.64
+```
+
+```
+  p_11 = 0.00   p_21 = min(p_21,p_12) = 0.00   p_31 = min(p_31,p_13) = 0.17   p_22 = 1.66
+  p_11 < 4.0: candidate 1+1
+  p_21 < 4.0: promoted to 2+1
+  p_31 < 4.0: promoted to 3+1
+
+  result: {31}   (total charge 5.02 < 5.6)
+```
+
+Same p_mn table and the same `{31}` as Stage 0. Options are the same as the app: `--sigma` or `--bound`, `--left`, `--right`, `--qmax`. The script knows only the chain of the note; the app also runs the tree. A disagreement in a p_mn would mean the C++ classifier differs from the formulas of the note.
+
+### 14.2 `compare_tables.py` against `ccdarksens_validate_*  --new`
+
+```bash
+python3 utils/compare_tables.py signal \
+  --ref data/Efficiencies_patterns_Nsims1000000_DCTrue_alpha1.csv \
+  --new outputs/walkthrough/signal_tree/Efficiencies_patterns.csv \
+  --n-ref 1000000 --n-new 100000
+
+python3 utils/compare_tables.py background \
+  --ref data/Background_efficiencies.csv \
+  --new outputs/walkthrough/background_tree/Background_efficiencies.csv \
+  --n-ref 100000 --n-new 1000000
+```
+
+```
+signal: 80 entries, 49 non-zero in either table
+  RMS pull (non-zero entries): 1.02   chi2/n: 1.03
+  entries beyond 3 sigma: 0 (expected 0.1)   beyond 2 sigma: 3 (expected 2.2)   max |pull|: 2.60
+...
+background: 676 entries, 199 non-zero in either table
+  RMS pull (non-zero entries): 0.98   chi2/n: 0.96
+  entries beyond 3 sigma: 2 (expected 0.5)   beyond 2 sigma: 7 (expected 9.1)   max |pull|: 3.16
+```
+
+These are the lines of Stages 1 and 2, digit for digit. The script always needs `--n-ref` and `--n-new` (the app reads `Nsims=` from the header); `--patterns` restricts the signal comparison and `--out file.csv` writes the per-entry table. Several `--new` files are averaged.
+
+### 14.3 `background_pattern_counts.py` against `ccdarksens_compute_brc`
+
+```bash
+python3 utils/background_pattern_counts.py configs/examples/background_pattern_rates.json \
+  --lambda1 3e-4 --lambda2 2e-4 --lambda3 2e-4
+```
+
+```
+  {11}        1.5694e+02       1.5138e+02       5.5631e+00
+  {21}        2.3512e-02       1.0083e-02       1.3429e-02
+  ...
+  {"background_Bp": [156.942, 0.0235117, 0.0470225, 1.56828e-06, 1.00734e-06, 1.11374e-05]}
+```
+
+Same six numbers as `build/ccdarksens_compute_brc 3 2 2` in Stage 3. The script takes the same config file and the same overrides (`--lambda1`, `--lambda2`, `--lambda3`, `--n-pixels`); it has no `--matrix` flag, so the matrix is the one named in `migration_matrix_csv` of the config (copy the config and edit that line to test another). A table of segments goes in `pixels.segments_csv` as for the app.
+
+### 14.4 `compare_limit_curves.py` against `ccdarksens_plot_limit --draw-both --ratio-to`
+
+```bash
+python3 utils/compare_limit_curves.py \
+  outputs/walkthrough/scan_quick_reference/scan_generic.root \
+  outputs/walkthrough/scan_quick/scan_generic.root \
+  outputs/walkthrough/scan_quick_own_tables/scan_generic.root \
+  --labels reference "chain table" "own Bp"
+```
+
+```
+    window (MeV)     n           chain table                own Bp
+    0.7-    3.0     1      0.91 (0.91-0.91)      0.66 (0.66-0.66)
+    3.0-   10.0     1      1.03 (1.03-1.03)      1.13 (1.13-1.13)
+   10.0-   30.0     1      0.99 (0.99-0.99)      1.02 (1.02-1.02)
+   30.0-  100.0     1      1.00 (1.00-1.00)      0.90 (0.90-0.90)
+  100.0- 1000.0     1      0.81 (0.81-0.81)      0.73 (0.73-0.73)
+```
+
+The script compares the **continuous bisection limit**, so the numbers match the app only with `--draw-both`. Without it the app compares the stored grid-crossing limit, which is what Stage 6 prints (0.98, 1.03, 0.95, 0.93, 0.93). At a single mass the two limits differ by up to 12% (here 0.93 against 0.81 at 200 MeV); for the published counts the window medians over the 800-mass scan differ by 3% (0.7–3 MeV) to 21% (100–1000 MeV). Add `--plot out.png` for a figure and `--sigma-floor` as in the app.
+
+> **WHAT YOU LEARN.** A number that two separately written programs agree on is much more trustworthy than one a single program gives. When they differ, the difference is itself a finding (here: the bisection limit and the stored limit are not the same quantity at a single mass).
+
+> **WATCH OUT.** The scripts are independent re-implementations, not tests that run automatically. If the apps are changed on purpose, the scripts must be changed with them.
 
 ---
 
@@ -861,6 +969,7 @@ Present in the files but **not read** by the generators: all of `run`, `detector
 | `utils/qedark_generate_grid.py`, `python/ccdarkphys/qedark/` | stage R: the grid driver and the QEDark rate code |
 | `apps/ccdarksens_scan_generic.cc` | stages 4–5 |
 | `apps/ccdarksens_plot_limit.cc` | stage 6 |
+| `utils/pattern_pvalues.py`, `utils/compare_tables.py`, `utils/background_pattern_counts.py`, `utils/compare_limit_curves.py` | independent Python cross-checks (§14) |
 | `configs/examples/pattern_signal_eff_{tree_pydme,chain}.json` | stage 1 inputs |
 | `configs/examples/pattern_background_eff{,_chain}.json` | stage 2 inputs |
 | `configs/examples/background_pattern_rates.json` | stage 3 input |
