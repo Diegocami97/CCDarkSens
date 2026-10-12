@@ -1,0 +1,58 @@
+{
+  "_header": "Diego Venegas-Vargas | DAMIC-M collaboration | CCDarkSens Framework -- Input for ccdarksens_pattern_signal_eff: P(pattern | n_e) with the published DAMIC-M selection ('chain'), pydme's diffusion alpha = 0.83 and the 1.5e-4 pile-up of the file header; reproduces the six search-pattern rows of data/efficiencies_paolo.csv at n_e = 2-4.",
+  "_usage": "./build/ccdarksens_pattern_signal_eff configs/examples/pattern_signal_eff_chain.json 1000000 outputs/pattern_signal_eff_chain",
+  "run": {
+    "label": "pattern_signal_eff_chain",
+    "outdir": "outputs/pattern_signal_eff_chain"
+  },
+  "detector": {
+    "rows": 1300,
+    "cols": 6300,
+    "pixel_size_um": 15.0,
+    "thickness_mm": 0.669,
+    "target_element": "Si",
+    "density_g_cm3": 2.329,
+    "mass_kg": 0.01523
+  },
+  "response": {
+    "mode": "pattern",
+    "analysis_space": "pattern",
+    "efficiency_mc": {
+      "sigma_readout_e": 0.16,
+      "Qmin_e": 0.6,
+      "Qmax_e": 5.6,
+      "A_um2": 803.25,
+      "b_umInv": 0.00065,
+      "alpha": 0.83,
+      "beta_per_keV": 0.0,
+      "enable_MN": true,
+      "enable_MNL": true,
+      "rng_seed": 987654321
+    },
+    "pattern_classifier": {
+      "max_e_per_pixel": 5,
+      "Qmin_e": 0.6,
+      "neighbor_Qmax_e": 0.6,
+      "Qmax_e": 5.6,
+      "sigma_res_e": 0.16,
+      "thr_M": 3.5,
+      "thr_MN": 4.0,
+      "thr_MNL": 5.5,
+      "selection": "chain",
+      "chain_max_pair": 3,
+      "chain_allow_22": true,
+      "chain_horizontal_isolation": false,
+      "chain_first_only": true
+    },
+    "pattern_image": {
+      "nrows_binned": 3,
+      "ncols": 50,
+      "row_binning": 100,
+      "col_binning": 1,
+      "pixel_size_um": 15.0,
+      "sigma_readout_e": 0.16,
+      "lambda_dc": 0.00015,
+      "rng_seed": 987654321
+    }
+  }
+}

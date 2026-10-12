@@ -1,0 +1,24 @@
+{
+  "_header": "Diego Venegas-Vargas | DAMIC-M collaboration | CCDarkSens Framework -- Input for ccdarksens_compute_brc --config: per-pixel k-electron rates in, random-coincidence pattern-bin counts B^rc_p out (see docs/Student_Examples_Background_Pattern_Counts.md).",
+  "_usage": "build/ccdarksens_compute_brc --config configs/examples/background_pattern_rates.json",
+
+  "rates": {
+    "_comment": "Mean number of k-electron events per pixel readout. lambda_3plus is used for every pixel holding 3, 4 or 5 electrons. The LBC best-fit values are theta = (2.9, 2.0, 2.0) with lambda_k = theta_k * 1e-4.",
+    "lambda_1": 2.9e-4,
+    "lambda_2": 2.0e-4,
+    "lambda_3plus": 2.0e-4
+  },
+
+  "pixels": {
+    "_comment": "Number of pixel readouts the rates apply to. null = sum of the Nusedpix column of the LBC image table (1,853,807,441).",
+    "n_pixel_readouts": null,
+    "image_table_csv": "data/Final_Combined_Image_Data.csv"
+  },
+
+  "migration_matrix_csv": "data/Background_efficiencies.csv",
+
+  "patterns": [11, 21, 111, 31, 22, 211],
+  "breakdown_pattern": 11,
+
+  "output_json": "outputs/background_pattern_counts/background_Bp.json"
+}

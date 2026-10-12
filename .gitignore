@@ -3,6 +3,9 @@ data/**
 !data/Background_efficiencies.csv
 !data/efficiencies_paolo.csv
 !data/Efficiencies_patterns_Nsims1000000_DCTrue_alpha1.csv
+# Same table extended to n_e = 20 for the absorption / dark-photon n_e-space examples:
+# rows for n_e = 6..20 are appended by hand as pattern {1} with efficiency 1.0 (not simulated).
+!data/Efficiencies_patterns_Nsims1000000_DCTrue_alpha1_ne20.csv
 !data/efficiency_per_pattern.csv
 !data/Final_Combined_Image_Data.csv
 !data/p100K_table.csv
@@ -20,11 +23,13 @@ docs/*.md
 !docs/Framework_Architecture.md
 !docs/GenericScanApp_Design.md
 !docs/LBC_QEDark_Reproduction_Guide.md
+!docs/Pipeline_Raw_Data_to_Limit.md
 !docs/Migdal_Reproduction_Guide.md
 !docs/QCDark2_NE_Exposure_Projections_Guide.md
 !docs/QCDark2_Pattern_Counts_Guide.md
 !docs/Student_Examples_Absorption_LBC.md
 !docs/Student_Examples_Absorption_Projection.md
+!docs/Student_Examples_Background_Pattern_Counts.md
 !docs/Student_Examples_DM_Electron_Heavy_LBC.md
 !docs/Student_Examples_DM_Electron_Heavy_Projection.md
 !docs/Student_Examples_DM_Electron_Intermediate_LBC.md
@@ -33,6 +38,8 @@ docs/*.md
 !docs/Student_Examples_DM_Electron_Light_Projection.md
 !docs/Student_Examples_Migdal_LBC.md
 !docs/Student_Examples_Migdal_Projection.md
+!docs/Student_Examples_Row_Cut_Recovered_Events.md
+!docs/Student_Examples_Pattern_Pipeline_Walkthrough.md
 !docs/Student_Examples_WIMP_DAMIC_M_Projection.md
 !docs/Student_Examples_WIMP_DAMIC_SNOLAB.md
 !docs/WIMP_Nucleon_Reproduction_Guide.md

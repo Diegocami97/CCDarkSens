@@ -1,0 +1,52 @@
+{
+  "_header": "Diego Venegas-Vargas | DAMIC-M collaboration | CCDarkSens Framework -- Walkthrough input: QEDark heavy-mediator rate tables for the five masses of walkthrough_quick_scan.json on a reduced cross-section axis (10^-42 to 10^-34 cm^2), written to data/qedark_rates/Si/heavy/walkthrough/.",
+  "_comment": "Run: python3 utils/qedark_generate_grid.py configs/examples/qedark_generate_walkthrough.json. The five masses are points of the 800-point grid logspace(0.2, 1000, 800), so the same files exist in the long_scan folder.",
+  "material": "Si",
+  "mediator": "heavy",
+  "halo": {
+    "v0_kms": 238.0,
+    "vE_kms": 263.0,
+    "vesc_kms": 544.0
+  },
+  "detector": {
+    "band_gap_eV": 1.2,
+    "eh_pair_eV": 3.8,
+    "binsize_eV": 0.1
+  },
+  "rates_dir": "data/qedark_rates/Si/heavy/walkthrough",
+  "filename_template": "dRdE_{material}_{mediator}_m{mchi_MeV}_s{sigma_e_cm2}.csv",
+  "grid": {
+    "mchi_MeV": {
+      "values": [
+        1.99987,
+        5.995706,
+        19.997409,
+        59.953172,
+        199.961135
+      ]
+    },
+    "sigma_e_cm2": {
+      "logspace": {
+        "start_exp": -42,
+        "stop_exp": -34,
+        "num": 121,
+        "endpoint": true
+      }
+    },
+    "format": {
+      "mchi": ".6f",
+      "sigma": ".1e"
+    }
+  },
+  "options": {
+    "skip_existing": true,
+    "overwrite": false,
+    "compress": false,
+    "parallel": 4,
+    "progress": true,
+    "format": {
+      "mchi": ".6f",
+      "sigma": ".1e"
+    }
+  }
+}
