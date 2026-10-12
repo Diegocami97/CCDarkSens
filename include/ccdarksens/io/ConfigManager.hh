@@ -219,6 +219,11 @@ struct PatternClassifierJSON {
     double thr_MNL          = 5.5;  // threshold for the M+N+L triple, in units of sigma_res_e
     bool   allow_pattern_zero = false;  ///< allow pattern (0) in single-pixel branch (background efficiency)
     bool   single_pixel_use_round = false;  ///< single-pixel = round(q) clamped 1..5 (match reference CSV)
+  std::string selection = "tree";  ///< "tree" (notebook decision tree) or "chain" (DAMIC-M published selection)
+  int    chain_max_pair = 3;  ///< chain: highest pair class (3 = up to 3+1, 4 = also 4+1)
+  bool   chain_allow_22 = true;  ///< chain: label an un-extended 2+1 pair as 2+2 when p_22 passes
+  bool   chain_horizontal_isolation = false;  ///< chain: also veto charged horizontal neighbours
+  bool   chain_first_only = true;  ///< chain: keep only the first multi-pixel pattern per image
 };
 
 // ----------------------------------------------------------------------------

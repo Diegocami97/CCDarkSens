@@ -44,8 +44,10 @@ struct PatternImageConfig {
   /// within the image interior on each GenerateImage() call, matching the Python
   /// reference:  x0 = uniform(x_min+15, x_max-15),  y0 = uniform(y_min+15, y_max-15).
   /// The margin in raw-pixel units is given by center_margin_pix.
-  /// Default false (backward-compatible: fixed center at image midpoint).
-  bool randomize_center    = false;
+  /// Default true: the reference draws a random sub-pixel centre. A fixed centre at
+  /// the image midpoint sits exactly on a pixel corner, splits every cloud
+  /// symmetrically between neighbouring pixels and gives a wrong efficiency table.
+  bool randomize_center    = true;
   double center_margin_pix = 15.0; ///< minimum raw-pixel distance from edge when randomising
 };
 

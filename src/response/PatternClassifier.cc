@@ -93,6 +93,19 @@ double PatternClassifier::pattern_stat_MN(const std::vector<double>& pix,
   return std::min(neg_log_clamped(p1), neg_log_clamped(p2));
 }
 
+// -----------------------------------------------------------------------------
+// StatPairOrdered
+//   p_mn = -log[cdf(q0 ; m) * cdf(q1 ; n)] for the pixels in the given order, with
+//   no minimum over the two orderings (Eq. 9 of the data-selection note).
+// -----------------------------------------------------------------------------
+double PatternClassifier::StatPairOrdered(double q0, double q1, int m, int n) const
+{
+  const double sigma = cfg_.sigma_res_e;
+  if (sigma <= 0.0) return std::abs(q0 - m) + std::abs(q1 - n);
+  return neg_log_clamped(norm_cdf(q0, static_cast<double>(m), sigma) *
+                         norm_cdf(q1, static_cast<double>(n), sigma));
+}
+
 double PatternClassifier::pattern_stat_MNL(const std::vector<double>& pix,
                                           int m, int n, int l) const
 {
@@ -541,6 +554,11 @@ PatternResult PatternClassifier::ScanImage2DWithIsolation(
   if (n < 5 || (int)row_above.size() != n || (int)row_below.size() != n)
     return PatternResult();
 
+  if (cfg_.selection == "chain") {
+    const auto v = scan_chain(row_above, row_middle, row_below, isolation_threshold);
+    return v.empty() ? PatternResult() : v.front();
+  }
+
   const double thr = (isolation_threshold >= 0.0) ? isolation_threshold : cfg_.Qmin_e;
 
   // Match notebook scan_image / scan_image_background: classify first, then check isolation
@@ -597,6 +615,9 @@ std::vector<PatternResult> PatternClassifier::ScanAllImage2DWithIsolation(
       static_cast<int>(row_below.size())  != ncols)
     return {};
 
+  if (cfg_.selection == "chain")
+    return scan_chain(row_above, row_middle, row_below, isolation_threshold);
+
   const double thr = (isolation_threshold >= 0.0) ? isolation_threshold : cfg_.Qmin_e;
   std::vector<PatternResult> results;
 
@@ -643,6 +664,173 @@ std::vector<PatternResult> PatternClassifier::ScanAllImage2DWithIsolation(
     pr.start_idx = i;
     results.push_back(pr);
     i += span;   // Python: i += len(var)
+  }
+  return results;
+}
+
+// =============================================================================
+//  selection == "chain": the DAMIC-M LBC pattern selection
+//
+//  Written from the data-selection note (Eqs. 9-13) and the PRL (End Matter):
+//   - a candidate pair (j, j+1) needs both pixels above Qmin and p_11 < thr_MN, where
+//     p_mn = -log[ cdf(q_j; m) cdf(q_j+1; n) ] with the Gaussian lower-tail cdf;
+//   - the pair is promoted to 2+1 if min(p_21, p_12) < thr_MN, then to 3+1 (and optionally
+//     4+1) if min(p_31, p_13) < thr_MN: a monotone chain, no 3+2 or 4+1 class by default;
+//   - 1+1 and 2+1 are extended to 1+1+1 / 2+1+1 by a third pixel taken as 1e-, on the left
+//     or right, when p_pair - log cdf(q_third; 1) < thr_MNL; an un-extended 2+1 becomes 2+2
+//     if p_22 < thr_MN;
+//   - among overlapping candidates in a run of charged pixels the one with the highest
+//     total charge is kept;
+//   - the rows above and below the pattern columns must be below the isolation threshold;
+//     horizontal neighbours are not vetoed unless chain_horizontal_isolation is set;
+//   - single pixels use the tree's single-pixel branch.
+// =============================================================================
+std::vector<PatternResult> PatternClassifier::scan_chain(
+    const std::vector<double>& row_above,
+    const std::vector<double>& row_middle,
+    const std::vector<double>& row_below,
+    double isolation_threshold) const
+{
+  const int n = static_cast<int>(row_middle.size());
+  std::vector<PatternResult> results;
+  if (n < 5 || static_cast<int>(row_above.size()) != n || static_cast<int>(row_below.size()) != n)
+    return results;
+
+  const double sig  = cfg_.sigma_res_e;
+  const double qmin = cfg_.Qmin_e;
+  const double thr  = (isolation_threshold >= 0.0) ? isolation_threshold : cfg_.Qmin_e;
+  const double thr2 = cfg_.thr_MN;
+  const double thr3 = cfg_.thr_MNL;
+
+  auto nl = [&](double q, double m) { return neg_log_clamped(norm_cdf(q, m, sig)); };
+  auto pair_stat = [&](double a, double b, int m, int k) {
+    return std::min(nl(a, m) + nl(b, k), nl(a, k) + nl(b, m));
+  };
+
+  struct Cand {
+    bool ok = false;
+    std::vector<int> q;
+    int start = 0;
+    int len = 0;
+    int total = 0;
+  };
+
+  auto cand = [&](int j) -> Cand {
+    Cand c;
+    if (j < 0 || j + 1 >= n) return c;
+    const double a = row_middle[static_cast<std::size_t>(j)];
+    const double b = row_middle[static_cast<std::size_t>(j + 1)];
+    if (!(a >= qmin && b >= qmin)) return c;
+    const double p11 = pair_stat(a, b, 1, 1);
+    if (!cfg_.enable_MN || p11 >= thr2) return c;
+
+    std::vector<int> q = {1, 1};
+    double p_cls = p11;
+    const double p21 = pair_stat(a, b, 2, 1);
+    if (p21 < thr2) {
+      q = {2, 1};
+      p_cls = p21;
+      if (cfg_.chain_max_pair >= 3) {
+        const double p31 = pair_stat(a, b, 3, 1);
+        if (p31 < thr2) {
+          q = {3, 1};
+          p_cls = p31;
+          if (cfg_.chain_max_pair >= 4) {
+            const double p41 = pair_stat(a, b, 4, 1);
+            if (p41 < thr2) { q = {4, 1}; p_cls = p41; }
+          }
+        }
+      }
+    }
+
+    int start = j, len = 2;
+    const bool extendable = (q == std::vector<int>{1, 1}) || (q == std::vector<int>{2, 1});
+    if (extendable) {
+      double best_extra = std::numeric_limits<double>::infinity();
+      int side = 0;
+      if (cfg_.enable_MNL) {
+        if (j + 2 < n && row_middle[static_cast<std::size_t>(j + 2)] >= qmin) {
+          const double e = nl(row_middle[static_cast<std::size_t>(j + 2)], 1.0);
+          if (e < best_extra) { best_extra = e; side = +1; }
+        }
+        if (j - 1 >= 0 && row_middle[static_cast<std::size_t>(j - 1)] >= qmin) {
+          const double e = nl(row_middle[static_cast<std::size_t>(j - 1)], 1.0);
+          if (e < best_extra) { best_extra = e; side = -1; }
+        }
+      }
+      if (side != 0 && p_cls + best_extra < thr3) {
+        q.push_back(1);
+        len = 3;
+        start = (side < 0) ? j - 1 : j;
+      } else if (q == std::vector<int>{2, 1} && cfg_.chain_allow_22 && pair_stat(a, b, 2, 2) < thr2) {
+        q = {2, 2};
+      }
+    }
+    c.ok = true;
+    c.q = q;
+    c.start = start;
+    c.len = len;
+    for (int d : q) c.total += d;
+    return c;
+  };
+
+  bool got_multi = false;
+  int j = 0;
+  while (j < n - 1) {
+    if (row_middle[static_cast<std::size_t>(j)] < qmin) { ++j; continue; }
+
+    Cand best = cand(j);
+    if (!best.ok) {
+      // lone pixel: the tree's single-pixel branch (needs empty horizontal neighbours)
+      std::vector<double> seg(5, 0.0);
+      seg[0] = (j > 0) ? row_middle[static_cast<std::size_t>(j - 1)] : 0.0;
+      for (int k = 0; k < 4; ++k)
+        seg[static_cast<std::size_t>(k + 1)] = (j + k < n) ? row_middle[static_cast<std::size_t>(j + k)] : 0.0;
+      PatternResult pr = classify_from_seed(seg, 1);
+      if (pr.valid && pr.cluster_size == 1 && pr.total_charge_e < cfg_.Qmax_e &&
+          row_above[static_cast<std::size_t>(j)] < thr && row_below[static_cast<std::size_t>(j)] < thr) {
+        pr.start_idx = j;
+        results.push_back(pr);
+      }
+      ++j;
+      continue;
+    }
+
+    for (int k = j + 1; k <= j + 2 && k < n - 1; ++k) {
+      if (!(row_middle[static_cast<std::size_t>(k - 1)] >= qmin)) break;
+      const Cand c = cand(k);
+      if (c.ok && c.total > best.total) best = c;
+    }
+
+    bool iso = true;
+    double sum = 0.0;
+    for (int k = best.start; k < best.start + best.len; ++k) {
+      const auto u = static_cast<std::size_t>(k);
+      if (row_above[u] >= thr || row_below[u] >= thr) iso = false;
+      sum += row_middle[u];
+    }
+    if (cfg_.chain_horizontal_isolation) {
+      if (best.start - 1 >= 0 && row_middle[static_cast<std::size_t>(best.start - 1)] >= qmin) iso = false;
+      if (best.start + best.len < n && row_middle[static_cast<std::size_t>(best.start + best.len)] >= qmin) iso = false;
+    }
+    if (sum >= cfg_.Qmax_e) iso = false;
+
+    if (!iso) { ++j; continue; }
+
+    if (cfg_.chain_first_only && got_multi) {
+      j = best.start + best.len;   // a second multi-pixel pattern in the same image is dropped
+      continue;
+    }
+    PatternResult pr;
+    pr.valid = true;
+    pr.start_idx = best.start;
+    pr.cluster_size = best.len;
+    pr.total_charge_e = sum;
+    pr.label.q = best.q;
+    pr.label.isolated = true;
+    results.push_back(pr);
+    got_multi = true;
+    j = best.start + best.len;
   }
   return results;
 }

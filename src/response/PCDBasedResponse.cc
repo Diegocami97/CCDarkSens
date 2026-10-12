@@ -68,7 +68,7 @@ PCDBasedResponse::BuildPCDTable(int ne_min, int ne_max, double Ee_ref_eV)
       pixSim.Reset();
 
       // Sample electron cloud
-      std::vector<double> xs(ne_true), ys(ne_true);
+      std::vector<double> xs, ys;  // SampleCloudXY appends, so these start empty
       // NOTE for review: SampleCloudXY's third argument is the lateral width sigma_xy [um],
       // but I pass Ee_ref_eV here, so in this (reserved) PCD path the width is the
       // reference energy value itself (zero by default). The dark-current call below is
@@ -76,7 +76,7 @@ PCDBasedResponse::BuildPCDTable(int ne_min, int ne_max, double Ee_ref_eV)
       ct_->SampleCloudXY(0.0, 0.0, Ee_ref_eV, ne_true, xs, ys);
 
       // Deposit electrons
-      for (int i = 0; i < ne_true; ++i) {
+      for (std::size_t i = 0; i < xs.size(); ++i) {
         pixSim.DepositElectron(xs[i], ys[i]);
       }
 

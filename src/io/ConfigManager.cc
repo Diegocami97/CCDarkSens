@@ -352,6 +352,13 @@ void ConfigManager::parse_response_(const nlohmann::json& jr) {
     pc.thr_MNL         = jc.value("thr_MNL",         pc.thr_MNL);
     pc.allow_pattern_zero = jc.value("allow_pattern_zero", pc.allow_pattern_zero);
     pc.single_pixel_use_round = jc.value("single_pixel_use_round", pc.single_pixel_use_round);
+    pc.selection       = jc.value("selection",       pc.selection);
+    pc.chain_max_pair  = jc.value("chain_max_pair",  pc.chain_max_pair);
+    pc.chain_allow_22  = jc.value("chain_allow_22",  pc.chain_allow_22);
+    pc.chain_horizontal_isolation = jc.value("chain_horizontal_isolation", pc.chain_horizontal_isolation);
+    pc.chain_first_only = jc.value("chain_first_only", pc.chain_first_only);
+    if (pc.selection != "tree" && pc.selection != "chain")
+      throw std::runtime_error("response.pattern_classifier.selection must be \"tree\" or \"chain\"");
   }
 
   // 2D image size and binning for pattern efficiency (notebook-style)

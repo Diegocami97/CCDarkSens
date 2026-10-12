@@ -111,12 +111,12 @@ void EfficiencyMC::BuildPatternTable(int ne_min, int ne_max, double Ee_eV)
 
       pixSim.Reset();
 
-      std::vector<double> xs(ne_true), ys(ne_true);
+      std::vector<double> xs, ys;  // SampleCloudXY appends, so these start empty
       const double z_um = ct_->SampleDepthUm();
       const double sigma_xy_um = ct_->SigmaXYUm(z_um, Ee_eV);
       ct_->SampleCloudXY(0.0, 0.0, sigma_xy_um, ne_true, xs, ys);
 
-      for (int i = 0; i < ne_true; ++i) {
+      for (std::size_t i = 0; i < xs.size(); ++i) {
         pixSim.DepositElectron(xs[i], ys[i]);
       }
 
@@ -182,11 +182,11 @@ void EfficiencyMC::PrintExampleRows(int ne, double Ee_eV, int n_examples,
 
   for (int ex = 0; ex < n_examples; ++ex) {
     pixSim.Reset();
-    std::vector<double> xs(ne), ys(ne);
+    std::vector<double> xs, ys;  // SampleCloudXY appends, so these start empty
     const double z_um = ct_->SampleDepthUm();
     const double sigma_xy_um = ct_->SigmaXYUm(z_um, Ee_eV);
     ct_->SampleCloudXY(0.0, 0.0, sigma_xy_um, ne, xs, ys);
-    for (int i = 0; i < ne; ++i) {
+    for (std::size_t i = 0; i < xs.size(); ++i) {
       pixSim.DepositElectron(xs[i], ys[i]);
     }
     if (cfg_.include_dc_pileup) pixSim.AddDarkCurrent();

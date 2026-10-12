@@ -265,6 +265,11 @@ ResponseFactoryResult MakePatternOrNeSpaceFold(const ConfigManager& cfg,
   pcc.thr_MNL = pcc_temp.thr_MNL;
   pcc.allow_pattern_zero = pcc_temp.allow_pattern_zero;
   pcc.single_pixel_use_round = pcc_temp.single_pixel_use_round;
+  pcc.selection = pcc_temp.selection;
+  pcc.chain_max_pair = pcc_temp.chain_max_pair;
+  pcc.chain_allow_22 = pcc_temp.chain_allow_22;
+  pcc.chain_horizontal_isolation = pcc_temp.chain_horizontal_isolation;
+  pcc.chain_first_only = pcc_temp.chain_first_only;
   auto classifier = std::make_shared<PatternClassifier>(pcc);
 
   auto emc_ptr = std::make_shared<EfficiencyMC>(emc_cfg, ct, classifier);

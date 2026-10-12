@@ -55,6 +55,25 @@ struct PatternClassifierConfig {
   /// If true, single-pixel branch uses round(q) clamped to 1..5 instead of
   /// sequential Pm threshold (matches reference Background_efficiencies.csv diagonal).
   bool single_pixel_use_round = false;
+
+  /// Multi-pixel selection rule used by the 2D image scans.
+  ///   "tree"  : the notebook decision tree of efficiencies.py (default; horizontal
+  ///             isolation, 311/221/32/41 classes). Reproduces the pydme tables.
+  ///   "chain" : the selection of the DAMIC-M LBC analysis (data-selection note,
+  ///             Eqs. 9-13, and PRL 135, 071002): a pair passing p_11 < thr_MN is promoted
+  ///             to 2+1 if p_21 < thr_MN and then to 3+1 if p_31 < thr_MN; 1+1 and 2+1 are
+  ///             extended to 1+1+1 / 2+1+1 by a third 1e- pixel on either side if
+  ///             p < thr_MNL; the candidate with the highest total charge wins; only the
+  ///             rows above and below are required to be clean. Single pixels still use
+  ///             the tree's single-pixel branch.
+  std::string selection = "tree";
+  int  chain_max_pair = 3;          ///< highest pair class in the chain: 3 => up to 3+1, 4 => also 4+1
+  bool chain_allow_22 = true;       ///< label a 2+1 pair with no triple extension as 2+2 if p_22 < thr_MN
+  bool chain_horizontal_isolation = false;  ///< also require empty horizontal neighbours (the note does not)
+  /// A single injected deposit yields at most one multi-pixel pattern: after the first accepted
+  /// multi-pixel pattern, later multi-pixel candidates are dropped (single pixels are still all counted).
+  /// Set to false when scanning real images that can hold many patterns.
+  bool chain_first_only = true;
 };
 
 // -----------------------------------------------------------------------------
@@ -151,6 +170,23 @@ public:
   ClassifyLocalPatch(const std::vector<double>& qpix,
                      int NX, int NY) const;
 
+  // -------------------------------------------------------------------------
+  // Identification statistics, exposed so a candidate can be checked by hand
+  // (ccdarksens_classify_pair). Each is -log of a product of lower-tail Gaussian
+  // CDFs with the configured readout noise; a pattern passes when it is below the
+  // corresponding threshold.
+  //   StatSingle      : -log cdf(q ; m)
+  //   StatPairOrdered : -log[cdf(q0 ; m) cdf(q1 ; n)]            (p_mn, Eq. 9)
+  //   StatPair        : min(p_mn, p_nm)                           (Eqs. 10, 11)
+  //   StatTriple      : -log[cdf(q0 ; m) cdf(q1 ; n) cdf(q2 ; l)] (p_mnl)
+  // -------------------------------------------------------------------------
+  double StatSingle(double q, int m) const { return pattern_stat_M({q}, m); }
+  double StatPairOrdered(double q0, double q1, int m, int n) const;
+  double StatPair(double q0, double q1, int m, int n) const { return pattern_stat_MN({q0, q1}, m, n); }
+  double StatTriple(double q0, double q1, double q2, int m, int n, int l) const {
+    return pattern_stat_MNL({q0, q1, q2}, m, n, l);
+  }
+
 private:
   PatternClassifierConfig cfg_;
 
@@ -186,6 +222,12 @@ private:
   // which pattern (M / MN / MNL) best matches, including isolation tests.
   PatternResult classify_from_seed(const std::vector<double>& row,
                                    int seed_idx) const;
+
+  // selection == "chain": scan the middle row of a 3-row image (see PatternClassifierConfig).
+  std::vector<PatternResult> scan_chain(const std::vector<double>& row_above,
+                                        const std::vector<double>& row_middle,
+                                        const std::vector<double>& row_below,
+                                        double isolation_threshold) const;
 };
 
 } // namespace ccdarksens

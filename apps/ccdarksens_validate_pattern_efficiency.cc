@@ -13,6 +13,15 @@
 //
 //  Usage:
 //    ccdarksens_validate_pattern_efficiency [n_trials_per_ne] [ref_csv_path]
+//    ccdarksens_validate_pattern_efficiency [n_trials_per_ne] [ref_csv_path] --config cfg.json
+//    ccdarksens_validate_pattern_efficiency [ref_csv_path] --new t1.csv [t2.csv ...]
+//                                           [--n-ref N] [--n-new N] [--patterns c ...] [--out f.csv]
+//
+//  Without flags the app runs its built-in reference simulation (the constants below).
+//  With --config it generates the table from the config of ccdarksens_pattern_signal_eff,
+//  so generator and validator use the same code and parameters. With --new it does not
+//  simulate: it compares existing tables (averaged) with the reference by a pooled
+//  two-sample binomial test and exits 0 when the RMS pull is <= 1.5.
 //
 //  Defaults: n_trials = 200000, ref = data/Efficiencies_patterns_Nsims1000000_DCTrue_alpha1.csv
 // ===========================================================================
@@ -31,10 +40,12 @@
 
 #include <TH1D.h>
 
+#include "ccdarksens/io/ConfigManager.hh"
 #include "ccdarksens/response/ChargeTransport.hh"
 #include "ccdarksens/response/EfficiencyMC.hh"
 #include "ccdarksens/response/PatternClassifier.hh"
 #include "ccdarksens/response/PatternImageGenerator.hh"
+#include "ccdarksens/response/PatternTables.hh"
 
 using namespace ccdarksens;
 
@@ -90,11 +101,30 @@ int main(int argc, char** argv)
     const int ne_min = 1;
     const int ne_max = 5;
 
-    int ne_trials = 200000;
-    if (argc >= 2) { try { ne_trials = std::stoi(argv[1]); } catch (...) {} }
+    const TableCheckArgs args = ParseTableCheckArgs(argc, argv);
 
+    // With --new the first positional is the reference path; otherwise it is n_trials.
+    const bool csv_mode = !args.new_files.empty();
+    int ne_trials = 200000;
     std::string ref_csv = "data/Efficiencies_patterns_Nsims1000000_DCTrue_alpha1.csv";
-    if (argc >= 3) ref_csv = argv[2];
+    if (csv_mode) {
+        if (args.positional.size() >= 1) ref_csv = args.positional[0];
+        return RunCsvTableComparison(true, ref_csv, args);
+    }
+    if (args.positional.size() >= 1) { try { ne_trials = std::stoi(args.positional[0]); } catch (...) {} }
+    if (args.positional.size() >= 2) ref_csv = args.positional[1];
+
+    // --config: same generation code and parameters as ccdarksens_pattern_signal_eff.
+    if (!args.config.empty()) {
+        ConfigManager cfg(args.config);
+        cfg.parse();
+        const PatternTableSetup setup = MakePatternTableSetup(cfg, /*background_mode=*/false);
+        std::cout << "[validate] config=" << args.config << "  selection=" << setup.selection
+                  << "  alpha=" << setup.alpha << "  lambda_dc=" << setup.lambda_dc
+                  << "  trials/n_e=" << ne_trials << "\n";
+        const PatternTable table = GenerateSignalTable(setup, ne_trials, ne_max);
+        return RunGeneratedTableComparison(true, ref_csv, table, ne_trials, args);
+    }
 
     // Physics
     const double A_um2        = 803.25;

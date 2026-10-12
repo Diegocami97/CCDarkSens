@@ -12,6 +12,13 @@
 cmake_minimum_required(VERSION 3.18)
 project(ccdarksens LANGUAGES CXX)
 
+# Optimised build by default: without a build type CMake compiles with no optimisation, and the
+# pattern Monte Carlo and the scans run more than ten times slower (measured: 99 s against 7 s
+# for 10^5 images per n_e). A build type given on the command line is kept.
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
+endif()
+
 # Match the ROOT toolchain in use
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -50,6 +57,7 @@ add_library(ccdarksens_core
     src/response/PCDBasedResponse.cc
     src/response/PixelSimulator.cc
     src/response/PatternClassifier.cc
+    src/response/PatternTables.cc
     src/response/EfficiencyMC.cc
     src/response/PatternImageGenerator.cc
     src/response/PatternRates.cc
@@ -198,6 +206,26 @@ target_link_libraries(ccdarksens_plot_limit
 
 # NOTE: ccdarksens_scan_dmelectron_toy removed — hardcoded 3-event tutorial app,
 # no config file, no output file. Source kept in apps/.
+
+# Hand check of one pair or triple of pixels: p_mn statistics and the label the
+# PatternClassifier returns for the chain and tree selections.
+add_executable(ccdarksens_classify_pair
+  apps/ccdarksens_classify_pair.cc)
+target_link_libraries(ccdarksens_classify_pair
+  PRIVATE ccdarksens_core
+          ROOT::Core ROOT::Hist
+          nlohmann_json::nlohmann_json)
+set_target_properties(ccdarksens_classify_pair PROPERTIES
+  RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/build)
+
+add_executable(ccdarksens_pattern_signal_eff
+  apps/ccdarksens_pattern_signal_eff.cc)
+target_link_libraries(ccdarksens_pattern_signal_eff
+  PRIVATE ccdarksens_core
+          ROOT::Core ROOT::RIO ROOT::Hist
+          nlohmann_json::nlohmann_json)
+set_target_properties(ccdarksens_pattern_signal_eff PROPERTIES
+  RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/build)
 
 add_executable(ccdarksens_pattern_background_eff
   apps/ccdarksens_pattern_background_eff.cc)

@@ -20,6 +20,15 @@
 //
 //  Usage:
 //    ccdarksens_validate_background_efficiency [n_trials] [ref_csv_path]
+//    ccdarksens_validate_background_efficiency [n_trials] [ref_csv_path] --config cfg.json
+//    ccdarksens_validate_background_efficiency [ref_csv_path] --new m1.csv [m2.csv ...]
+//                                              [--n-ref N] [--n-new N] [--out f.csv]
+//
+//  Without flags the app runs its built-in reference simulation (the constants below).
+//  With --config it generates the matrix from the config of ccdarksens_pattern_background_eff,
+//  so generator and validator use the same code and parameters. With --new it does not
+//  simulate: it compares existing matrices (averaged) with the reference by a pooled
+//  two-sample binomial test and exits 0 when the RMS pull is <= 1.5.
 //
 //  Defaults: n_trials = 100000, ref = data/Background_efficiencies.csv
 // ===========================================================================
@@ -35,9 +44,11 @@
 #include <string>
 #include <vector>
 
+#include "ccdarksens/io/ConfigManager.hh"
 #include "ccdarksens/response/ChargeTransport.hh"
 #include "ccdarksens/response/PatternClassifier.hh"
 #include "ccdarksens/response/PatternImageGenerator.hh"
+#include "ccdarksens/response/PatternTables.hh"
 
 using namespace ccdarksens;
 
@@ -132,11 +143,28 @@ int main(int argc, char** argv)
     // -----------------------------------------------------------------------
     // Parameters — must match the Python reference (same thresholds/noise)
     // -----------------------------------------------------------------------
-    int n_trials = 100000;
-    if (argc >= 2) { try { n_trials = std::stoi(argv[1]); } catch (...) {} }
+    const TableCheckArgs args = ParseTableCheckArgs(argc, argv);
 
+    // With --new the first positional is the reference path; otherwise it is n_trials.
+    int n_trials = 100000;
     std::string ref_csv = "data/Background_efficiencies.csv";
-    if (argc >= 3) ref_csv = argv[2];
+    if (!args.new_files.empty()) {
+        if (args.positional.size() >= 1) ref_csv = args.positional[0];
+        return RunCsvTableComparison(false, ref_csv, args);
+    }
+    if (args.positional.size() >= 1) { try { n_trials = std::stoi(args.positional[0]); } catch (...) {} }
+    if (args.positional.size() >= 2) ref_csv = args.positional[1];
+
+    // --config: same generation code and parameters as ccdarksens_pattern_background_eff.
+    if (!args.config.empty()) {
+        ConfigManager cfg(args.config);
+        cfg.parse();
+        const PatternTableSetup setup = MakePatternTableSetup(cfg, /*background_mode=*/true);
+        std::cout << "[validate_bg] config=" << args.config << "  selection=" << setup.selection
+                  << "  trials/pattern=" << n_trials << "\n";
+        const PatternTable matrix = GenerateBackgroundMatrix(setup, n_trials);
+        return RunGeneratedTableComparison(false, ref_csv, matrix, n_trials, args);
+    }
 
     const double sigma_ro  = 0.16;
     const double Qmin_e    = 0.60;    // 3.75 * 0.16
