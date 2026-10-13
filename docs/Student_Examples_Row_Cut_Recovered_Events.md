@@ -355,7 +355,26 @@ wait
 
 Plots are made at one confidence level, 90% C.L. by default (`--cl 0.90`, one-sided asymptotic, q = 1.642): every curve is rebuilt from the q(m_χ, σ) histogram stored in its own scan file (`--from-qhist`, the default), so all curves are computed the same way. The limit at a mass is where q(σ) crosses the threshold (1.642).
 
-With two events in `{31}` against 0.07 expected, q at σ → 0 is **already above the threshold** for many masses. There is no crossing there, the curve drops to the lowest σ of the grid (1e-46 cm²), and the log says `upper_limit=1e-46`. That value is not a limit: read it as "the data prefer a signal at this mass". On a plot it is a vertical line down to the bottom of the axis.
+With the excess in the data, q at σ → 0 is **already above the threshold** for many masses. There is no crossing there, the curve drops to the lowest σ of the grid (1e-46 cm²), and the log says `upper_limit=1e-46`. That value is not a limit. On a plot it is a vertical line down to the bottom of the axis.
+
+#### Why the curve is cut, and why it looks random
+
+Measured on scan A (the same holds for B and C):
+
+1. **The cut is a threshold effect on q at σ → 0.** In the stored q-map q(σ → 0) is q₀ = 2 (NLL of the background-only fit − NLL of the best fit). Where the best fit has a signal, q₀ is positive. The largest q₀ is 1.81 for A, 1.79 for C and 2.09 for B, against a threshold of 1.642: that is **1.3σ to 1.4σ** one-sided, only just over the threshold. It is not the 2.8σ of the single-bin count of §10: the same signal would also put events in `{21}` and `{111}`, where zero were seen, and that costs most of the gain.
+2. **Why q₀ makes the curve vanish.** The scan forces q to be non-decreasing in σ (`MonotonizeQ`, a running maximum starting at σ = 10⁻⁴⁶). The real q(σ) first falls to zero at the best fit σ̂ and then rises, so the part above σ̂ would cross 1.642 and give a limit. After the running maximum, q stays at q₀ = 1.78 up to the point where the true q exceeds it, and it never starts below 1.642: there is no crossing. Example (m = 174 MeV, A): the profiled NLL is −752.465 at σ = 0, −753.309 at 1.1×10⁻³⁸, −753.350 at 1.7×10⁻³⁸, −752.997 at 3.1×10⁻³⁸ and −751.036 at 6.8×10⁻³⁸; the true q would cross 1.642 near 4×10⁻³⁸, which is the continuous limit of §9.2.
+3. **Why it looks random.** The reference level of q is the minimum from a two-parameter (σ, θ) Minuit fit, when it succeeds. In the flat region the fit sometimes returns a *boundary* solution (σ̂ = 10⁻⁴⁶, NLL equal to the background-only one) instead of the true minimum 0.89 lower. Then q₀ = 0 and the limit survives. At m = 172 MeV the fit returned NLL = −752.465 at the boundary, at 174 MeV it found −753.356 at σ̂ = 1.5×10⁻³⁸. The signal shapes at 172 and 174 MeV differ by 1%, and the true profiled minimum is −753.349 at both. In the scan log of A, 36 of the 201 masses that report a 2D fit ended on the boundary, and 599 masses report none (the grid minimum is used).
+
+So the vertical lines have two causes: the excess pushes q₀ just above the threshold (real), and whether a given mass is cut depends on a minimizer outcome (an artefact). Published counts are not affected: q₀ ≤ 0.17 at every mass.
+
+| Run | Largest q₀ | Mass with the largest q₀ | Masses with q₀ > 1.642 (of 800) |
+|---|---|---|---|
+| published | 0.17 | – | 0 |
+| A ({31} = 2) | 1.81 | 948 MeV | 271 |
+| C ({11} = 158) | 1.79 | 0.8 MeV | 103 (all between 0.7 and 2.0 MeV, where the signal is entirely in `{11}`) |
+| B | 2.09 | 958 MeV | 466 |
+
+The continuous limit of §9.2 does not use the monotonized q and does not have this problem.
 
 | Run | Curve points with no crossing |
 |---|---|
@@ -409,7 +428,7 @@ Measured with this checkout (median ratio of the limit to the published one over
 | 30 – 100 | 1.42 | 1.05 | 1.66 | 1.66 | 1.42 |
 | 100 – 1000 | 1.42 | 1.05 | 1.66 | 1.66 | 1.42 |
 
-The two tables answer different questions. The q-map says "at these masses the data allow an upper limit by crossing, and it is this much higher". The continuous limit says "if you quote a one-sided upper limit above the best fit at every mass, it is this much higher". The fact that most of the heavy-mass region has no crossing in A, B, D and E is itself the main result: two events in `{31}` against 0.07 expected make the data prefer a signal there. The limit staircase at the n_e thresholds makes differences between two columns smaller than about 10% noise.
+The two tables answer different questions. The q-map says "at these masses the data allow an upper limit by crossing, and it is this much higher". The continuous limit says "if you quote a one-sided upper limit above the best fit at every mass, it is this much higher". That most of the heavy-mass region has no crossing in A, B, D and E is the consequence of §9.1: q₀ sits just above the threshold (1.3σ to 1.4σ) and the monotonization turns that into "no limit"; which masses are cut also depends on the minimizer. It is not evidence for a signal. The limit staircase at the n_e thresholds makes differences between two columns smaller than about 10% noise.
 
 ### 9.3 Hand checks
 

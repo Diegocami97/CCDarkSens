@@ -624,7 +624,7 @@ build/ccdarksens_scan_generic configs/examples/dm_electron_heavy_lbc_1p3kgday.js
 
 > **CHECK.** The reference quick scan at m_χ = 5.99571 MeV gives `upper_limit=6.08338e-39`, within 0.1% of the published scan (`6.07699e-39`); at all five masses within 0.5%.
 
-> **WATCH OUT.** `upper_limit=1e-46` is the *bottom* of the cross-section grid, not a limit. It appears when the data prefer a signal so strongly that q(σ → 0) is already above the threshold, so there is no crossing. Do not read the stored value at those masses; in the plot (next stage, `--from-qhist`) they appear as a vertical line down to the bottom of the σ grid. `upper_limit=1e-26` is the *top* of the grid: no signal was found, usually because the mass or the rates folder is wrong (stage R).
+> **WATCH OUT.** `upper_limit=1e-46` is the *bottom* of the cross-section grid, not a limit. It appears when q(σ → 0), the improvement of the best fit over the background-only fit, is already above the threshold, so there is no crossing; the scan forces q to be non-decreasing, so a fit that prefers a small signal removes the limit at that mass. The row-cut example (§9.1) shows this on scan A, where the largest q(σ → 0) is only 1.81 against 1.642. Do not read the stored value at those masses; in the plot (next stage, `--from-qhist`) they appear as a vertical line down to the bottom of the σ grid. `upper_limit=1e-26` is the *top* of the grid: no signal was found, usually because the mass or the rates folder is wrong (stage R).
 
 > **ASSUMPTION (A6).** The 90% threshold is the asymptotic 1.642. For few counts in `{31}` the toy threshold is higher, and the limit would be weaker; `run.mode = "threshold_toys"` in this app and `ccdarksens_band` calibrate it.
 
