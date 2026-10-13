@@ -12,12 +12,16 @@
 //  stays as the reference for the DM-electron plots (see
 //  docs/GenericScanApp_Design.md). Literature files are found relative to the
 //  repository root, not only the working directory; --ratio-to prints the ratio
-//  of every curve to a reference curve per mass window.
+//  of every curve to a reference curve per mass window. Every limit is plotted at
+//  one confidence level, 90% C.L. by default (one-sided asymptotic, q = 1.642),
+//  rebuilt from the q-map of each scan file; the level is printed in the log, in
+//  the CSV header and on the plot, and any other threshold is shown there too.
 // ===========================================================================
 
 #include <cmath>
 #include <cctype>
 #include <cstdlib>
+#include <cstdio>
 #include <iomanip>
 #include <iostream>
 #include <string>
@@ -196,6 +200,7 @@ static bool SaveLimitContoursCsv(const std::string& path,
   }
   out << "# Upper-limit contour: mchi_MeV vs sigma_e_cm2 (dark_photon: mA_eV vs epsilon)\n";
   out << "# q_threshold=" << q_threshold << "\n";
+  out << "# cl_one_sided=" << 0.5 * (1.0 + TMath::Erf(std::sqrt(std::max(q_threshold, 0.0)) / std::sqrt(2.0))) << "\n";
   const bool multi = (glimits.size() > 1);
   if (multi) {
     out << "label,mchi_MeV,sigma_e_cm2\n";
@@ -1645,7 +1650,13 @@ int main(int argc, char** argv)
     std::cerr << "Usage: " << argv[0]
               << " scan_dmelectron_grid.root [\"label\"] [q_threshold] [mediator]\n"
               << "  Optional flags:\n"
-              << "    --from-qhist    Build limit from q(mchi,sigma) histogram even if upper_limit_sigma_e_mchi exists.\n"
+              << "    --cl <x>        Confidence level of every plotted limit (default 0.90): one-sided asymptotic,\n"
+              << "                    q = NormQuantile(x)^2 (0.90 -> 1.6424). Printed in the log, the CSV header and on the plot.\n"
+              << "    --q-threshold <q>  Use this q instead of the one of --cl (also the old positional number). The plot is\n"
+              << "                    then labelled with the threshold and its one-sided C.L., not with 90%.\n"
+              << "    --use-stored-limit  Use the limit stored in the scan file (at the C.L. the scan was run with)\n"
+              << "                    instead of rebuilding it from the q-map at --cl.\n"
+              << "    --from-qhist    Build limit from q(mchi,sigma) histogram (the default for DM-electron plots).\n"
               << "    --draw-both     Draw stored UL and pydme bisection diagnostic (or q-map if bisection graph absent).\n"
               << "    --dark-photon   Dark photon absorption plot (m_{A'} vs #varepsilon); "
               << "loads data/previous_limits/dark_photon/ (.csv and .txt).\n"
@@ -1695,7 +1706,15 @@ int main(int argc, char** argv)
   bool migdal_mode = false;
   bool wimp_mode = false;
   bool wimp_minimal = false;  // --wimp-minimal: only observed (black) + our scan curve(s) (red)
-  double q_thr = 2.71; // default ~90% CL, 1 dof
+  // Confidence level of every plotted limit. The default is 90% C.L., one-sided asymptotic (the
+  // convention of the scan, run.cl = 0.90): q = NormQuantile(0.90)^2 = 1.6424. A different level
+  // comes from --cl; an explicit threshold (--q-threshold, or the old positional number) is kept
+  // but labelled as such, so a plot never carries "90%" with another threshold.
+  double cl_value = 0.90;
+  double q_thr = 0.0;                 // set after parsing
+  bool q_thr_explicit = false;        // --q-threshold or positional number given
+  double q_thr_cli = 0.0;
+  bool use_stored_limit = false;      // --use-stored-limit
   std::string mediator = "heavy";
 
   // --band <band.root>: optional sensitivity-band file produced by
@@ -1785,6 +1804,9 @@ int main(int argc, char** argv)
       force_from_qhist = true;
       continue;
     }
+    if (tok_lc == "--cl" && i + 1 < argc) { cl_value = std::stod(argv[++i]); continue; }
+    if (tok_lc == "--q-threshold" && i + 1 < argc) { q_thr_cli = std::stod(argv[++i]); q_thr_explicit = true; continue; }
+    if (tok_lc == "--use-stored-limit") { use_stored_limit = true; continue; }
     if (tok_lc == "--legacy-migdal-canvas") {
       legacy_migdal_canvas = true;
       continue;
@@ -1950,7 +1972,8 @@ int main(int argc, char** argv)
 
     double v = 0.0;
     if (is_number_token(tok, v)) {
-      q_thr = v;
+      q_thr_cli = v;
+      q_thr_explicit = true;
       continue;
     }
   }
@@ -1995,7 +2018,29 @@ int main(int argc, char** argv)
     std::cout << "  - " << in_paths[i] << " (label=\"" << legend_labels[i] << "\""
               << (is_ref ? ", reference" : "") << ")\n";
   }
-  std::cout << "[limit] q_threshold = " << q_thr << "\n";
+  // Confidence level and threshold. One-sided asymptotic: q = NormQuantile(CL)^2; the C.L. of a
+  // threshold q is Phi(sqrt(q)).
+  const double q_cl = std::pow(TMath::NormQuantile(cl_value), 2);
+  q_thr = q_thr_explicit ? q_thr_cli : q_cl;
+  const double cl_of_q = 0.5 * (1.0 + TMath::Erf(std::sqrt(std::max(q_thr, 0.0)) / std::sqrt(2.0)));
+  const bool q_is_standard = std::abs(q_thr - q_cl) < 1e-3 * std::max(1.0, q_cl);
+  char cl_buf[128];
+  if (q_is_standard)
+    std::snprintf(cl_buf, sizeof(cl_buf), "#bf{%.0f%% C.L.}", 100.0 * cl_value);
+  else
+    std::snprintf(cl_buf, sizeof(cl_buf), "#bf{q_{thr} = %.2f (%.1f%% C.L. one-sided)}", q_thr, 100.0 * cl_of_q);
+  const std::string cl_label = cl_buf;
+  // Rebuild every DM-electron curve from the q-map unless the stored limit was asked for, so that
+  // all limits are at the same C.L.; --draw-both keeps the stored and continuous curves too.
+  if (!use_stored_limit && !draw_both && !dark_photon && !migdal_mode) force_from_qhist = true;
+  std::cout << "[limit] confidence level = " << 100.0 * cl_of_q << "% one-sided asymptotic, q_threshold = "
+            << q_thr << (q_is_standard ? "  (standard: --cl " + std::to_string(cl_value) + ")" : "  (NOT the standard 90% C.L.)")
+            << "\n";
+  if (q_thr_explicit && !q_is_standard)
+    std::cout << "[limit] WARNING: threshold q = " << q_thr << " given on the command line is "
+              << 100.0 * cl_of_q << "% C.L. one-sided, not " << 100.0 * cl_value << "%; the plot says so.\n";
+  if (use_stored_limit || draw_both)
+    std::cout << "[limit] note: stored and continuous curves are at the C.L. of the scan (run.cl), not at --cl.\n";
   std::cout << "[limit] mediator = " << mediator << " (literature curves)\n";
   if (draw_both) {
     std::cout << "[limit] Drawing stored UL (q-grid) and pydme bisection diagnostic (or q-map fallback).\n";
@@ -2016,7 +2061,8 @@ int main(int argc, char** argv)
       return a_lc == "--band" || a_lc == "--band-mode" ||
              a_lc == "--band-per-toy-which" || a_lc == "--title" ||
              a_lc == "--out-pdf" || a_lc == "--out-root" || a_lc == "--out-csv" ||
-             a_lc == "--reference-scan" || a_lc == "--ratio-to" || a_lc == "--sigma-floor";
+             a_lc == "--reference-scan" || a_lc == "--ratio-to" || a_lc == "--sigma-floor" ||
+             a_lc == "--cl" || a_lc == "--q-threshold";
     };
     int dst = 1;
     for (int src = 1; src < argc; ++src) {
@@ -2031,7 +2077,8 @@ int main(int argc, char** argv)
           a_lc == "--plain-legend" || a_lc == "--legend-left" ||
           a_lc == "--legend-right" || a_lc == "--dark-photon" ||
           a_lc == "--migdal" || a_lc == "--wimp" || a_lc == "--wimp-minimal" ||
-          a_lc == "--intermediate" || a_lc == "--legacy-migdal-canvas") {
+          a_lc == "--intermediate" || a_lc == "--legacy-migdal-canvas" ||
+          a_lc == "--use-stored-limit") {
         continue;
       }
       if (skip_value_flag(a_lc)) {
@@ -3297,6 +3344,14 @@ if (!dark_photon && !migdal_mode && !wimp_mode && mediator != "intermediate") {
     }
   }
 
+  {
+    // Confidence level of every limit on the plot, in the top-left corner of the frame.
+    TLatex cl_tex;
+    cl_tex.SetNDC();
+    cl_tex.SetTextFont(42);
+    cl_tex.SetTextSize(0.04);
+    cl_tex.DrawLatex(gPad->GetLeftMargin() + 0.03, 1.0 - gPad->GetTopMargin() - 0.06, cl_label.c_str());
+  }
   leg->Draw();
 
   if (!plot_title.empty()) {

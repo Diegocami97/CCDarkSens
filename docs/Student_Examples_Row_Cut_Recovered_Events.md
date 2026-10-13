@@ -353,7 +353,7 @@ wait
 
 ### 9.1 What the q-map shows when the data have an excess
 
-Plots are made with `--from-qhist`: every curve is rebuilt from the q(m_χ, σ) histogram stored in its own scan file, so all curves are computed the same way. The limit at a mass is where q(σ) crosses the threshold (1.642).
+Plots are made at one confidence level, 90% C.L. by default (`--cl 0.90`, one-sided asymptotic, q = 1.642): every curve is rebuilt from the q(m_χ, σ) histogram stored in its own scan file (`--from-qhist`, the default), so all curves are computed the same way. The limit at a mass is where q(σ) crosses the threshold (1.642).
 
 With two events in `{31}` against 0.07 expected, q at σ → 0 is **already above the threshold** for many masses. There is no crossing there, the curve drops to the lowest σ of the grid (1e-46 cm²), and the log says `upper_limit=1e-46`. That value is not a limit: read it as "the data prefer a signal at this mass". On a plot it is a vertical line down to the bottom of the axis.
 
@@ -370,7 +370,7 @@ With two events in `{31}` against 0.07 expected, q at σ → 0 is **already abov
 
 ```bash
 mkdir -p outputs/row_cut_recovered_events
-build/ccdarksens_plot_limit --batch --heavy --from-qhist --ratio-to 1 \
+build/ccdarksens_plot_limit --batch --heavy --ratio-to 1 \
   --x-min 0.7 --x-max 1000 --y-min 1e-40 --y-max 1e-33 \
   --out-pdf outputs/row_cut_recovered_events/limit_compare.pdf \
   --out-root outputs/row_cut_recovered_events/limit_compare.root \
@@ -380,11 +380,10 @@ build/ccdarksens_plot_limit --batch --heavy --from-qhist --ratio-to 1 \
   outputs/dm_electron_heavy_lbc_rowcut_B/scan_generic.root "B" \
   outputs/dm_electron_heavy_lbc_rowcut_C/scan_generic.root "C" \
   outputs/dm_electron_heavy_lbc_rowcut_D/scan_generic.root "D" \
-  outputs/dm_electron_heavy_lbc_rowcut_E/scan_generic.root "E" \
-  1.642374415149816 heavy
+  outputs/dm_electron_heavy_lbc_rowcut_E/scan_generic.root "E"
 ```
 
-`--ratio-to 1` is the first input. `--y-min` keeps the floor values off the plot. The app prints, for each curve and window, the median ratio and how many masses of the window have a crossing (`n of N`); masses with no crossing are left out.
+Every curve is plotted at 90% C.L. (the default of `--cl`; the plot is labelled "90% C.L."), rebuilt from the q-map of its own file. `--ratio-to 1` is the first input. `--y-min` keeps the floor values off the plot. The app prints, for each curve and window, the median ratio and how many masses of the window have a crossing (`n of N`); masses with no crossing are left out.
 
 **What the plot should look like.** The published curve has its minimum near 4×10⁻³⁹ cm² at about 10 MeV. A to E follow it above the published curve between 2 and 30 MeV, by the ratios below. Then each of them drops to the bottom of the axis at a mass that depends on the run: C near 2 MeV, B near 15 MeV, A near 40 MeV, E near 30 MeV. Above that the curves are absent at most masses and reappear only in two mass bands, around 120–200 MeV and 400–600 MeV. The published curve rises smoothly to 10³ MeV. The vertical lines are the "no crossing" masses of §9.1, not a plotting defect; they show where the excess makes q(0) exceed the threshold.
 

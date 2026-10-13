@@ -214,7 +214,7 @@ build/ccdarksens_plot_dmelectron_limit --batch --draw-both --show-damic \
 | `--draw-both` | Draw primary UL (`upper_limit_sigma_e_mchi_graph`) and pydme bisection diagnostic (if present) |
 | `--show-damic` | Overlay canonical pydme paper-export reference curve |
 | `--out-pdf` | Output plot path |
-| `1.642374415149816` | 90% CL threshold (optional; default is 2.71 for a different convention — use this value for pydme parity) |
+| `1.642374415149816` | 90% C.L. threshold (optional: the app derives it from `--cl`, default 0.90, and no longer needs the number; a different value is accepted, flagged in the log and labelled on the plot) |
 | `heavy` / `light` | Selects which pydme reference file to load |
 
 ### Compare both mediators on one plot

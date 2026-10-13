@@ -635,17 +635,20 @@ build/ccdarksens_scan_generic configs/examples/dm_electron_heavy_lbc_1p3kgday.js
 **Usage.**
 
 ```bash
-build/ccdarksens_plot_limit --batch --heavy --from-qhist [--show-damic]
+build/ccdarksens_plot_limit --batch --heavy [--cl 0.90] [--show-damic]
     [--ratio-to N|LABEL] [--sigma-floor X] [--x-min X --x-max X --y-min Y --y-max Y]
     [--out-pdf F] [--out-root F] [--out-csv F]
-    scan1.root "label1" [scan2.root "label2" ...] 1.642374415149816 heavy
+    scan1.root "label1" [scan2.root "label2" ...]
 ```
 
 | Flag | Effect |
 |---|---|
 | `--batch` | no window; write the files and exit |
 | `--heavy`, `--light`, `--intermediate` | which mediator's literature curves to overlay |
-| `--from-qhist` | **always use this one.** Build every curve from the q(m_χ, σ) histogram stored in its own scan file, so all curves are computed the same way. Where q at σ → 0 is already above the threshold there is no crossing and the curve is drawn on the floor of the σ grid |
+| `--cl X` | **the confidence level of every plotted limit; default 0.90.** One-sided asymptotic, q = NormQuantile(X)² (0.90 gives 1.6424, the value of the scan). It is printed in the log, written in the CSV header and drawn on the plot as "90% C.L." |
+| `--from-qhist` | the default for DM-electron plots: every curve is rebuilt from the q(m_χ, σ) histogram stored in its own scan file, at `--cl`, so all curves are computed the same way. Where q at σ → 0 is already above the threshold there is no crossing and the curve is drawn on the floor of the σ grid |
+| `--use-stored-limit` | use the limit stored in the scan file instead; it is at the C.L. the scan was run with (`run.cl`) |
+| `--q-threshold Q` | a threshold other than the one of `--cl` (the old positional number does the same). Accepted but flagged: the log warns and the plot is labelled "q_thr = Q (…% C.L. one-sided)", never "90%" |
 | `--x-min`, `--x-max`, `--y-min`, `--y-max` | axis ranges; use them to zoom, or to keep floor values off the plot |
 | `--draw-both` | additionally draw the continuous bisection limit (used for the cross-check of §14.4; not needed for the plots) |
 | `--show-damic` | overlay the published DAMIC-M curve |
@@ -654,20 +657,21 @@ build/ccdarksens_plot_limit --batch --heavy --from-qhist [--show-damic]
 | `--out-csv F` | write every curve as `label,mchi_MeV,sigma_e_cm2` |
 | `--legacy-migdal-canvas` | also write the old Migdal projection canvas (off by default; it writes `dme_migdal_limit_curve.*` in the working directory) |
 
-The trailing `1.642374415149816 heavy` are the q threshold and the mediator, kept for compatibility.
+**One confidence level for every plot.** All limits are drawn at 90% C.L. unless `--cl` says otherwise. Older commands ended with `1.642374415149816 heavy`; the number is the 90% value and is now derived from `--cl`, and `--heavy` already gives the mediator, so both can be left out. A different number (for example `2.71`, which is 95.0% one-sided) is still accepted, but the log prints `WARNING … not 90%` and the label on the plot shows the threshold, so a plot can no longer carry "90%" with another threshold by accident.
 
 **Compare the three quick scans.**
 
 ```bash
-build/ccdarksens_plot_limit --batch --heavy --from-qhist --ratio-to reference \
+build/ccdarksens_plot_limit --batch --heavy --ratio-to reference \
   --out-pdf outputs/walkthrough/limit_compare.pdf \
   --out-root outputs/walkthrough/limit_compare.root \
   --out-csv outputs/walkthrough/limit_compare.csv \
   outputs/walkthrough/scan_quick_reference/scan_generic.root "reference" \
   outputs/walkthrough/scan_quick/scan_generic.root "chain table" \
-  outputs/walkthrough/scan_quick_own_tables/scan_generic.root "own Bp" \
-  1.642374415149816 heavy
+  outputs/walkthrough/scan_quick_own_tables/scan_generic.root "own Bp"
 ```
+
+The log starts with `[limit] confidence level = 90% one-sided asymptotic, q_threshold = 1.64237 (standard: --cl 0.900000)`; the same level is in the CSV header (`# cl_one_sided=0.9`) and in the top-left corner of the plot.
 
 ```
 [limit] Forcing curve build from q(mchi,sigma) histogram.
@@ -688,7 +692,7 @@ build/ccdarksens_plot_limit --batch --heavy --from-qhist --ratio-to reference \
 
 (`n = 1 of 1` per window because the quick scans have five masses; with the full 800-mass scans the same table gives window medians. "n of N" counts the masses that have a crossing out of the masses of the window. The ratio is computed at the masses of the curve being compared, by interpolating the reference.)
 
-**What the plots should look like** (`--out-pdf outputs/walkthrough/limit_compare.pdf`): the three curves are short segments between 2 and 200 MeV that lie on the published DAMIC-M line, which is the check that the rates, the signal table and the configs are right. Zoom with `--x-min 1.5 --x-max 300 --y-min 2e-39 --y-max 5e-36` to see them: at 2–4 MeV the own-Bp curve is below the other two, and above 20 MeV the chain-table curves are a few percent below the reference. The curves are straight between points because there are only five masses.
+**What the plots should look like** (`--out-pdf outputs/walkthrough/limit_compare.pdf`, labelled "90% C.L." in the top-left corner): the three curves are short segments between 2 and 200 MeV that lie on the published DAMIC-M line, which is the check that the rates, the signal table and the configs are right. Zoom with `--x-min 1.5 --x-max 300 --y-min 2e-39 --y-max 5e-36` to see them: at 2–4 MeV the own-Bp curve is below the other two, and above 20 MeV the chain-table curves are a few percent below the reference. The curves are straight between points because there are only five masses.
 
 > **WATCH OUT.** When the data have an excess the q-map has no crossing at some masses (q at σ → 0 is above the threshold). The curve then drops to the bottom of the σ grid there, which looks like a vertical line on a plot; it means "no limit from this method at this mass", and the data prefer a signal. The table prints how many points of each curve are on the floor and leaves them out of the ratio (the `n of N` column). Use `--y-min` to keep the floor off the plot.
 
@@ -738,12 +742,12 @@ build/ccdarksens_scan_generic configs/examples/walkthrough_quick_scan.json
 build/ccdarksens_scan_generic configs/examples/walkthrough_quick_scan_own_tables.json
 
 # 6. compare with the reference
-build/ccdarksens_plot_limit --batch --heavy --from-qhist --ratio-to reference \
+build/ccdarksens_plot_limit --batch --heavy --ratio-to reference \
   --out-pdf outputs/walkthrough/limit_compare.pdf --out-root outputs/walkthrough/limit_compare.root \
   --out-csv outputs/walkthrough/limit_compare.csv \
   outputs/walkthrough/scan_quick_reference/scan_generic.root "reference" \
   outputs/walkthrough/scan_quick/scan_generic.root "chain table" \
-  outputs/walkthrough/scan_quick_own_tables/scan_generic.root "own Bp" 1.642374415149816 heavy
+  outputs/walkthrough/scan_quick_own_tables/scan_generic.root "own Bp"
 ```
 
 The numbers each stage must give are the boxes marked CHECK above.

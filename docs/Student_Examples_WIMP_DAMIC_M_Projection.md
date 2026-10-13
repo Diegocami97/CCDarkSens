@@ -77,7 +77,7 @@ build/ccdarksens_plot_limit --batch --wimp-minimal \
   2.71 heavy
 ```
 
-**`q_threshold = 2.71`, not `1.642374415149816`** — same reasoning as the SNOLAB companion doc §6: `2.71` is `ccdarksens_plot_limit`'s own default (the standard Δχ²=2.71 one-sided convention), correct for this `profile_minimizer: brent` channel; `1.642374415149816` is the asymptotic Cowan et al. value validated for the pydme-style channels only.
+**`q_threshold = 2.71`, not `1.642374415149816`** — same reasoning as the SNOLAB companion doc §6: `2.71` is the standard Δχ²=2.71 convention (the old default of `ccdarksens_plot_limit`; the app now defaults to 90% C.L. one-sided, 1.6424, so pass `2.71` explicitly: the log then warns and the plot is labelled "q_thr = 2.71" instead of "90% C.L."), correct for this `profile_minimizer: brent` channel; `1.642374415149816` is the asymptotic Cowan et al. value validated for the pydme-style channels only.
 
 `--wimp-minimal` loads only the DAMIC 2016 paper's trusted observed curve and its expected ±1σ band (dropping `--wimp`'s extra secondary curves — median, two uncertain-provenance digitizations, and a literature DAMIC-M-projected-1kg-year curve — kept out here for a cleaner comparison; use plain `--wimp` if you want those back). A rendered copy is checked in at [`wimp_damicm_combined.pdf`](wimp_damicm_combined.pdf). Both DAMIC-M curves sit far below the DAMIC 2016 band, as expected for a much lower-noise, hypothetical future detector.
 
