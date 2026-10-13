@@ -2347,13 +2347,23 @@ int main(int argc, char** argv)
                     << " of " << g->GetN() << " points on the sigma floor)\n";
           for (const auto& w : win) {
             std::vector<double> r;
+            int n_window = 0;  // masses of the window, valid or not
             for (int i = 0; i < g->GetN(); ++i) {
               const double x = g->GetX()[i], y = g->GetY()[i];
-              if (x < w[0] || x >= w[1] || x < xr_lo || x > xr_hi || y <= 0.0) continue;
+              if (x < w[0] || x >= w[1] || x < xr_lo || x > xr_hi) continue;
+              ++n_window;
+              // A point on the sigma floor has no crossing (q_0 above threshold): it is not a limit,
+              // so it is left out of the ratio, and the count of valid points is printed.
+              if (y <= sigma_floor * (1.0 + 1e-6)) continue;
               const double yr = g_ref->Eval(x);
-              if (yr > 0.0) r.push_back(y / yr);
+              if (y > 0.0 && yr > 0.0 && yr > sigma_floor * (1.0 + 1e-6)) r.push_back(y / yr);
             }
-            if (r.empty()) continue;
+            if (r.empty()) {
+              if (n_window > 0)
+                std::cout << "    " << std::setw(6) << w[0] << " - " << std::setw(6) << w[1]
+                          << " MeV  no mass with a crossing (0 of " << n_window << ")\n";
+              continue;
+            }
             std::sort(r.begin(), r.end());
             auto quant = [&](double frac) {  // linear interpolation between order statistics
               const double pos = frac * static_cast<double>(r.size() - 1);
@@ -2362,7 +2372,7 @@ int main(int argc, char** argv)
               return r[lo] + (pos - static_cast<double>(lo)) * (r[hi] - r[lo]);
             };
             std::cout << "    " << std::setw(6) << w[0] << " - " << std::setw(6) << w[1] << " MeV  n=" << std::setw(4)
-                      << r.size() << "   " << std::fixed << std::setprecision(2) << quant(0.5) << " ("
+                      << r.size() << " of " << std::setw(4) << n_window << "   " << std::fixed << std::setprecision(2) << quant(0.5) << " ("
                       << quant(0.16) << " - " << quant(0.84) << ")" << std::defaultfloat << "\n";
           }
         }

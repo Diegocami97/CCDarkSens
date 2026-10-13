@@ -624,7 +624,7 @@ build/ccdarksens_scan_generic configs/examples/dm_electron_heavy_lbc_1p3kgday.js
 
 > **CHECK.** The reference quick scan at m_χ = 5.99571 MeV gives `upper_limit=6.08338e-39`, within 0.1% of the published scan (`6.07699e-39`); at all five masses within 0.5%.
 
-> **WATCH OUT.** `upper_limit=1e-46` is the *bottom* of the cross-section grid, not a limit. It appears when the data prefer a signal so strongly that q(σ → 0) is already above the threshold, so there is no crossing. Compare against the bisection limit in the plot app (next stage) and do not read the stored value at those masses. `upper_limit=1e-26` is the *top* of the grid: no signal was found, usually because the mass or the rates folder is wrong (stage R).
+> **WATCH OUT.** `upper_limit=1e-46` is the *bottom* of the cross-section grid, not a limit. It appears when the data prefer a signal so strongly that q(σ → 0) is already above the threshold, so there is no crossing. Do not read the stored value at those masses; in the plot (next stage, `--from-qhist`) they appear as a vertical line down to the bottom of the σ grid. `upper_limit=1e-26` is the *top* of the grid: no signal was found, usually because the mass or the rates folder is wrong (stage R).
 
 > **ASSUMPTION (A6).** The 90% threshold is the asymptotic 1.642. For few counts in `{31}` the toy threshold is higher, and the limit would be weaker; `run.mode = "threshold_toys"` in this app and `ccdarksens_band` calibrate it.
 
@@ -635,8 +635,9 @@ build/ccdarksens_scan_generic configs/examples/dm_electron_heavy_lbc_1p3kgday.js
 **Usage.**
 
 ```bash
-build/ccdarksens_plot_limit --batch --heavy [--draw-both] [--show-damic]
-    [--ratio-to N|LABEL] [--sigma-floor X] [--out-pdf F] [--out-root F] [--out-csv F]
+build/ccdarksens_plot_limit --batch --heavy --from-qhist [--show-damic]
+    [--ratio-to N|LABEL] [--sigma-floor X] [--x-min X --x-max X --y-min Y --y-max Y]
+    [--out-pdf F] [--out-root F] [--out-csv F]
     scan1.root "label1" [scan2.root "label2" ...] 1.642374415149816 heavy
 ```
 
@@ -644,7 +645,9 @@ build/ccdarksens_plot_limit --batch --heavy [--draw-both] [--show-damic]
 |---|---|
 | `--batch` | no window; write the files and exit |
 | `--heavy`, `--light`, `--intermediate` | which mediator's literature curves to overlay |
-| `--draw-both` | draw the stored limit and the continuous bisection limit |
+| `--from-qhist` | **always use this one.** Build every curve from the q(m_χ, σ) histogram stored in its own scan file, so all curves are computed the same way. Where q at σ → 0 is already above the threshold there is no crossing and the curve is drawn on the floor of the σ grid |
+| `--x-min`, `--x-max`, `--y-min`, `--y-max` | axis ranges; use them to zoom, or to keep floor values off the plot |
+| `--draw-both` | additionally draw the continuous bisection limit (used for the cross-check of §14.4; not needed for the plots) |
 | `--show-damic` | overlay the published DAMIC-M curve |
 | `--ratio-to N` or a label | print, per mass window, the median (16–84%) ratio of every other curve to input N (1-based) or to the input with that label |
 | `--sigma-floor X` | the lowest cross section of the scan grid (default 1e-46); points at it are reported as "no crossing" |
@@ -656,7 +659,7 @@ The trailing `1.642374415149816 heavy` are the q threshold and the mediator, kep
 **Compare the three quick scans.**
 
 ```bash
-build/ccdarksens_plot_limit --batch --heavy --ratio-to reference \
+build/ccdarksens_plot_limit --batch --heavy --from-qhist --ratio-to reference \
   --out-pdf outputs/walkthrough/limit_compare.pdf \
   --out-root outputs/walkthrough/limit_compare.root \
   --out-csv outputs/walkthrough/limit_compare.csv \
@@ -667,24 +670,27 @@ build/ccdarksens_plot_limit --batch --heavy --ratio-to reference \
 ```
 
 ```
+[limit] Forcing curve build from q(mchi,sigma) histogram.
 [limit] ratio of each curve to input 1 ("reference"); median and 16-84% range per mass window, bigger = weaker limit
-  "chain table" (g_dme_limit_1_ul, 0 of 5 points on the sigma floor)
-         0.7 -      3 MeV  n=   1   0.98 (0.98 - 0.98)
-         3 -     10 MeV  n=   1   1.03 (1.03 - 1.03)
-        10 -     30 MeV  n=   1   0.95 (0.95 - 0.95)
-        30 -  1e+02 MeV  n=   1   0.93 (0.93 - 0.93)
-     1e+02 -  1e+03 MeV  n=   1   0.93 (0.93 - 0.93)
-  "own Bp" (g_dme_limit_2_ul, 0 of 5 points on the sigma floor)
-         0.7 -      3 MeV  n=   1   0.63 (0.63 - 0.63)
-         3 -     10 MeV  n=   1   1.03 (1.03 - 1.03)
-        10 -     30 MeV  n=   1   0.95 (0.95 - 0.95)
-        30 -  1e+02 MeV  n=   1   0.94 (0.94 - 0.94)
-     1e+02 -  1e+03 MeV  n=   1   0.93 (0.93 - 0.93)
+  "chain table" (g_dme_limit_1_q, 0 of 5 points on the sigma floor)
+         0.7 -      3 MeV  n=   1 of    1   0.98 (0.98 - 0.98)
+         3 -     10 MeV  n=   1 of    1   1.03 (1.03 - 1.03)
+        10 -     30 MeV  n=   1 of    1   0.95 (0.95 - 0.95)
+        30 -  1e+02 MeV  n=   1 of    1   0.93 (0.93 - 0.93)
+     1e+02 -  1e+03 MeV  n=   1 of    1   0.93 (0.93 - 0.93)
+  "own Bp" (g_dme_limit_2_q, 0 of 5 points on the sigma floor)
+         0.7 -      3 MeV  n=   1 of    1   0.63 (0.63 - 0.63)
+         3 -     10 MeV  n=   1 of    1   1.03 (1.03 - 1.03)
+        10 -     30 MeV  n=   1 of    1   0.95 (0.95 - 0.95)
+        30 -  1e+02 MeV  n=   1 of    1   0.94 (0.94 - 0.94)
+     1e+02 -  1e+03 MeV  n=   1 of    1   0.93 (0.93 - 0.93)
 ```
 
-(n = 1 per window because the quick scans have five masses; with the full 800-mass scans the same table gives window medians. The ratio is computed at the masses of the curve being compared, by interpolating the reference.)
+(`n = 1 of 1` per window because the quick scans have five masses; with the full 800-mass scans the same table gives window medians. "n of N" counts the masses that have a crossing out of the masses of the window. The ratio is computed at the masses of the curve being compared, by interpolating the reference.)
 
-> **WATCH OUT.** Add `--draw-both` when a scan has an excess in the data. Without it the plot uses the stored limit, which sits on the sigma floor where q₀ is above threshold, and the ratio is meaningless. The table prints how many points of each curve are on the floor.
+**What the plots should look like** (`--out-pdf outputs/walkthrough/limit_compare.pdf`): the three curves are short segments between 2 and 200 MeV that lie on the published DAMIC-M line, which is the check that the rates, the signal table and the configs are right. Zoom with `--x-min 1.5 --x-max 300 --y-min 2e-39 --y-max 5e-36` to see them: at 2–4 MeV the own-Bp curve is below the other two, and above 20 MeV the chain-table curves are a few percent below the reference. The curves are straight between points because there are only five masses.
+
+> **WATCH OUT.** When the data have an excess the q-map has no crossing at some masses (q at σ → 0 is above the threshold). The curve then drops to the bottom of the σ grid there, which looks like a vertical line on a plot; it means "no limit from this method at this mass", and the data prefer a signal. The table prints how many points of each curve are on the floor and leaves them out of the ratio (the `n of N` column). Use `--y-min` to keep the floor off the plot.
 
 > **CROSS-CHECK.** `utils/compare_limit_curves.py` prints the same ratios from the ROOT files without the plot app (§14.4).
 
@@ -732,7 +738,7 @@ build/ccdarksens_scan_generic configs/examples/walkthrough_quick_scan.json
 build/ccdarksens_scan_generic configs/examples/walkthrough_quick_scan_own_tables.json
 
 # 6. compare with the reference
-build/ccdarksens_plot_limit --batch --heavy --ratio-to reference \
+build/ccdarksens_plot_limit --batch --heavy --from-qhist --ratio-to reference \
   --out-pdf outputs/walkthrough/limit_compare.pdf --out-root outputs/walkthrough/limit_compare.root \
   --out-csv outputs/walkthrough/limit_compare.csv \
   outputs/walkthrough/scan_quick_reference/scan_generic.root "reference" \
@@ -752,7 +758,7 @@ The numbers each stage must give are the boxes marked CHECK above.
 | every `upper_limit=1e-26` | no rate file was found: the masses or cross sections of the scan config are not the ones the generator wrote, or `model.rates_dir` is wrong | `ls` the folder; use the same mass values (six decimals) and σ axis in both configs |
 | `ModuleNotFoundError: numpy` in stage R | Python without numpy | install numpy; it is the only Python dependency |
 | the generator ran and nothing changed | `options.skip_existing` is true and the files exist | set `overwrite` to true, or use a new `rates_dir` |
-| `upper_limit=1e-46` at many masses | q(σ→0) above threshold (excess in the data); no crossing | use the bisection limit (`--draw-both`) and read it as "data prefer a signal here" |
+| `upper_limit=1e-46` at many masses | q(σ→0) above threshold (excess in the data); no crossing | read it as "the data prefer a signal here"; in the `--from-qhist` plot it is a vertical line; the continuous limit (`--draw-both`, §14.4) gives a one-sided limit above the best fit |
 | a changed matrix does not move the limit | the scan uses the pasted `background_Bp`, not the matrix | recompute Bp with `ccdarksens_compute_brc` and paste it |
 | RMS pull ≫ 1 against a reference | the table was made with a different selection, α, pile-up or σ_ro | compare the `# Simulation Parameters` header; use the matching reference |
 | validator says "give --n-ref and --n-new" | the CSV header has no `Nsims=` value | pass the trial counts explicitly |
@@ -867,7 +873,7 @@ python3 utils/compare_limit_curves.py \
   100.0- 1000.0     1      0.81 (0.81-0.81)      0.73 (0.73-0.73)
 ```
 
-The script compares the **continuous bisection limit**, so the numbers match the app only with `--draw-both`. Without it the app compares the stored grid-crossing limit, which is what Stage 6 prints (0.98, 1.03, 0.95, 0.93, 0.93). At a single mass the two limits differ by up to 12% (here 0.93 against 0.81 at 200 MeV); for the published counts the window medians over the 800-mass scan differ by 3% (0.7–3 MeV) to 21% (100–1000 MeV). Add `--plot out.png` for a figure and `--sigma-floor` as in the app.
+The script compares the **continuous bisection limit**, so the numbers match the app only with `--draw-both`. With `--from-qhist`, which is what the plots and Stage 6 use, the app compares the limit built from the q-map, which is what Stage 6 prints (0.98, 1.03, 0.95, 0.93, 0.93). At a single mass the two limits differ by up to 12% (here 0.93 against 0.81 at 200 MeV); for the published counts the window medians over the 800-mass scan differ by 3% (0.7–3 MeV) to 21% (100–1000 MeV). Add `--plot out.png` for a figure and `--sigma-floor` as in the app.
 
 > **WHAT YOU LEARN.** A number that two separately written programs agree on is much more trustworthy than one a single program gives. When they differ, the difference is itself a finding (here: the bisection limit and the stored limit are not the same quantity at a single mass).
 

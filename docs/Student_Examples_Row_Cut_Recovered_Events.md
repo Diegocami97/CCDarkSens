@@ -351,47 +351,56 @@ build/ccdarksens_scan_generic configs/examples/dm_electron_heavy_lbc_1p3kgday.js
 wait
 ```
 
-### 9.1 Do not read the stored limit when the data show an excess
+### 9.1 What the q-map shows when the data have an excess
 
-Open the log of run A:
+Plots are made with `--from-qhist`: every curve is rebuilt from the q(m_χ, σ) histogram stored in its own scan file, so all curves are computed the same way. The limit at a mass is where q(σ) crosses the threshold (1.642).
 
-```
-[scan-generic] mchi=50.0162 -> upper_limit=1e-46
-```
+With two events in `{31}` against 0.07 expected, q at σ → 0 is **already above the threshold** for many masses. There is no crossing there, the curve drops to the lowest σ of the grid (1e-46 cm²), and the log says `upper_limit=1e-46`. That value is not a limit: read it as "the data prefer a signal at this mass". On a plot it is a vertical line down to the bottom of the axis.
 
-`1e-46 cm²` is the first point of the cross-section grid. It is not a limit. The stored limit is the first crossing of `q(σ)` through the threshold (1.642). With two events in `{31}` against 0.07 expected, `q_0` at `σ → 0` is **already above the threshold** for many masses, there is no crossing, and the code returns the lowest grid point. Read it as "the data prefer a signal at this mass".
-
-| Run | Mass points (of 800) with the limit on the grid floor |
+| Run | Curve points with no crossing |
 |---|---|
-| published | 0 |
-| A ({31} = 2) | 271 |
-| C ({11} = 158) | 103 |
-| B | 466 |
-| D (f = 1%) | 356 |
-| E (f = 6.2%) | 294 |
+| published | 0 of 684 |
+| A ({31} = 2) | 271 of 684 |
+| C ({11} = 158) | 103 of 685 |
+| B | 466 of 685 |
+| D (f = 1%) | 356 of 683 |
+| E (f = 6.2%) | 294 of 683 |
 
-The scan also stores a continuous limit that starts at the best-fit σ and steps upward (`upper_limit_sigma_e_mchi_pydme_bisection`). That one is a proper one-sided limit when there is an excess. For the published counts it agrees with the grid crossing to 3% at 0.7–3 MeV and 14–21% above (median over each window), with spikes where a mass sits between n_e thresholds. Use it for the comparison and quote **window medians**, not single mass points.
-
-### 9.2 Compare
+### 9.2 Compare and plot
 
 ```bash
 mkdir -p outputs/row_cut_recovered_events
-build/ccdarksens_plot_limit --batch --heavy --draw-both --ratio-to published \
+build/ccdarksens_plot_limit --batch --heavy --from-qhist --ratio-to 1 \
+  --x-min 0.7 --x-max 1000 --y-min 1e-40 --y-max 1e-33 \
   --out-pdf outputs/row_cut_recovered_events/limit_compare.pdf \
   --out-root outputs/row_cut_recovered_events/limit_compare.root \
   --out-csv outputs/row_cut_recovered_events/limit_compare.csv \
-  outputs/dm_electron_heavy_lbc_1p3kgday/scan_generic.root published \
-  outputs/dm_electron_heavy_lbc_rowcut_A/scan_generic.root A \
-  outputs/dm_electron_heavy_lbc_rowcut_B/scan_generic.root B \
-  outputs/dm_electron_heavy_lbc_rowcut_C/scan_generic.root C \
-  outputs/dm_electron_heavy_lbc_rowcut_D/scan_generic.root D \
-  outputs/dm_electron_heavy_lbc_rowcut_E/scan_generic.root E \
+  outputs/dm_electron_heavy_lbc_1p3kgday/scan_generic.root "published" \
+  outputs/dm_electron_heavy_lbc_rowcut_A/scan_generic.root "A" \
+  outputs/dm_electron_heavy_lbc_rowcut_B/scan_generic.root "B" \
+  outputs/dm_electron_heavy_lbc_rowcut_C/scan_generic.root "C" \
+  outputs/dm_electron_heavy_lbc_rowcut_D/scan_generic.root "D" \
+  outputs/dm_electron_heavy_lbc_rowcut_E/scan_generic.root "E" \
   1.642374415149816 heavy
 ```
 
-`--draw-both` makes the app compare the continuous bisection limit of each input. To count the points of the *stored* limit that sit on the sigma floor (the table of §9.1), run the same command without `--draw-both`: the ratio table then reports "271 of 800 points on the sigma floor" for A, and so on.
+`--ratio-to 1` is the first input. `--y-min` keeps the floor values off the plot. The app prints, for each curve and window, the median ratio and how many masses of the window have a crossing (`n of N`); masses with no crossing are left out.
 
-Measured with this checkout. Each entry is the ratio of the limit to the published one, median and 16–84% range over the mass window; bigger means a weaker limit.
+**What the plot should look like.** The published curve has its minimum near 4×10⁻³⁹ cm² at about 10 MeV. A to E follow it above the published curve between 2 and 30 MeV, by the ratios below. Then each of them drops to the bottom of the axis at a mass that depends on the run: C near 2 MeV, B near 15 MeV, A near 40 MeV, E near 30 MeV. Above that the curves are absent at most masses and reappear only in two mass bands, around 120–200 MeV and 400–600 MeV. The published curve rises smoothly to 10³ MeV. The vertical lines are the "no crossing" masses of §9.1, not a plotting defect; they show where the excess makes q(0) exceed the threshold.
+
+Measured with this checkout (median ratio of the limit to the published one over the masses of the window that have a crossing; in brackets the masses with a crossing out of the masses of the window):
+
+| m_χ window (MeV) | A: {31} only | C: {11} only | B: both, Bp fixed | D: B with f = 1% | E: B with f = 6.2% |
+|---|---|---|---|---|---|
+| 0.7 – 3 | 1.00 (137/137) | 2.07 (37/137) | 2.08 (37/137) | 1.70 (137/137) | 1.25 (137/137) |
+| 3 – 10 | 1.74 (112/112) | 1.49 (112/112) | 2.47 (112/112) | 2.31 (112/112) | 1.78 (112/112) |
+| 10 – 30 | 1.69 (104/104) | 1.18 (104/104) | 1.97 (37/104) | 1.95 (46/104) | 1.65 (104/104) |
+| 30 – 100 | 1.58 (24/112) | 1.14 (112/112) | no crossing (0/112) | no crossing (0/112) | 1.58 (1/112) |
+| 100 – 1000 | 2.19 (34/216) | 1.13 (216/216) | 2.66 (33/216) | 2.59 (31/216) | 2.15 (34/216) |
+
+**Reading the table.** Where a window has few masses with a crossing, the median is over those masses only, which are the ones with the weakest excess; it is not representative. The windows to trust are the ones with `n = N`.
+
+**The continuous limit.** The scan also stores a limit that starts at the best-fit σ and steps upward (`upper_limit_sigma_e_mchi_pydme_bisection`). It is a proper one-sided limit above the best fit and exists at every mass, including those with no crossing in the q-map. It is drawn with `--draw-both`, and the cross-check script of §14.4 of the walkthrough prints it. Its window medians (all masses) are:
 
 | m_χ window (MeV) | A: {31} only | C: {11} only | B: both, Bp fixed | D: B with f = 1% | E: B with f = 6.2% |
 |---|---|---|---|---|---|
@@ -401,7 +410,7 @@ Measured with this checkout. Each entry is the ratio of the limit to the publish
 | 30 – 100 | 1.42 | 1.05 | 1.66 | 1.66 | 1.42 |
 | 100 – 1000 | 1.42 | 1.05 | 1.66 | 1.66 | 1.42 |
 
-(The app prints the 16–84% range of each window as well. The limit has a staircase at the n_e thresholds, so differences between two columns smaller than about 10% should be treated as noise.)
+The two tables answer different questions. The q-map says "at these masses the data allow an upper limit by crossing, and it is this much higher". The continuous limit says "if you quote a one-sided upper limit above the best fit at every mass, it is this much higher". The fact that most of the heavy-mass region has no crossing in A, B, D and E is itself the main result: two events in `{31}` against 0.07 expected make the data prefer a signal there. The limit staircase at the n_e thresholds makes differences between two columns smaller than about 10% noise.
 
 ### 9.3 Hand checks
 
