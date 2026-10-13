@@ -1978,7 +1978,13 @@ int main(int argc, char** argv)
     }
   }
 
-  // Fallback for the legacy calling convention: first arg is the file.
+  // Fallback for the legacy calling convention: first arg is the file. A flag is never the file:
+  // without an input path ending in .root the call is an error, not an attempt to open "--batch".
+  if (in_paths.empty() && std::string(argv[1]).rfind("--", 0) == 0) {
+    std::cerr << "[limit] ERROR: no input file: give the path of a scan ROOT file (ending in .root) "
+                 "after the options.\n";
+    return 1;
+  }
   if (in_paths.empty()) {
     in_paths.push_back(argv[1]);
     legend_labels.push_back((argc >= 3) ? std::string(argv[2]) : std::string("scan"));
@@ -2020,6 +2026,14 @@ int main(int argc, char** argv)
   }
   // Confidence level and threshold. One-sided asymptotic: q = NormQuantile(CL)^2; the C.L. of a
   // threshold q is Phi(sqrt(q)).
+  if (cl_value > 1.0 && cl_value < 100.0) {
+    std::cout << "[limit] note: --cl " << cl_value << " read as a percentage (" << cl_value / 100.0 << ")\n";
+    cl_value /= 100.0;
+  }
+  if (!(cl_value > 0.0 && cl_value < 1.0)) {
+    std::cerr << "[limit] ERROR: --cl must be between 0 and 1 (for example 0.90), got " << cl_value << "\n";
+    return 1;
+  }
   const double q_cl = std::pow(TMath::NormQuantile(cl_value), 2);
   q_thr = q_thr_explicit ? q_thr_cli : q_cl;
   const double cl_of_q = 0.5 * (1.0 + TMath::Erf(std::sqrt(std::max(q_thr, 0.0)) / std::sqrt(2.0)));
