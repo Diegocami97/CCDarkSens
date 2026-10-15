@@ -47,6 +47,14 @@ CCDarkSens is a C++17 dark matter sensitivity framework for DAMIC-M. It computes
 
 ---
 
+## Halo and threshold of the LBC reproduction (do not revert)
+
+- **Halo.** The heavy-mediator rate tables of the PRL reproduction use the standard halo of Baxter et al. (arXiv:2105.00599, Table 1): v₀ = 238, **v_E = 253.7**, v_esc = 544 km/s. The older `data/qedark_rates/Si/heavy/long_scan` (v_E = 263 km/s, pydme's default) makes the limit 30–40% too strong below 10 MeV; the examples read `long_scan_vE253p7` (`configs/examples/qedark_generate_heavy_dense.json`).
+- **q construction.** The student LBC configs set `run.one_sided_q = true` (q = 0 at and below the best fit; the default running maximum drops the limit to the bottom of the σ grid when the data have an excess) and `run.robust_minimum = true` (reference NLL = min of the 2D fit, the grid minimum and the background-only fit; removes ±35% spikes in the {31} = 2 scans). Both are off by default in the app so that the reference-parity behaviour is unchanged.
+- **Threshold.** The headline limit of the student LBC configs is `<name>.json` (one-sided q, robust minimum, asymptotic q = 1.642). The asymptotic threshold is too strong at 3–10 MeV, where `{21}` and `{111}` decide the limit, so each case has an optional check in two more runs — `<name>_toys.json` (`run.mode="threshold_toys"`, `one_sided: true`) and `<name>_mc.json` (`run.q_target_lookup_path`), plotted with `ccdarksens_plot_limit --use-stored-limit`. Against the published curve the headline is within 4% at 1–3 MeV and above 12 MeV and 27% below it at 3–6 MeV; the check is within 7% at 3–6 MeV and up to 34% above at 6–12 MeV. Neither reproduces the curve everywhere. See `docs/GenericScanApp_Design.md` §9b and walkthrough §9.1.
+
+---
+
 ## Efficiency MC — where P(pattern | n_e) really comes from
 
 Production scans do **not** run the MC: every pattern-/n_e-space config in `configs/examples/` sets `response.efficiency_mc.efficiency_csv`, which loads the collaboration table `data/Efficiencies_patterns_Nsims1000000_DCTrue_alpha1.csv`. That table was made with the reference 2D simulation (3×50 binned image, 100-row binning, Poisson dark-current pileup λ = 0.00041 per binned pixel). The MC code only runs when no CSV is given.

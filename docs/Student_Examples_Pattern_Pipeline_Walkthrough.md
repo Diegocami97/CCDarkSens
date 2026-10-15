@@ -102,12 +102,12 @@ Two things in this map are easy to miss:
 | Stage | Program | What it makes | Time measured on this checkout |
 |---|---|---|---|
 | 0 | `ccdarksens_classify_pair` | the label and p_mn of one pair | instant |
-| R | `utils/qedark_generate_grid.py` (Python) | the rate files | 605 files in about 1 s |
+| R | `utils/qedark_generate_grid.py` (Python) | the rate files | 605 files in about 1 s; 240,000 files in a few minutes |
 | 1 | `ccdarksens_pattern_signal_eff` | the signal table | 7 s for 10⁵ trials per n_e (n_e = 1..5) |
 | 2 | `ccdarksens_pattern_background_eff` | the background matrix | 3 s for 10⁵ trials, 30 s for 10⁶ |
 | c | `ccdarksens_validate_*` | a pass/fail and a table of pulls | instant for `--new` |
 | 3 | `ccdarksens_compute_brc` | the six Bp values | instant |
-| 4–5 | `ccdarksens_scan_generic` | the limit | 1 s for 5 masses, about 90 s for the full 800-mass grid |
+| 4–5 | `ccdarksens_scan_generic` | the limit | 1 s for 5 masses, about 2 min for the full 800-mass grid; the toy calibration of §9.1 about 20 min for 800 masses at 10,000 toys |
 | 6 | `ccdarksens_plot_limit` | curves, CSV, ratios | seconds |
 
 ---
@@ -133,7 +133,7 @@ What must be present:
 | all stages | the build above | `cmake` |
 | stages 1–3, validators | `data/Efficiencies_patterns_Nsims1000000_DCTrue_alpha1.csv`, `data/efficiencies_paolo.csv`, `data/Background_efficiencies.csv`, `data/Final_Combined_Image_Data.csv` | in the repository |
 | stage R | Python 3 with numpy, and `python/ccdarkphys/qedark/data/Si_f2.txt` | numpy from your Python; the data file is in the repository |
-| stages 4–6 | the rate files of stage R in `data/qedark_rates/Si/heavy/walkthrough/` | **you generate them in stage R**; they are not in the repository (`data/**` is ignored by git) |
+| stages 4–6 | the rate files of stage R in `data/qedark_rates/Si/heavy/walkthrough_vE253p7/` | **you generate them in stage R**; they are not in the repository (`data/**` is ignored by git) |
 
 Stages 0–3 need only the tracked files. Do stage R before the scans.
 
@@ -157,8 +157,9 @@ Every program that needs a JSON is listed here with the file it reads. A program
 | 2 | same | `configs/examples/pattern_background_eff_chain.json` | background matrix, `chain` selection | same |
 | c | `ccdarksens_validate_*` with `--config` | the four files above | the validator regenerates the table with the config of the generator | same |
 | 3 | `ccdarksens_compute_brc --config` | `configs/examples/background_pattern_rates.json` | rates λ₁, λ₂, λ₃, pixel count, matrix path, patterns | `rates`, `pixels`, `migration_matrix_csv`, `patterns`, `breakdown_pattern`, `output_json` |
-| 4–5 | `ccdarksens_scan_generic` | `configs/examples/dm_electron_heavy_lbc_1p3kgday.json` | the published LBC scan: pydme table, published Bp and Br, observed counts, 800 × 300 grid | `run`, `detector`, `experiment`, `response`, `model` |
+| 4–5 | `ccdarksens_scan_generic` | `configs/examples/dm_electron_heavy_lbc_1p3kgday.json` (+ `_toys.json`, `_mc.json`) | the published LBC scan: pydme table, published Bp and Br, observed counts, 800 × 300 grid; step 1 asymptotic, step 2 toy calibration, step 3 Monte Carlo threshold (§9.1) | `run`, `detector`, `experiment`, `response`, `model` |
 | 4–5 | same | `configs/examples/walkthrough_quick_scan_reference.json` | five masses, the shipped pydme table, published Bp: the reference | same |
+| 4–5 | same | `configs/examples/walkthrough_quick_scan_reference_toys.json`, `…_reference_mc.json` | the reference scan with the Monte Carlo threshold (steps 2 and 3 of §9.1) | `run.threshold_toys`, `run.q_target_lookup_path` |
 | 4–5 | same | `configs/examples/walkthrough_quick_scan.json` | five masses, your chain signal table, published Bp | same |
 | 4–5 | same | `configs/examples/walkthrough_quick_scan_own_tables.json` | five masses, your chain signal table **and your Bp** | same |
 | 0, 6 | `ccdarksens_classify_pair`, `ccdarksens_plot_limit` | none | arguments on the command line | – |
@@ -484,7 +485,7 @@ The `{11}` diagonal is 141.5 to 141.7 in all three (this is the published 141.4)
 
 ## 7. Stage R — The signal rate tables
 
-**What they are.** The scan folds a differential rate dR/dE for every (m_χ, σ_e) point. These rates are the physics input of the whole chain: DM–electron scattering in silicon with the QEDark form factor (`python/ccdarkphys/qedark/`, data file `Si_f2.txt`), the standard halo (v₀ = 238, v_E = 263, v_esc = 544 km/s), a heavy mediator, a band gap of 1.2 eV, 3.8 eV per electron–hole pair, and 0.1 eV energy bins. One CSV is written per (m_χ, σ_e) point.
+**What they are.** The scan folds a differential rate dR/dE for every (m_χ, σ_e) point. These rates are the physics input of the whole chain: DM–electron scattering in silicon with the QEDark form factor (`python/ccdarkphys/qedark/`, data file `Si_f2.txt`), the standard halo of Baxter et al. (v₀ = 238, v_E = 253.7, v_esc = 544 km/s; see A10), a heavy mediator, a band gap of 1.2 eV, 3.8 eV per electron–hole pair, and 0.1 eV energy bins. One CSV is written per (m_χ, σ_e) point.
 
 **This is the one Python program of the pipeline.** The rates come from a Python physics code (a port of QEDark), not from a C++ app. Nothing else in this walkthrough needs Python.
 
@@ -494,7 +495,7 @@ The `{11}` diagonal is 141.5 to 141.7 in all three (this is the published 141.4)
 python3 utils/qedark_generate_grid.py CONFIG.json          # needs Python 3 and numpy; run from the repository root
 ```
 
-**The config** is `configs/examples/qedark_generate_walkthrough.json` (Appendix A.4 explains every key). It is a copy of the dense configuration of the published scan with three changes: only the five masses of the quick scans, a cross-section axis reduced to 10⁻⁴² to 10⁻³⁴ cm² with 121 points (0.067 dex steps, the step of the published grid), and the output folder `data/qedark_rates/Si/heavy/walkthrough`.
+**The config** is `configs/examples/qedark_generate_walkthrough.json` (Appendix A.4 explains every key). It is a copy of the dense configuration of the published scan with three changes: only the five masses of the quick scans, a cross-section axis reduced to 10⁻⁴² to 10⁻³⁴ cm² with 121 points (0.067 dex steps, the step of the published grid), and the output folder `data/qedark_rates/Si/heavy/walkthrough_vE253p7`.
 
 **Run it.**
 
@@ -503,7 +504,7 @@ python3 utils/qedark_generate_grid.py configs/examples/qedark_generate_walkthrou
 ```
 
 ```
-[grid] wrote data/qedark_rates/Si/heavy/walkthrough/dRdE_Si_heavy_m199.961135_s1.0e-34.csv
+[grid] wrote data/qedark_rates/Si/heavy/walkthrough_vE253p7/dRdE_Si_heavy_m199.961135_s1.0e-34.csv
 ```
 
 It writes 605 files (5 masses × 121 cross sections) in about 1 s on 4 processes. One file looks like this:
@@ -511,7 +512,7 @@ It writes 605 files (5 masses × 121 cross sections) in about 1 s on 4 processes
 ```
 # Differential Rates computed with CCDarkSens (QEDark entry)
 # material = Si, mediator = heavy, table = .../python/ccdarkphys/qedark/data/Si_f2.txt
-# halo (cm/s): v0=23800000.0, vE=26300000.0, vesc=54400000.0
+# halo (cm/s): v0=23800000.0, vE=25370000.0, vesc=54400000.0
 # mX (eV) = 5995706.0
 # sigma_e (cm^2) = 1e-38
 # Output units: dR/dE in events / kg / year / eV
@@ -526,11 +527,11 @@ E,dRdE
 
 > **WHAT YOU LEARN.** The physics input is a table of files named by (m_χ, σ_e). The scan config's grid decides which names it asks for, so the two grids must be generated and read with the same numbers and the same format.
 
-> **CHECK.** `ls data/qedark_rates/Si/heavy/walkthrough | wc -l` gives 605; `head` of a file shows `# Columns: E (eV), dRdE (events/kg/year/eV)`.
+> **CHECK.** `ls data/qedark_rates/Si/heavy/walkthrough_vE253p7 | wc -l` gives 605; `head` of a file shows `# Columns: E (eV), dRdE (events/kg/year/eV)`.
 
-> **WATCH OUT.** (1) `options.skip_existing` is true: running the generator again does not rewrite an existing file. If you change the halo or the form factor, set `overwrite` to true or use a new `rates_dir`. (2) A coarse cross-section axis changes the limit. With 33 points (0.25 dex steps) the reference scan below came out up to 7% away from the published one; with 121 points it is within 0.5%. Keep the step at 0.07 dex or finer. (3) The full published scan uses 800 masses × 300 cross sections = 240,000 files, `configs/examples/qedark_generate_heavy_dense.json`. At the measured speed this is of the order of ten minutes (extrapolated, not measured). The 895,363 files that sit on the author's machine are more than that grid needs.
+> **WATCH OUT.** (1) `options.skip_existing` is true: running the generator again does not rewrite an existing file. If you change the halo or the form factor, set `overwrite` to true or use a new `rates_dir`. (2) A coarse cross-section axis changes the limit. With 33 points (0.25 dex steps) the reference scan below came out up to 7% away from the published one; with 121 points it is within 0.5%. Keep the step at 0.07 dex or finer. (3) The full published scan uses 800 masses × 300 cross sections = 240,000 files, `configs/examples/qedark_generate_heavy_dense.json`, written to `data/qedark_rates/Si/heavy/long_scan_vE253p7` (about 8 GB; it took a few minutes on 8 processes). A folder `long_scan` made with the older v_E = 263 km/s may sit next to it; the scan configs of this walkthrough read `long_scan_vE253p7` only.
 
-> **ASSUMPTION (A10).** The halo and detector parameters of the config are the ones of the published analysis (v₀ = 238, v_E = 263, v_esc = 544 km/s; 1.2 eV; 3.8 eV). I did not re-derive the rates here.
+> **ASSUMPTION (A10).** The halo is the one recommended by Baxter et al. (arXiv:2105.00599, Table 1 and Eqs. 11–12), which the PRL cites: ρ = 0.3 GeV/cm³, v₀ = 238 km/s, v_esc = 544 km/s, and the speed of the laboratory in the galactic frame, v_E = |v₀ + v_⊙ + v_⊕(March 9)| = |(0, 238, 0) + (11.1, 12.2, 7.3) + (29.2, −0.1, 5.9)| = |(40.3, 250.1, 13.2)| = 253.7 km/s. Rate tables made with v_E = 263 km/s (the default of older pydme configs) raise the rate in the low-mass tail and make the limit up to 30–40% too strong below 10 MeV. The band gap (1.2 eV), 3.8 eV per pair and 0.1 eV bins are the ones of the published analysis; I did not re-derive the rates here.
 
 ---
 
@@ -547,7 +548,8 @@ The scan reads a config. Three entries connect it to what you just made; everyth
 
 Three ready-made configs are provided. All are copies of `dm_electron_heavy_lbc_1p3kgday.json` with these changes:
 
-- `model.rates_dir` is `data/qedark_rates/Si/heavy/walkthrough` (stage R);
+- `model.rates_dir` is `data/qedark_rates/Si/heavy/walkthrough_vE253p7` (stage R);
+- `run.one_sided_q` is `true` (q is 0 at and below the best-fit cross section; §9) and `run.robust_minimum` is `true` (the reference NLL minimum cannot be above the grid minimum; §9);
 - `model.grid.mchi_MeV` is the five masses `{"values": [1.99987, 5.995706, 19.997409, 59.953172, 199.961135]}` and `model.grid.sigma_e_cm2` is `logspace(-42, -34, 121)`, the same numbers as the generator config;
 - `run.label` and `run.outdir` are set so the output does not overwrite the published scan.
 
@@ -565,17 +567,17 @@ The limits at the five masses (cm²), grid-crossing values from the scan log:
 
 | m_χ (MeV) | published scan (800 masses) | reference quick scan | chain table | chain table and own Bp |
 |---|---|---|---|---|
-| 1.99987 | 1.369e-36 | 1.375e-36 | 1.344e-36 | 8.72e-37 |
-| 5.99571 | 6.077e-39 | 6.083e-39 | 6.268e-39 | 6.291e-39 |
-| 19.9974 | 4.586e-39 | 4.601e-39 | 4.392e-39 | 4.392e-39 |
-| 59.9532 | 9.595e-39 | 9.601e-39 | 8.975e-39 | 8.991e-39 |
-| 199.961 | 2.846e-38 | 2.851e-38 | 2.641e-38 | 2.648e-38 |
+| 1.99987 | 1.690e-36 | 1.683e-36 | 1.647e-36 | 1.070e-36 |
+| 5.99571 | 6.716e-39 | 6.692e-39 | 6.858e-39 | 6.881e-39 |
+| 19.9974 | 4.908e-39 | 4.891e-39 | 4.708e-39 | 4.706e-39 |
+| 59.9532 | 1.014e-38 | 1.016e-38 | 9.503e-39 | 9.518e-39 |
+| 199.961 | 2.998e-38 | 3.001e-38 | 2.789e-38 | 2.795e-38 |
 
 How to read it:
 
-- **The reference reproduces the published scan** to 0.4% or better at all five masses. This is the check that stage R and the quick-scan configs are right.
+- **The reference reproduces the published scan** to 0.4% or better at all five masses (these are asymptotic limits with q = 1.642; §9 adds the Monte Carlo threshold). This is the check that stage R and the quick-scan configs are right.
 - **The chain table** moves the limit by −7% to +3% against the pydme table. The signal efficiencies of the two selections differ most at n_e = 4 and 5.
-- **Your Bp** matters at 2 MeV, where `{11}` drives the limit: your Bp for `{11}` is 148.5, above the 144 observed, so the data sit below the background and the limit becomes 37% stronger than the reference. The published Bp is 141.4, below the 144 observed. At the other masses your Bp changes the limit by 1% or less, because the `{11}` background is not what limits there.
+- **Your Bp** matters at 2 MeV, where `{11}` drives the limit: your Bp for `{11}` is 148.5, above the 144 observed, so the data sit below the background and the limit becomes 36% stronger than the reference. The published Bp is 141.4, below the 144 observed. At the other masses your Bp changes the limit by 1% or less, because the `{11}` background is not what limits there.
 
 > **WATCH OUT.** (1) **The masses must be points of the rate grid.** The rate files are looked up by mass with six decimals. A mass that is not in the folder gives no signal, and the scan reports `upper_limit=1e-26`, the top of the cross-section grid, with no error message. The published grid is `logspace(0.2, 1000, 800)`. (2) A misspelled config key is ignored silently; the scan runs with the default. (3) `observed_counts` and `background_Bp` must have as many entries as `pattern_roi`. (4) **A single mass is not a smooth number.** The crossing at 200 MeV for the chain table moved from 3.1e-38 to 2.6e-38 when the cross-section grid was shifted by half a step, a 15% change with the same physics. The limit is a staircase in n_e and has features in σ; quote window medians over many masses (stage 6 on the full scan), not five points.
 
@@ -603,30 +605,91 @@ Each takes about a second. The reference prints:
 
 ```
 [scan-generic] analysis_space=pattern observable_bins=pattern exposure=0.00355913 kg*year
-[scan-generic] mchi=1.99987 -> upper_limit=1.37463e-36
-[scan-generic] mchi=5.99571 -> upper_limit=6.08338e-39
-[scan-generic] mchi=19.9974 -> upper_limit=4.6012e-39
-[scan-generic] mchi=59.9532 -> upper_limit=9.60086e-39
-[scan-generic] mchi=199.961 -> upper_limit=2.85053e-38
+[scan-generic] mchi=1.99987 -> upper_limit=1.68302e-36
+[scan-generic] mchi=5.99571 -> upper_limit=6.69171e-39
+[scan-generic] mchi=19.9974 -> upper_limit=4.89089e-39
+[scan-generic] mchi=59.9532 -> upper_limit=1.01551e-38
+[scan-generic] mchi=199.961 -> upper_limit=3.00072e-38
 [scan-generic] Done. Output written to outputs/walkthrough/scan_quick_reference/scan_generic.root
 ```
 
 **The output file** `scan_generic.root` holds `q_mchi_sigma` (the statistic on the grid), `upper_limit_sigma_e_mchi` and `upper_limit_sigma_e_mchi_graph` (the limit from the grid crossing), `upper_limit_sigma_e_mchi_pydme_bisection` (the continuous limit; present when the profile minimiser is `pydme`) and `exposure_kg_year`.
 
-**Run the full published scan** (800 masses × 300 cross sections, about 90 s). It needs the dense rate grid of stage R, 240,000 files:
+**Run the full published scan** (800 masses × 300 cross sections, about 2 min). It needs the dense rate grid of stage R, 240,000 files:
 
 ```bash
 python3 utils/qedark_generate_grid.py configs/examples/qedark_generate_heavy_dense.json
 build/ccdarksens_scan_generic configs/examples/dm_electron_heavy_lbc_1p3kgday.json
 ```
 
+### 9.1 Checking the threshold with toys (the Poisson regime)
+
+The limit of the scans above is the result of this walkthrough. It crosses q(σ) with the asymptotic value 1.642, which is accurate when the limit is set by a bin with many counts (`{11}`, below 3 MeV and above 10 MeV). It is too strong when the limit is set by bins that expect about 0.1 events and saw none (`{21}`, `{111}`): the 90% threshold for a counting experiment with zero observed needs about 2.3 signal events, and q = 1.642 corresponds to about 0.8. Between 3 and 7 MeV the signal of n_e = 3 lands in exactly those bins. The published analysis built the distribution of the test statistic with toy Monte Carlo (PRL, "Results"), and Baxter et al. (arXiv:2105.00599, §2.3) recommend that asymptotic results be checked with toys. The app can do that check in two more runs, with the same config except for three keys; you do not need it for the other stages.
+
+1. **Step 1** (what you ran above, `…reference.json`): the scan, with `run.one_sided_q = true` and `run.robust_minimum = true`. This is the headline limit.
+2. **Step 2** (`…reference_toys.json`, `run.mode = "threshold_toys"`): at each mass, 10,000 Poisson toys of the expected counts at the step-1 limit σ_thr, each fitted with σ and θ free; q of a toy is 2(NLL at σ_thr − NLL at the best fit), set to 0 when the best fit lies above σ_thr (one-sided). The 90th percentile of those q values is written to `qtarget_threshold.root`.
+3. **Step 3** (`…reference_mc.json`, `run.q_target_lookup_path`): the scan again, with that value as the threshold at each mass. This is the check of step 1, not a replacement for it.
+
+```bash
+build/ccdarksens_scan_generic configs/examples/walkthrough_quick_scan_reference_toys.json
+build/ccdarksens_scan_generic configs/examples/walkthrough_quick_scan_reference_mc.json
+```
+
+```
+[scan-generic] threshold_toys mchi=1.99987 sigma_thr=1.68302e-36 q_target(p=0.9)=1.7553
+[scan-generic] threshold_toys mchi=5.99571 sigma_thr=6.69171e-39 q_target(p=0.9)=2.86719
+[scan-generic] threshold_toys mchi=19.9974 sigma_thr=4.89089e-39 q_target(p=0.9)=1.63944
+[scan-generic] threshold_toys mchi=59.9532 sigma_thr=1.01551e-38 q_target(p=0.9)=1.62159
+[scan-generic] threshold_toys mchi=199.961 sigma_thr=3.00072e-38 q_target(p=0.9)=1.59292
+...
+[scan-generic] mchi=1.99987 -> upper_limit=1.73615e-36
+[scan-generic] mchi=5.99571 -> upper_limit=1.0146e-38
+[scan-generic] mchi=19.9974 -> upper_limit=4.88595e-39
+[scan-generic] mchi=59.9532 -> upper_limit=1.00886e-38
+[scan-generic] mchi=199.961 -> upper_limit=2.95393e-38
+```
+
+At 20, 60 and 200 MeV (`{11}` with many counts) the toy threshold is 1.59–1.64, the asymptotic value, and the limit moves by at most 3%. At 6 MeV it is 2.87 and the limit rises by 52%. At 2 MeV, where `{11}` decides, it is 1.76 (+3%).
+
+**The published scan and its check** (800 masses; about 2 min, 16 min and 2 min on 8 cores):
+
+```bash
+build/ccdarksens_scan_generic configs/examples/dm_electron_heavy_lbc_1p3kgday.json        # step 1
+build/ccdarksens_scan_generic configs/examples/dm_electron_heavy_lbc_1p3kgday_toys.json   # step 2
+build/ccdarksens_scan_generic configs/examples/dm_electron_heavy_lbc_1p3kgday_mc.json     # step 3
+```
+
+The headline limit is `outputs/dm_electron_heavy_lbc_1p3kgday/scan_generic.root` (step 1); `outputs/dm_electron_heavy_lbc_1p3kgday_mc/scan_generic.root` is the same scan with the Monte Carlo threshold.
+
+**How close this is to the published curve.** Ratio of the limit of this scan to the published DAMIC-M curve (the collaboration's paper-export file `DAMIC-M_2025_QEDark_DMe_heavymediator.txt`, 25 masses), median per window. The config's exposure is 1.274 kg-day against 1.257 kg-day in the PRL, which makes the limit 1.3% lower on its own.
+
+| m_χ window (MeV) | masses | asymptotic (step 1, headline) | Monte Carlo (step 3, check) |
+|---|---|---|---|
+| 0.7 – 1.1 | 5 | 0.80 | 0.80 |
+| 1.1 – 3 | 4 | 0.96 | 0.96 |
+| 3 – 6 | 3 | 0.73 | 0.93 |
+| 6 – 12 | 3 | 0.92 | 1.32 |
+| 12 – 100 | 5 | 0.97 | 0.96 |
+| 100 – 1100 | 5 | 0.97 | 0.94 |
+
+On the dense 800-mass grid the Monte Carlo limit divided by the asymptotic one has a median of 1.00 below 3 MeV, **1.44 between 3 and 10 MeV** (16–84%: 1.24–1.49) and 0.99–1.01 above 10 MeV.
+
+How to read it:
+
+- **Above 12 MeV and between 1 and 3 MeV** both thresholds reproduce the published curve to 4–6%; the Monte Carlo step does nothing there, as it should.
+- **The 0.75 MeV point** (ratio 0.37) is on the steep edge of the curve, where the limit changes by two orders of magnitude over 10% in mass. It is the same for both thresholds and is not a threshold effect.
+- **3–6 MeV:** the asymptotic limit is 27% below the published one and the Monte Carlo limit 7% below. This is the effect the toys correct.
+- **6–12 MeV:** the Monte Carlo limit is 17–34% *above* the published curve (1.12 at 5.5 MeV, 1.32 at 7.2 MeV, 1.34 at 9 MeV, 1.17 at 11.8 MeV) where the asymptotic limit was within 8%. So the published curve lies between the two thresholds there. I do not know which choice in the published toy procedure accounts for it; candidates not tested are the handling of the discreteness of q for few counts (the toy threshold jumps between 2.25 and 2.95 at neighbouring masses near 9–10 MeV) and how the nuisance θ is fixed in the toys. Read it this way: the step-1 limit is the result; between 3 and 10 MeV the asymptotic threshold understates the limit by a median 1.44 (up to 1.5), and the toy result is the better-motivated number there. Quote both if the window matters, and say which threshold a number uses.
+
+> **WATCH OUT.** (1) **Plot step 3 with `--use-stored-limit`.** `--from-qhist` (the default) rebuilds every curve from the stored q-map at the asymptotic 1.642 and would draw the step-1 limit again; the stored limit of the `_mc` file is the one with the per-mass threshold. (2) The toy cross section is the limit of step 1, which is lower than the final one by up to 30% at a few masses. Repeating step 2 with the step-3 file as `sigma_threshold_graph_path` changed the limits by 0.5% in the median in a test at 25 masses; one pass is enough for a table, not for a single mass. (3) Masses with no signal (below about 0.7 MeV) have `sigma_thr = 1e-26` and `q_target = 0`; a zero threshold is replaced by the asymptotic value in the scan, and the limit there stays at `1e-26`, no limit. (4) The **two-sided** statistic (`run.threshold_toys.one_sided = false`, which is the default of the key) is the one Baxter et al. recommend; in a 25-mass test it gave limits 20–35% weaker than the published curve above 1 MeV, so it is not what the published curve shows.
+
 > **WHAT YOU LEARN.** A limit is a crossing of q(σ) through a threshold. Everything upstream (rates, signal table, Bp, counts) enters through the expected counts in the six bins.
 
-> **CHECK.** The reference quick scan at m_χ = 5.99571 MeV gives `upper_limit=6.08338e-39`, within 0.1% of the published scan (`6.07699e-39`); at all five masses within 0.5%.
+> **CHECK.** The reference quick scan at m_χ = 5.99571 MeV gives `upper_limit=6.69171e-39`, within 0.4% of the published scan (`6.71562e-39`); at all five masses within 0.5%.
 
-> **WATCH OUT.** `upper_limit=1e-46` is the *bottom* of the cross-section grid, not a limit. It appears when q(σ → 0), the improvement of the best fit over the background-only fit, is already above the threshold, so there is no crossing; the scan forces q to be non-decreasing, so a fit that prefers a small signal removes the limit at that mass. The row-cut example (§9.1) shows this on scan A, where the largest q(σ → 0) is only 1.81 against 1.642. Do not read the stored value at those masses; in the plot (next stage, `--from-qhist`) they appear as a vertical line down to the bottom of the σ grid. `upper_limit=1e-26` is the *top* of the grid: no signal was found, usually because the mass or the rates folder is wrong (stage R).
+> **WATCH OUT.** `upper_limit=1e-46` is the *bottom* of the cross-section grid, not a limit. It appears when q(σ → 0), the improvement of the best fit over the background-only fit, is already above the threshold, so there is no crossing. With the default q construction (`run.one_sided_q` false) the scan forces q to be non-decreasing, so a fit that prefers a small signal removes the limit at that mass; the row-cut example shows this on scan A of the older configs, where the largest q(σ → 0) is only 1.81 against 1.642. The configs of this walkthrough set `run.one_sided_q` to true, which puts q = 0 at and below the best-fit cross section, so the limit is the first crossing above it and the vertical lines do not appear. They also set `run.robust_minimum` to true: the reference minimum is then the lowest of the 2D fit, the grid minimum and the background-only fit. The 2D Minuit fit sometimes stops 0.1–0.2 in NLL above the true minimum, which moves q for the whole mass and makes the limit jump by up to 35% between neighbouring masses (seen in the {31} = 2 scans of the row-cut example above 100 MeV); the robust minimum removes that and only ever lowers a limit. Do not read the stored value `1e-46` as a limit if it does appear. `upper_limit=1e-26` is the *top* of the grid: no signal was found, usually because the mass or the rates folder is wrong (stage R). At masses below about 0.7 MeV the same value is correct: the deposit cannot make two electrons, and the paper's curve ends there too.
 
-> **ASSUMPTION (A6).** The 90% threshold is the asymptotic 1.642. For few counts in `{31}` the toy threshold is higher, and the limit would be weaker; `run.mode = "threshold_toys"` in this app and `ccdarksens_band` calibrate it.
+> **ASSUMPTION (A6).** The headline limit uses the asymptotic threshold 1.642. It is accurate where the limit is set by a bin with many counts and too strong at 3–10 MeV, where it is set by bins that expect about 0.1 events and saw none; §9.1 checks it with a Monte Carlo threshold, which reproduces the published curve at 3–6 MeV and overshoots it at 6–12 MeV.
 
 ---
 
@@ -678,14 +741,14 @@ The log starts with `[limit] confidence level = 90% one-sided asymptotic, q_thre
 [limit] ratio of each curve to input 1 ("reference"); median and 16-84% range per mass window, bigger = weaker limit
   "chain table" (g_dme_limit_1_q, 0 of 5 points on the sigma floor)
          0.7 -      3 MeV  n=   1 of    1   0.98 (0.98 - 0.98)
-         3 -     10 MeV  n=   1 of    1   1.03 (1.03 - 1.03)
-        10 -     30 MeV  n=   1 of    1   0.95 (0.95 - 0.95)
-        30 -  1e+02 MeV  n=   1 of    1   0.93 (0.93 - 0.93)
+         3 -     10 MeV  n=   1 of    1   1.02 (1.02 - 1.02)
+        10 -     30 MeV  n=   1 of    1   0.96 (0.96 - 0.96)
+        30 -  1e+02 MeV  n=   1 of    1   0.94 (0.94 - 0.94)
      1e+02 -  1e+03 MeV  n=   1 of    1   0.93 (0.93 - 0.93)
   "own Bp" (g_dme_limit_2_q, 0 of 5 points on the sigma floor)
-         0.7 -      3 MeV  n=   1 of    1   0.63 (0.63 - 0.63)
+         0.7 -      3 MeV  n=   1 of    1   0.64 (0.64 - 0.64)
          3 -     10 MeV  n=   1 of    1   1.03 (1.03 - 1.03)
-        10 -     30 MeV  n=   1 of    1   0.95 (0.95 - 0.95)
+        10 -     30 MeV  n=   1 of    1   0.96 (0.96 - 0.96)
         30 -  1e+02 MeV  n=   1 of    1   0.94 (0.94 - 0.94)
      1e+02 -  1e+03 MeV  n=   1 of    1   0.93 (0.93 - 0.93)
 ```
@@ -734,12 +797,16 @@ build/ccdarksens_compute_brc --config configs/examples/background_pattern_rates.
 
 # R. rate tables for the five masses (605 files)
 python3 utils/qedark_generate_grid.py configs/examples/qedark_generate_walkthrough.json
-ls data/qedark_rates/Si/heavy/walkthrough | wc -l      # 605
+ls data/qedark_rates/Si/heavy/walkthrough_vE253p7 | wc -l      # 605
 
 # 4-5. wire and scan: reference (shipped table), then your signal table, then your signal table and Bp
 build/ccdarksens_scan_generic configs/examples/walkthrough_quick_scan_reference.json
 build/ccdarksens_scan_generic configs/examples/walkthrough_quick_scan.json
 build/ccdarksens_scan_generic configs/examples/walkthrough_quick_scan_own_tables.json
+
+# 5b. Monte Carlo threshold for the reference: toys at the step-1 limits, then the scan again
+build/ccdarksens_scan_generic configs/examples/walkthrough_quick_scan_reference_toys.json
+build/ccdarksens_scan_generic configs/examples/walkthrough_quick_scan_reference_mc.json
 
 # 6. compare with the reference
 build/ccdarksens_plot_limit --batch --heavy --ratio-to reference \
@@ -870,14 +937,14 @@ python3 utils/compare_limit_curves.py \
 
 ```
     window (MeV)     n           chain table                own Bp
-    0.7-    3.0     1      0.91 (0.91-0.91)      0.66 (0.66-0.66)
-    3.0-   10.0     1      1.03 (1.03-1.03)      1.13 (1.13-1.13)
-   10.0-   30.0     1      0.99 (0.99-0.99)      1.02 (1.02-1.02)
-   30.0-  100.0     1      1.00 (1.00-1.00)      0.90 (0.90-0.90)
-  100.0- 1000.0     1      0.81 (0.81-0.81)      0.73 (0.73-0.73)
+    0.7-    3.0     1      1.02 (1.02-1.02)      0.65 (0.65-0.65)
+    3.0-   10.0     1      1.00 (1.00-1.00)      0.96 (0.96-0.96)
+   10.0-   30.0     1      0.94 (0.94-0.94)      0.97 (0.97-0.97)
+   30.0-  100.0     1      0.94 (0.94-0.94)      0.94 (0.94-0.94)
+  100.0- 1000.0     1      0.95 (0.95-0.95)      0.94 (0.94-0.94)
 ```
 
-The script compares the **continuous bisection limit**, so the numbers match the app only with `--draw-both`. With `--from-qhist`, which is what the plots and Stage 6 use, the app compares the limit built from the q-map, which is what Stage 6 prints (0.98, 1.03, 0.95, 0.93, 0.93). At a single mass the two limits differ by up to 12% (here 0.93 against 0.81 at 200 MeV); for the published counts the window medians over the 800-mass scan differ by 3% (0.7–3 MeV) to 21% (100–1000 MeV). Add `--plot out.png` for a figure and `--sigma-floor` as in the app.
+The script compares the **continuous bisection limit**, so the numbers match the app only with `--draw-both`. With `--from-qhist`, which is what the plots and Stage 6 use, the app compares the limit built from the q-map, which is what Stage 6 prints (0.98, 1.02, 0.96, 0.94, 0.93). At a single mass the two limits differ by up to 7% (here 1.03 against 0.96 at 6 MeV for the own-Bp curve); for the published counts the bisection limit over the stored one has window medians over the 800-mass scan of 1.03 (0.7–3 MeV) to 1.20 (3–10 and 100–1000 MeV). Add `--plot out.png` for a figure and `--sigma-floor` as in the app.
 
 > **WHAT YOU LEARN.** A number that two separately written programs agree on is much more trustworthy than one a single program gives. When they differ, the difference is itself a finding (here: the bisection limit and the stored limit are not the same quantity at a single mass).
 
@@ -939,6 +1006,13 @@ Present in the files but **not read** by the generators: all of `run`, `detector
 |---|---|---|
 | `run.label`, `run.outdir` | name and output folder of the run | set per run |
 | `run.cl` | confidence level; sets the q threshold (0.90 gives 1.642) | 0.9 |
+| `run.one_sided_q` | q = 0 at and below the best-fit cross section on the grid; the limit is the first crossing above it. Default false (q is made non-decreasing from the lowest σ) | true |
+| `run.robust_minimum` | the reference NLL minimum is min(2D fit, grid minimum, background-only). Default false | true |
+| `run.mode` | `scan` (default) or `threshold_toys` (toy calibration of the threshold, then exit) | `scan`; `threshold_toys` in the `_toys` configs |
+| `run.threshold_toys.sigma_threshold_graph_path` | ROOT file with the cross section per mass to calibrate at: a `ccdarksens_band` output or the `scan_generic.root` of step 1 | step-1 output |
+| `run.threshold_toys.n_threshold_toys`, `percentile`, `rng_seed` | toys per mass, the quantile of q that becomes the threshold (0.90), the seed | 10000, 0.90, 23456 |
+| `run.threshold_toys.one_sided` | true: a toy whose best fit lies above the tested σ contributes q = 0 (the published curve); false: it contributes t > 0 (two-sided) | true |
+| `run.q_target_lookup_path` | `qtarget_threshold.root` of the toy step; the scan then uses that per-mass threshold instead of 1.642 | set in the `_mc` configs |
 | `run.background_source` | `bp_br_template` uses the pasted Bp and Br; `dc_flat_migration` computes the background from the dark current | `bp_br_template` |
 | `run.background_model` | `Bp_theta_Br`: expected = S + Bp + θ·Br | `Bp_theta_Br` |
 | `run.background_Bp`, `background_Br` | six numbers each, in the order of `experiment.pattern_roi` | published, or yours |
@@ -949,7 +1023,7 @@ Present in the files but **not read** by the generators: all of `run`, `detector
 | `experiment.pattern_roi`, `observable_bins` | the pattern bins and the observable space | 11, 21, 111, 31, 22, 211; `pattern` |
 | `response.analysis_space` | selects the response backend | `pattern` |
 | `response.efficiency_mc.efficiency_csv` | the signal table, path relative to the folder above the config | pydme table, or yours |
-| `model.type`, `rates_dir`, `filename_template` | the signal model and where its rate files are | `dm_electron`; `data/qedark_rates/Si/heavy/long_scan` (published) or `…/walkthrough` (quick scans) |
+| `model.type`, `rates_dir`, `filename_template` | the signal model and where its rate files are | `dm_electron`; `data/qedark_rates/Si/heavy/long_scan_vE253p7` (published) or `…/walkthrough_vE253p7` (quick scans) |
 | `model.grid.mchi_MeV`, `model.grid.sigma_e_cm2` | the mass axis and the cross-section axis; they must equal the generator's axes | published: 800 logspace 0.2–1000 MeV, 300 logspace 10⁻⁴⁶–10⁻²⁶ cm²; quick scans: five masses, 121 logspace 10⁻⁴²–10⁻³⁴ cm² |
 
 ### A.4 Rate generator config (`utils/qedark_generate_grid.py`)
@@ -957,11 +1031,11 @@ Present in the files but **not read** by the generators: all of `run`, `detector
 | Key | Meaning | Value here |
 |---|---|---|
 | `material`, `mediator` | the target and the mediator class: `heavy` (also `massive`) or `light` (also `massless`) | `Si`, `heavy` |
-| `halo.v0_kms`, `vE_kms`, `vesc_kms` | standard halo model: circular speed, Earth speed, escape speed | 238, 263, 544 km/s |
+| `halo.v0_kms`, `vE_kms`, `vesc_kms` | standard halo model: circular speed, Earth speed, escape speed | 238, 253.7, 544 km/s |
 | `detector.band_gap_eV` | threshold below which no electron is produced | 1.2 eV |
 | `detector.eh_pair_eV` | energy per electron–hole pair above the gap | 3.8 eV |
 | `detector.binsize_eV` | energy bin of the output spectrum | 0.1 eV |
-| `rates_dir` | folder the files are written to; the scan config's `model.rates_dir` must be this | `data/qedark_rates/Si/heavy/walkthrough` |
+| `rates_dir` | folder the files are written to; the scan config's `model.rates_dir` must be this | `data/qedark_rates/Si/heavy/walkthrough_vE253p7` |
 | `filename_template` | file name pattern; the scan builds the same name | `dRdE_{material}_{mediator}_m{mchi_MeV}_s{sigma_e_cm2}.csv` |
 | `grid.mchi_MeV` | mass axis: `values`, `linspace` or `logspace` | five values |
 | `grid.sigma_e_cm2` | cross-section axis | `logspace` 10⁻⁴²–10⁻³⁴, 121 points |
@@ -988,6 +1062,8 @@ Present in the files but **not read** by the generators: all of `run`, `detector
 | `configs/examples/pattern_background_eff{,_chain}.json` | stage 2 inputs |
 | `configs/examples/background_pattern_rates.json` | stage 3 input |
 | `configs/examples/qedark_generate_walkthrough.json` | stage R input |
+| `configs/examples/dm_electron_heavy_lbc_1p3kgday{,_toys,_mc}.json` | the published scan in its three threshold steps (§9.1) |
+| `configs/examples/walkthrough_quick_scan_reference_{toys,mc}.json` | steps 2 and 3 for the five-mass reference |
 | `configs/examples/walkthrough_quick_scan_reference.json`, `walkthrough_quick_scan.json`, `walkthrough_quick_scan_own_tables.json` | stages 4–5: shipped table / your signal table / your table and Bp |
 | `data/Efficiencies_patterns_Nsims1000000_DCTrue_alpha1.csv` | pydme signal reference |
 | `data/efficiencies_paolo.csv` | published signal efficiencies |

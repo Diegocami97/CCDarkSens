@@ -183,6 +183,24 @@ Fresh WIMP-nucleon rate CSVs were generated at the current binning (`ee_Emax_eV=
 
 ---
 
+## 9b. Opt-in statistical switches added after the parity gates
+
+These keys exist only in `ccdarksens_scan_generic`; the reference app does not read them, and every default reproduces the behaviour verified in §6–§8, except the last row (the default toy calibration was re-run after the `one_sided` change and its `qtarget_threshold.root` is identical, max |Δq| = 0).
+
+| Key | Default | Effect |
+|---|---|---|
+| `run.one_sided_q` | `false` | q is 0 at and below the grid cross section with the lowest NLL and a running maximum above it (`ScanUtils::OneSidedQ`), instead of a running maximum from the lowest σ (`MonotonizeQ`). With an excess in the data, `MonotonizeQ` leaves q at q₀ = 2·(NLL(σ=0) − NLL_min), which can sit just above the threshold, so there is no crossing and the stored limit is the bottom of the σ grid. The one-sided construction removes that case and gives the first crossing above the best fit. |
+| `run.robust_minimum` | `false` | the reference NLL minimum is `min(2D fit, grid minimum, background-only)`. The 2D Minuit fit can return a boundary point instead of the true minimum, which makes q₀ jump between neighbouring masses; the log prints each time the minimum was lowered. Used by the student LBC examples: without it the limits of the {31} = 2 scans show steps and spikes of ±35% between adjacent masses above 100 MeV, where the 2D fit stopped about 0.1–0.2 in NLL above the true minimum; with it none above 5 MeV. It only ever lowers a limit (by up to 30% at a few masses; the published scan by at most 5.5%). |
+| `run.threshold_toys.one_sided` | `false` | in the toy calibration a toy whose best fit lies above σ_thr contributes q = 0 (one-sided q) instead of t > 0 (two-sided t̃). Uses the 2D fit's σ̂. |
+| `run.threshold_toys.sigma_threshold_graph_path` | – | may now be the `scan_generic.root` of an earlier run: if the file has no `sigma_threshold_per_mass` the graph `upper_limit_sigma_e_mchi_graph` is used. |
+| `run.q_target_lookup_path` | – | a per-mass value ≤ 0 (toys with no signal) is replaced by the asymptotic threshold instead of being used as a threshold of 0. |
+
+**Why.** For the published LBC counts the limit between 3 and 7 MeV is set by `{21}` and `{111}`, which expect about 0.1 events and saw none. The asymptotic q = 1.642 corresponds to about 0.8 signal events there, against about 2.3 for the exact 90% threshold, so the asymptotic limit is 25–30% stronger than the published curve. With `one_sided_q = true` and the one-sided toy threshold the limit is within 7% of the published curve at 3–6 MeV and above 12 MeV, and 17–34% above it at 6–12 MeV (measured with v_E = 253.7 km/s rates; `docs/Student_Examples_Pattern_Pipeline_Walkthrough.md` §9.1 has the table). The two-sided toy threshold (`one_sided = false`) gave limits 20–35% weaker than the published curve above 1 MeV in a 25-mass test.
+
+The scan with the asymptotic threshold is the result; the check is two more runs of the same app: `run.mode = "threshold_toys"` at the limit of the scan, and the scan again with `run.q_target_lookup_path`. Plots of the last file need `ccdarksens_plot_limit --use-stored-limit`, because `--from-qhist` rebuilds the limit from the stored q-map at the asymptotic threshold.
+
+---
+
 ## 10. Summary: what this buys
 
 A single scan app now covers every signal channel and every statistical mode the DM-electron reference app supports, verified by direct bit-exact comparison rather than by construction alone. `ccdarksens_band` and `ccdarksens_plot_dmelectron_limit` work against its output completely unmodified. The reference app itself was never touched — every finding here came from reading it, never from editing it.
