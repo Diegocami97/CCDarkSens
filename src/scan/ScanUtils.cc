@@ -102,6 +102,29 @@ std::vector<double> MonotonizeQ(const std::vector<double>& nll_values,
 }
 
 // ----------------------------------------------------------------------------
+// OneSidedQ
+//   sigma_hat = the grid point with the lowest NLL (the first one on ties). For k <= k_hat
+//   q = 0, because the test of a cross section at or below the best fit is not rejected; for
+//   k > k_hat q[k] = max(0, 2*(nll[k] - nll_min)) with a running maximum that starts at 0.
+// ----------------------------------------------------------------------------
+std::vector<double> OneSidedQ(const std::vector<double>& nll_values,
+                              double nll_min)
+{
+  std::vector<double> q(nll_values.size(), 0.0);
+  if (nll_values.empty()) return q;
+  std::size_t k_hat = 0;
+  for (std::size_t k = 1; k < nll_values.size(); ++k)
+    if (nll_values[k] < nll_values[k_hat]) k_hat = k;
+  double running = 0.0;
+  for (std::size_t k = k_hat + 1; k < nll_values.size(); ++k) {
+    const double v = 2.0 * (nll_values[k] - nll_min);
+    running = std::max(running, (v > 0.0) ? v : 0.0);
+    q[k] = running;
+  }
+  return q;
+}
+
+// ----------------------------------------------------------------------------
 // BisectUpperLimit
 //   Bracket-and-bisect in log10(sigma): starting at the seed I step upward (step 0.3,
 //   doubling, up to 12 times) until q_mu reaches target_q, then bisect (24 iterations at

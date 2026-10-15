@@ -337,7 +337,8 @@ int RunJointChannelScan(ConfigManager& cfg, const json& jroot) {
       nll_values.push_back(nll_sum);
     }
     const double nll_min = *std::min_element(nll_values.begin(), nll_values.end());
-    const auto q_mono = ccdarksens::scan::MonotonizeQ(nll_values, nll_min);
+    const auto q_mono = run.one_sided_q ? ccdarksens::scan::OneSidedQ(nll_values, nll_min)
+                                        : ccdarksens::scan::MonotonizeQ(nll_values, nll_min);
     const double ul_sigma = ccdarksens::scan::UlFromQMonoCrossing(sigma_list, q_mono, target_q);
     for (int k = 0; k < static_cast<int>(nll_values.size()); ++k) {
       if (q_mono[static_cast<std::size_t>(k)] <= 0.0) continue;
@@ -543,7 +544,9 @@ int main(int argc, char** argv) {
       if (q_target_by_mass.empty()) return target_q;
       const double rel_tol_mass = 1e-9;
       for (const auto& kv : q_target_by_mass) {
-        if (std::abs(kv.first - mchi) <= rel_tol_mass * std::max(1.0, std::abs(mchi))) return kv.second;
+        if (std::abs(kv.first - mchi) <= rel_tol_mass * std::max(1.0, std::abs(mchi))) {
+          return kv.second > 0.0 ? kv.second : target_q;  // 0 = toys had no signal at this mass
+        }
       }
       double best = target_q, best_diff = std::numeric_limits<double>::infinity();
       for (const auto& kv : q_target_by_mass) {
@@ -553,7 +556,7 @@ int main(int argc, char** argv) {
           best = kv.second;
         }
       }
-      return best;
+      return best > 0.0 ? best : target_q;
     };
 
     // ---- run.mode == "threshold_toys": band.cc's toy-MC threshold
@@ -578,10 +581,13 @@ int main(int argc, char** argv) {
         if (!fst.IsOpen() || fst.IsZombie()) {
           throw std::runtime_error("Cannot open sigma_threshold_graph_path: " + tt.sigma_threshold_graph_path);
         }
+        // The graph written by ccdarksens_band, or the limit curve of an earlier scan_generic run
+        // (so a scan output can be passed straight in as the threshold graph).
         TGraph* g_st = dynamic_cast<TGraph*>(fst.Get("sigma_threshold_per_mass"));
+        if (!g_st) g_st = dynamic_cast<TGraph*>(fst.Get("upper_limit_sigma_e_mchi_graph"));
         if (!g_st) {
-          throw std::runtime_error("sigma_threshold_graph_path missing TGraph 'sigma_threshold_per_mass': " +
-                                    tt.sigma_threshold_graph_path);
+          throw std::runtime_error("sigma_threshold_graph_path has neither TGraph 'sigma_threshold_per_mass' nor "
+                                    "'upper_limit_sigma_e_mchi_graph': " + tt.sigma_threshold_graph_path);
         }
         for (int i = 0; i < g_st->GetN(); ++i) {
           double x = 0.0, y = 0.0;
@@ -683,13 +689,17 @@ int main(int argc, char** argv) {
           const double nll_top = pr_top.second;
 
           double nll_glob = nll_top;
+          bool sigma_hat_above = false;  // best fit above sigma_thr (one-sided q is 0 there)
           if (do_2d_fit_here && S_grid.size() >= 2u) {
             auto res = profile_pl.MinimizeOverSigmaAndTheta(S_from_log10, log10_lo, log10_hi, profile_param_lo,
                                                               profile_param_hi, log10_sigma_thr_seed, theta_hat_top);
-            if (res.ok && res.nll_min < nll_glob) nll_glob = res.nll_min;
+            if (res.ok && res.nll_min < nll_glob) {
+              nll_glob = res.nll_min;
+              sigma_hat_above = res.log10_sigma_hat > log10_sigma_thr_seed;
+            }
           }
           const double q = 2.0 * (nll_top - nll_glob);
-          q_values[static_cast<std::size_t>(k)] = (q > 0.0) ? q : 0.0;
+          q_values[static_cast<std::size_t>(k)] = (q > 0.0 && !(tt.one_sided && sigma_hat_above)) ? q : 0.0;
         }
 
         const std::size_t q_idx =
@@ -851,9 +861,19 @@ int main(int argc, char** argv) {
       // Use the 2D global minimum when pydme_style_ul requests it and the 2D
       // fit succeeded; else the grid minimum, to avoid a spurious flat curve
       // (matches the reference app exactly).
-      const double nll_min = (run.pydme_style_ul && use_2d_nll_min) ? nll_min_2d : nll_min_grid;
+      double nll_min = (run.pydme_style_ul && use_2d_nll_min) ? nll_min_2d : nll_min_grid;
+      if (run.robust_minimum) {
+        // Lowest NLL seen at this mass: the 2D fit can end on the boundary in a flat NLL and return a
+        // value above the grid minimum (or the background-only value), which would raise every q.
+        const double nll_robust = std::min({nll_min, nll_min_grid, nll_null});
+        if (run.verbosity >= 1 && nll_robust < nll_min - 1e-6)
+          std::cout << "[scan-generic] mchi=" << mchi << " robust_minimum: nll_min lowered from " << nll_min
+                    << " to " << nll_robust << "\n";
+        nll_min = nll_robust;
+      }
       const double target_q_mchi = target_q_for_mass(mchi);
-      const auto q_mono = ccdarksens::scan::MonotonizeQ(nll_values, nll_min);
+      const auto q_mono = run.one_sided_q ? ccdarksens::scan::OneSidedQ(nll_values, nll_min)
+                                          : ccdarksens::scan::MonotonizeQ(nll_values, nll_min);
       const double ul_sigma = ccdarksens::scan::UlFromQMonoCrossing(sigma_list, q_mono, target_q_mchi);
 
       double ul_pydme_bisection = -1.0;

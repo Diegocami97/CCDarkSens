@@ -144,6 +144,8 @@ void ConfigManager::parse_run_(const nlohmann::json& j) {
   run_.profile_likelihood_plot_mchi = j.value("profile_likelihood_plot_mchi", 0.0);
   run_.profile_minimizer = j.value("profile_minimizer", std::string("brent"));
   run_.pydme_style_ul = j.value("pydme_style_ul", false);
+  run_.one_sided_q = j.value("one_sided_q", false);
+  run_.robust_minimum = j.value("robust_minimum", false);
   run_.smooth_ul_envelope = j.value("smooth_ul_envelope", false);
   run_.mode = j.value("mode", std::string("scan"));
   run_.q_target_lookup_path = j.value("q_target_lookup_path", std::string{});
@@ -154,6 +156,7 @@ void ConfigManager::parse_run_(const nlohmann::json& j) {
     run_.threshold_toys.n_threshold_toys = jt.value("n_threshold_toys", static_cast<long long>(10000));
     run_.threshold_toys.percentile = jt.value("percentile", 0.90);
     run_.threshold_toys.rng_seed = jt.value("rng_seed", static_cast<uint64_t>(23456ULL));
+    run_.threshold_toys.one_sided = jt.value("one_sided", false);
   }
 }
 

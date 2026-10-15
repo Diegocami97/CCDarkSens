@@ -42,6 +42,13 @@ std::vector<double> InterpolateSignal(
 std::vector<double> MonotonizeQ(const std::vector<double>& nll_values,
                                 double nll_min);
 
+/// One-sided q_mu vector. sigma_hat is the grid point with the lowest NLL; q is 0 for every
+/// k <= k_hat (a signal at or below the best fit is not penalised), and above k_hat it is
+/// q[k] = max(0, 2*(nll[k] - nll_min)) with a running maximum starting at 0. The first crossing of a
+/// target above sigma_hat is then the upper limit even when the data prefer a signal.
+std::vector<double> OneSidedQ(const std::vector<double>& nll_values,
+                              double nll_min);
+
 /// Bracket-and-bisect upper limit in log10(sigma) space.
 ///
 /// Expands hi from log10_seed upward until q_mu_at(hi) >= target_q, then

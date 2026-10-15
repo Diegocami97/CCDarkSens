@@ -73,6 +73,15 @@ struct RunHeader {
   std::string profile_minimizer = "brent";
   /// When true, match pydme UL: accept 2D fit at boundary and use 2D nll_min for q_mu/UL (same denominator and bracket start as pydme).
   bool pydme_style_ul = false;
+  /// When true, q(sigma) is the one-sided statistic: q = 0 for every sigma at or below the best-fit
+  /// sigma-hat of the grid, and the running maximum starts there, so the limit is the crossing above
+  /// sigma-hat. Default false keeps q fixed to its sigma -> 0 value below sigma-hat (the validated
+  /// behaviour); with an excess in the data q(0) can then sit above the threshold and leave no limit.
+  bool one_sided_q = false;
+  /// When true, the reference level of q is the lowest NLL seen at that mass: min(2D (sigma, theta)
+  /// fit, grid minimum, background-only fit). Default false keeps the 2D fit when it succeeded,
+  /// even if it ended on the boundary with a higher NLL than the grid (the validated behaviour).
+  bool robust_minimum = false;
   /// When true, cap local maxima in the stored TH1D upper limit (legacy post-scan smoother). Default false: raw bisection UL; downstream should prefer upper_limit_sigma_e_mchi_graph.
   bool smooth_ul_envelope = false;
 
@@ -91,6 +100,9 @@ struct RunHeader {
     long long n_threshold_toys = 10000;
     double percentile = 0.90;
     uint64_t rng_seed = 23456ULL;
+    /// false (default): two-sided statistic t = 2(NLL_top - NLL_global), toys with sigma_hat above
+    /// sigma_thr still contribute t > 0. true: one-sided q, such a toy contributes 0.
+    bool one_sided = false;
   };
   ThresholdToysJSON threshold_toys;
 };
