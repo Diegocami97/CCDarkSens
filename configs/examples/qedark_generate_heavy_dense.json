@@ -1,24 +1,41 @@
 {
-  "_header": "Diego Venegas-Vargas | DAMIC-M collaboration | CCDarkSens Framework -- Example input: QEDark rate tables for the LBC heavy-mediator example scan (800 x 300 grid).",
-  "_comment": "Generate QEDark rate tables for the LBC heavy-mediator example scan (800 x 300 grid).",
+  "_header": "Diego Venegas-Vargas | DAMIC-M collaboration | CCDarkSens Framework -- Example input: QEDark rate tables for the LBC heavy-mediator example scan (800 x 300 grid), standard halo of Baxter et al. (arXiv:2105.00599, Table 1).",
+  "_comment": "Halo: v0 = 238 km/s, v_E = 253.7 km/s (the lab speed |v0 + v_sun + v_earth| of Baxter et al. on March 9, the value of the DAMIC-M 2025 analysis), v_esc = 544 km/s. Written to long_scan_vE253p7 so that the earlier v_E = 263 km/s tables in long_scan are not mixed with these. About 8 GB for 240,000 files.",
   "material": "Si",
   "mediator": "heavy",
-  "halo": { "v0_kms": 238.0, "vE_kms": 263.0, "vesc_kms": 544.0 },
+  "halo": {
+    "v0_kms": 238.0,
+    "vE_kms": 253.7,
+    "vesc_kms": 544.0
+  },
   "detector": {
     "band_gap_eV": 1.2,
     "eh_pair_eV": 3.8,
     "binsize_eV": 0.1
   },
-  "rates_dir": "data/qedark_rates/Si/heavy/long_scan",
+  "rates_dir": "data/qedark_rates/Si/heavy/long_scan_vE253p7",
   "filename_template": "dRdE_{material}_{mediator}_m{mchi_MeV}_s{sigma_e_cm2}.csv",
   "grid": {
     "mchi_MeV": {
-      "logspace": { "start": 0.2, "stop": 1000.0, "num": 800, "endpoint": true }
+      "logspace": {
+        "start": 0.2,
+        "stop": 1000.0,
+        "num": 800,
+        "endpoint": true
+      }
     },
     "sigma_e_cm2": {
-      "logspace": { "start_exp": -46, "stop_exp": -26, "num": 300, "endpoint": true }
+      "logspace": {
+        "start_exp": -46,
+        "stop_exp": -26,
+        "num": 300,
+        "endpoint": true
+      }
     },
-    "format": { "mchi": ".6f", "sigma": ".1e" }
+    "format": {
+      "mchi": ".6f",
+      "sigma": ".1e"
+    }
   },
   "options": {
     "skip_existing": true,
@@ -26,6 +43,9 @@
     "compress": false,
     "parallel": 8,
     "progress": true,
-    "format": { "mchi": ".6f", "sigma": ".1e" }
+    "format": {
+      "mchi": ".6f",
+      "sigma": ".1e"
+    }
   }
 }

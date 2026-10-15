@@ -1,5 +1,5 @@
 {
-  "_header": "Diego Venegas-Vargas | DAMIC-M collaboration | CCDarkSens Framework -- Walkthrough scan: DM-electron heavy mediator, pattern space, 5 masses, signal table and Bp taken from the files written by the walkthrough steps (outputs/walkthrough/), observed counts of the published LBC result.",
+  "_header": "Diego Venegas-Vargas | DAMIC-M collaboration | CCDarkSens Framework -- Walkthrough scan: DM-electron heavy mediator, pattern space, 5 masses, signal table and Bp taken from the files written by the walkthrough steps (outputs/walkthrough/), observed counts of the published LBC result. Rates: standard halo of Baxter et al. (v_E = 253.7 km/s), walkthrough_vE253p7; one-sided q. run.robust_minimum = true: the reference NLL minimum is the lowest of the 2D fit, the grid minimum and the background-only fit.",
   "_comment": "Quick scan for docs/Student_Examples_Pattern_Pipeline_Walkthrough.md. The masses are points of the 800-point rate grid (logspace 0.2-1000 MeV), because the rate files are looked up by mass; replace response.efficiency_mc.efficiency_csv and run.background_Bp by your own table and Bp.",
   "run": {
     "label": "walkthrough_quick_scan",
@@ -45,7 +45,9 @@
     "theta_hi": 10,
     "profile_minimizer": "pydme",
     "pydme_style_ul": true,
-    "smooth_ul_envelope": false
+    "smooth_ul_envelope": false,
+    "one_sided_q": true,
+    "robust_minimum": true
   },
   "detector": {
     "rows": 1300,
@@ -137,7 +139,7 @@
     "type": "dm_electron",
     "material": "Si",
     "mediator": "heavy",
-    "rates_dir": "data/qedark_rates/Si/heavy/walkthrough",
+    "rates_dir": "data/qedark_rates/Si/heavy/walkthrough_vE253p7",
     "filename_template": "dRdE_{material}_{mediator}_m{mchi_MeV}_s{sigma_e_cm2}.csv",
     "Emin_eV": 2,
     "Emax_eV": 20,

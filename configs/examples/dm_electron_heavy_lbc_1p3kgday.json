@@ -1,5 +1,5 @@
 {
-  "_header": "Diego Venegas-Vargas | DAMIC-M collaboration | CCDarkSens Framework -- Student example: DM-electron heavy mediator, real LBC reproduction, pattern space, real Bp/Br background template and observed counts, 1.3 kg-day exposure. QEDark rates.",
+  "_header": "Diego Venegas-Vargas | DAMIC-M collaboration | CCDarkSens Framework -- Student example: DM-electron heavy mediator, real LBC reproduction, pattern space, real Bp/Br background template and observed counts, 1.3 kg-day exposure. QEDark rates. Step 1 of 3 of the threshold workflow, and the result: asymptotic scan with the one-sided q on the QEDark rates of the standard halo of Baxter et al. (v_E = 253.7 km/s, long_scan_vE253p7). Step 2 is dm_electron_heavy_lbc_1p3kgday_toys.json, step 3 is dm_electron_heavy_lbc_1p3kgday_mc.json. run.robust_minimum = true: the reference NLL minimum is the lowest of the 2D fit, the grid minimum and the background-only fit.",
   "_comment": "LBC pydme reproduction \u2014 QEDark heavy mediator, dense grid. See docs/LBC_QEDark_Reproduction_Guide.md",
   "run": {
     "label": "dm_electron_heavy_lbc_1p3kgday",
@@ -45,7 +45,9 @@
     "theta_hi": 10,
     "profile_minimizer": "pydme",
     "pydme_style_ul": true,
-    "smooth_ul_envelope": false
+    "smooth_ul_envelope": false,
+    "one_sided_q": true,
+    "robust_minimum": true
   },
   "detector": {
     "rows": 1300,
@@ -137,7 +139,7 @@
     "type": "dm_electron",
     "material": "Si",
     "mediator": "heavy",
-    "rates_dir": "data/qedark_rates/Si/heavy/long_scan",
+    "rates_dir": "data/qedark_rates/Si/heavy/long_scan_vE253p7",
     "filename_template": "dRdE_{material}_{mediator}_m{mchi_MeV}_s{sigma_e_cm2}.csv",
     "Emin_eV": 2,
     "Emax_eV": 20,
